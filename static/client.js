@@ -365,7 +365,7 @@ window.gameApp = function() {
                         } else if (tile.classList.contains('present')) {
                             emojiGrid += '🟨';
                         } else {
-                            emojiGrid += '⬜';
+                            emojiGrid += '⬛';
                         }
                     });
                     emojiGrid += '\n';
