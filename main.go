@@ -15,17 +15,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Global application state
 var (
-	wordList     []string
-	dailyWord    DailyWord
-	gameSessions = make(map[string]*GameState)
-	sessionMutex sync.RWMutex
-	isProduction bool
+	wordList     []string                      // Valid 5-letter words for the game
+	dailyWord    DailyWord                     // Current daily word with thread safety
+	gameSessions = make(map[string]*GameState) // Session-based game storage
+	sessionMutex sync.RWMutex                  // Protects gameSessions map
+	isProduction bool                          // Environment flag for static file serving
 )
 
 func main() {
+	// Determine environment for proper asset serving
 	isProduction = os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
 
+	// Load game data
 	if err := loadWords(); err != nil {
 		log.Fatalf("Failed to load words: %v", err)
 	}
@@ -34,10 +37,13 @@ func main() {
 		log.Fatalf("Failed to load daily word: %v", err)
 	}
 
+	// Start daily word rotation scheduler
 	go dailyWordScheduler()
 
+	// Setup web server
 	router := gin.Default()
 
+	// Serve static files from appropriate directory
 	if isProduction && dirExists("dist") {
 		router.LoadHTMLGlob("dist/templates/*.html")
 		router.Static("/static", "./dist/static")
@@ -46,12 +52,14 @@ func main() {
 		router.Static("/static", "./static")
 	}
 
+	// Define routes
 	router.GET("/", homeHandler)
 	router.GET("/new-game", newGameHandler)
 	router.POST("/new-game", newGameHandler)
 	router.POST("/guess", guessHandler)
 	router.GET("/game-state", gameStateHandler)
 
+	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -63,6 +71,7 @@ func main() {
 	}
 }
 
+// loadWords reads the word list from JSON file
 func loadWords() error {
 	data, err := os.ReadFile("data/words.json")
 	if err != nil {
@@ -78,10 +87,11 @@ func loadWords() error {
 	return nil
 }
 
+// loadDailyWord loads or creates today's word
 func loadDailyWord() error {
 	data, err := os.ReadFile("data/daily-word.json")
 	if err != nil {
-		// If file doesn't exist, create it with a random word
+		// File doesn't exist, create with random word
 		return setNewDailyWord()
 	}
 
@@ -92,7 +102,7 @@ func loadDailyWord() error {
 
 	dailyWord.FromJSON(dwj)
 
-	// Check if the word is from today
+	// Check if word is still valid for today
 	today := time.Now().Format("2006-01-02")
 	if dailyWord.GetDate() != today {
 		return setNewDailyWord()
@@ -101,6 +111,7 @@ func loadDailyWord() error {
 	return nil
 }
 
+// setNewDailyWord generates and saves a new daily word
 func setNewDailyWord() error {
 	dailyWord.mu.Lock()
 	defer dailyWord.mu.Unlock()
@@ -108,9 +119,8 @@ func setNewDailyWord() error {
 	dailyWord.Word = wordList[rand.Intn(len(wordList))]
 	dailyWord.Date = time.Now().Format("2006-01-02")
 
-	// Use unsafe version since we already hold the lock
+	// Save to file (using unsafe version since we hold the lock)
 	dwj := dailyWord.toJSONUnsafe()
-
 	data, err := json.MarshalIndent(dwj, "", "  ")
 	if err != nil {
 		return err
@@ -119,6 +129,7 @@ func setNewDailyWord() error {
 	return os.WriteFile("data/daily-word.json", data, 0644)
 }
 
+// dailyWordScheduler updates the daily word at midnight
 func dailyWordScheduler() {
 	for {
 		now := time.Now()
@@ -134,6 +145,7 @@ func dailyWordScheduler() {
 	}
 }
 
+// homeHandler serves the main game page
 func homeHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
@@ -145,12 +157,14 @@ func homeHandler(c *gin.Context) {
 	})
 }
 
+// newGameHandler resets the current session's game
 func newGameHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	resetGameState(sessionID)
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
+// guessHandler processes a player's word guess
 func guessHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
@@ -162,37 +176,41 @@ func guessHandler(c *gin.Context) {
 
 	guess := strings.ToUpper(strings.TrimSpace(c.PostForm("guess")))
 
+	// Validate guess length
 	if len(guess) != 5 {
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Word must be 5 letters!"})
 		return
 	}
 
+	// Check guess against target word (always done for color feedback)
+	result := checkGuess(guess, dailyWord.GetWord())
+
+	// Handle invalid words (not in dictionary)
 	if !isValidWord(guess) {
-		// Store the invalid guess in the game state
-		invalidResult := make([]GuessResult, 5)
-		for i := 0; i < 5; i++ {
-			invalidResult[i] = GuessResult{
-				Letter: string(guess[i]),
-				Status: "invalid",
-			}
-		}
-		game.Guesses[game.CurrentRow] = invalidResult
+		// Store guess with color feedback but mark as invalid
+		game.Guesses[game.CurrentRow] = result
+		game.GuessHistory = append(game.GuessHistory, guess)
 		game.CurrentRow++
 
-		// Check if we've run out of guesses
+		// Check for game over
 		if game.CurrentRow >= 6 {
 			game.GameOver = true
 			game.TargetWord = dailyWord.GetWord()
 		}
 
 		saveGameState(sessionID, game)
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Not in word list!"})
+		c.HTML(http.StatusOK, "game-board", gin.H{
+			"game":  game,
+			"error": "Not in word list!",
+		})
 		return
 	}
 
-	result := checkGuess(guess, dailyWord.GetWord())
+	// Process valid guess
 	game.Guesses[game.CurrentRow] = result
+	game.GuessHistory = append(game.GuessHistory, guess)
 
+	// Check for win condition
 	if guess == dailyWord.GetWord() {
 		game.Won = true
 		game.GameOver = true
@@ -202,6 +220,8 @@ func guessHandler(c *gin.Context) {
 			game.GameOver = true
 		}
 	}
+
+	// Reveal target word when game ends
 	if game.GameOver {
 		game.TargetWord = dailyWord.GetWord()
 	}
@@ -210,26 +230,27 @@ func guessHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 }
 
+// gameStateHandler returns current game state (for HTMX)
 func gameStateHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 	c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 }
 
-// checkGuess compares the guess against the target word using Wordle rules
+// checkGuess implements Wordle's letter comparison algorithm
 func checkGuess(guess, target string) []GuessResult {
 	result := make([]GuessResult, 5)
 	targetCopy := []rune(target)
 
-	// First pass: mark correct positions
+	// First pass: mark exact matches (green)
 	for i := range 5 {
 		if guess[i] == target[i] {
 			result[i] = GuessResult{Letter: string(guess[i]), Status: "correct"}
-			targetCopy[i] = ' '
+			targetCopy[i] = ' ' // Mark as used
 		}
 	}
 
-	// Second pass: mark present letters
+	// Second pass: mark present letters in wrong position (yellow)
 	for i := range 5 {
 		if result[i].Status == "" {
 			letter := string(guess[i])
@@ -239,7 +260,7 @@ func checkGuess(guess, target string) []GuessResult {
 			for j := 0; j < 5; j++ {
 				if targetCopy[j] == rune(guess[i]) {
 					result[i].Status = "present"
-					targetCopy[j] = ' '
+					targetCopy[j] = ' ' // Mark as used
 					found = true
 					break
 				}
@@ -254,10 +275,14 @@ func checkGuess(guess, target string) []GuessResult {
 	return result
 }
 
+// isValidWord checks if a word exists in the word list
 func isValidWord(word string) bool {
 	return slices.Contains(wordList, word)
 }
 
+// Session management functions
+
+// getOrCreateSession retrieves or creates a session ID cookie
 func getOrCreateSession(c *gin.Context) string {
 	sessionID, err := c.Cookie("session_id")
 	if err != nil {
@@ -267,19 +292,24 @@ func getOrCreateSession(c *gin.Context) string {
 	return sessionID
 }
 
+// getGameState retrieves or creates a game state for a session
 func getGameState(sessionID string) *GameState {
 	sessionMutex.RLock()
 	game, exists := gameSessions[sessionID]
 	sessionMutex.RUnlock()
 
 	if !exists {
+		// Create new game state
 		game = &GameState{
-			Guesses:    make([][]GuessResult, 6),
-			CurrentRow: 0,
-			GameOver:   false,
-			Won:        false,
-			TargetWord: "",
+			Guesses:      make([][]GuessResult, 6),
+			CurrentRow:   0,
+			GameOver:     false,
+			Won:          false,
+			TargetWord:   "",
+			GuessHistory: []string{},
 		}
+
+		// Initialize empty guess rows
 		for i := range game.Guesses {
 			game.Guesses[i] = make([]GuessResult, 5)
 		}
@@ -292,19 +322,21 @@ func getGameState(sessionID string) *GameState {
 	return game
 }
 
+// resetGameState removes a session's game state to start fresh
 func resetGameState(sessionID string) {
 	sessionMutex.Lock()
 	delete(gameSessions, sessionID)
 	sessionMutex.Unlock()
 }
 
+// saveGameState updates the stored game state for a session
 func saveGameState(sessionID string, game *GameState) {
 	sessionMutex.Lock()
 	gameSessions[sessionID] = game
 	sessionMutex.Unlock()
 }
 
-// dirExists checks if a directory exists
+// dirExists checks if a directory path exists
 func dirExists(path string) bool {
 	info, err := os.Stat(path)
 	if os.IsNotExist(err) {

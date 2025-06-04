@@ -2,33 +2,38 @@ package main
 
 import "sync"
 
+// WordList represents the JSON structure for loading valid words
 type WordList struct {
 	Words []string `json:"words"`
 }
 
+// DailyWord holds the current daily word with thread-safe access
 type DailyWord struct {
 	Word string
 	Date string
-	mu   sync.RWMutex
+	mu   sync.RWMutex // Protects concurrent access to Word and Date
 }
 
-// DailyWordJSON is used for JSON serialization without the mutex
+// DailyWordJSON is used for JSON serialization (excludes mutex)
 type DailyWordJSON struct {
 	Word string `json:"word"`
 	Date string `json:"date"`
 }
 
+// GameState represents a player's current game session
 type GameState struct {
-	Guesses    [][]GuessResult
-	CurrentRow int
-	GameOver   bool
-	Won        bool
-	TargetWord string // Revealed only when game ends
+	Guesses      [][]GuessResult // 6 rows of 5 letters each with status
+	CurrentRow   int             // Which row the player is currently on (0-5)
+	GameOver     bool            // Whether the game has ended
+	Won          bool            // Whether the player won
+	TargetWord   string          // Revealed only when game ends
+	GuessHistory []string        // All guesses made (for accurate try counting)
 }
 
+// GuessResult represents a single letter's evaluation
 type GuessResult struct {
-	Letter string
-	Status string // "correct", "present", or "absent"
+	Letter string // The guessed letter
+	Status string // "correct", "present", "absent", or "invalid"
 }
 
 // PlayerStats tracks user statistics (for future implementation)
@@ -37,10 +42,12 @@ type PlayerStats struct {
 	GamesWon          int         `json:"gamesWon"`
 	CurrentStreak     int         `json:"currentStreak"`
 	MaxStreak         int         `json:"maxStreak"`
-	GuessDistribution map[int]int `json:"guessDistribution"`
+	GuessDistribution map[int]int `json:"guessDistribution"` // Tries -> count
 }
 
-// ToJSON safely converts DailyWord to a JSON-serializable struct
+// Thread-safe methods for DailyWord
+
+// ToJSON safely converts DailyWord to JSON-serializable struct
 func (dw *DailyWord) ToJSON() DailyWordJSON {
 	dw.mu.RLock()
 	defer dw.mu.RUnlock()
@@ -58,21 +65,21 @@ func (dw *DailyWord) FromJSON(dwj DailyWordJSON) {
 	dw.Date = dwj.Date
 }
 
-// GetWord returns the current word with thread safety
+// GetWord returns the current word with read lock
 func (dw *DailyWord) GetWord() string {
 	dw.mu.RLock()
 	defer dw.mu.RUnlock()
 	return dw.Word
 }
 
-// GetDate returns the current date with thread safety
+// GetDate returns the current date with read lock
 func (dw *DailyWord) GetDate() string {
 	dw.mu.RLock()
 	defer dw.mu.RUnlock()
 	return dw.Date
 }
 
-// toJSONUnsafe creates JSON struct without acquiring lock (for use when lock is already held)
+// toJSONUnsafe creates JSON struct without locking (for internal use when lock is held)
 func (dw *DailyWord) toJSONUnsafe() DailyWordJSON {
 	return DailyWordJSON{
 		Word: dw.Word,

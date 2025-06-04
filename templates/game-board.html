@@ -1,8 +1,10 @@
 {{define "game-board"}}
+<!-- Game Board Grid: 6 rows x 5 tiles -->
 <div id="game-board" class="game-grid">
     {{range $row, $guesses := .game.Guesses}}
         <div class="guess-row">
             {{range $col, $guess := $guesses}}
+                <!-- Tile classes: filled + status (correct/present/absent), active for current input -->
                 <div class="tile {{if $guess.Letter}}filled {{$guess.Status}}{{end}}{{if and (eq $row $.game.CurrentRow) (not $.game.GameOver) (not $guess.Letter)}} active{{end}}">
                     {{$guess.Letter}}
                 </div>
@@ -11,6 +13,7 @@
     {{end}}
 </div>
 
+<!-- Error alerts for invalid guesses -->
 {{if .error}}
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         {{.error}}
@@ -18,11 +21,12 @@
     </div>
 {{end}}
 
+<!-- Game over screen with results and share button -->
 {{if .game.GameOver}}
     <div class="game-over-container text-center">
         {{if .game.Won}}
             <h3 class="text-success">🎉 Congratulations! 🎉</h3>
-            <p class="mb-3">You guessed the word in {{.game.CurrentRow}} tries!</p>
+            <p class="mb-3">You guessed the word in {{len .game.GuessHistory}} {{if eq (len .game.GuessHistory) 1}}try{{else}}tries{{end}}!</p>
         {{else}}
             <h3 class="text-danger">Game Over!</h3>
             <p class="mb-3">The word was: <strong>{{.game.TargetWord}}</strong></p>

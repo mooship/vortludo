@@ -1,5 +1,6 @@
-/* Vortludo Styles */
+/* Vortludo Styles - A Libre Wordle Clone */
 
+/* CSS Custom Properties (Variables) */
 :root {
     --tile-size: 62px;
     --gap: 8px;
@@ -16,7 +17,7 @@
     --tile-bg: #ffffff;
 }
 
-/* Dark theme overrides */
+/* Dark Theme Variables */
 [data-theme="dark"] {
     --bg-primary: #121213;
     --bg-secondary: #1a1a1b;
@@ -29,6 +30,7 @@
     --absent: #3a3a3c;
 }
 
+/* Base Styles */
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -42,6 +44,7 @@ body {
     background: linear-gradient(135deg, #1a1a1b 0%, #2d2d30 100%);
 }
 
+/* Navigation */
 .navbar {
     background-color: var(--bg-secondary) !important;
     border-bottom: 1px solid var(--border-color);
@@ -73,14 +76,13 @@ body {
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Game container */
+/* Game Layout */
 .game-container {
     padding: 1rem;
     max-width: 500px;
     margin: 0 auto;
 }
 
-/* Game board */
 .game-grid {
     display: grid;
     gap: var(--gap);
@@ -95,6 +97,7 @@ body {
     gap: var(--gap);
 }
 
+/* Game Tiles */
 .tile {
     width: var(--tile-size);
     height: var(--tile-size);
@@ -111,6 +114,7 @@ body {
     color: var(--text-primary);
 }
 
+/* Tile States */
 .tile.active {
     border-color: #878a8c;
     animation: pulse 2s infinite;
@@ -125,14 +129,13 @@ body {
     border-color: var(--text-secondary);
 }
 
-/* Tile states */
+/* Wordle Color States */
 .tile.correct {
     background-color: var(--correct);
     color: white;
     border-color: var(--correct);
 }
 
-/* Letters present in the word but wrong position */
 .tile.present {
     background-color: var(--present);
     color: white;
@@ -145,38 +148,32 @@ body {
     border-color: var(--absent);
 }
 
+/* Invalid word styling - red tiles for dictionary validation */
 .tile.invalid {
     background-color: #dc3545;
     color: white;
     border-color: #dc3545;
 }
 
-/* Tile flip animation */
+/* Tile Animations */
 .tile.flip {
     animation: flip 0.6s ease-in-out forwards;
     animation-delay: calc(var(--tile-index) * 0.1s);
 }
 
 @keyframes flip {
-    0% {
-        transform: rotateX(0);
-    }
-    50% {
-        transform: rotateX(-90deg);
-    }
-    100% {
-        transform: rotateX(0);
-    }
+    0% { transform: rotateX(0); }
+    50% { transform: rotateX(-90deg); }
+    100% { transform: rotateX(0); }
 }
 
-/* Ensure content is preserved during flip */
 .tile.flip.correct,
 .tile.flip.present,
 .tile.flip.absent {
     transform-style: preserve-3d;
 }
 
-/* Virtual keyboard */
+/* Virtual Keyboard */
 .keyboard {
     margin-top: 2rem;
     user-select: none;
@@ -225,7 +222,7 @@ body {
     min-width: 65px;
 }
 
-/* Key states */
+/* Keyboard Color States - match tiles */
 .key.correct {
     background-color: var(--correct);
     color: white;
@@ -241,7 +238,7 @@ body {
     color: white;
 }
 
-/* Game over */
+/* Game End Screen */
 .game-over-container {
     margin-top: 20px;
     padding: 20px;
@@ -251,7 +248,7 @@ body {
     color: var(--text-primary);
 }
 
-/* Alerts */
+/* Alert Messages */
 .alert {
     position: fixed;
     top: 20px;
@@ -274,7 +271,7 @@ body {
     background-color: rgba(220, 53, 69, 0.2);
 }
 
-/* Animations */
+/* Animation Keyframes */
 @keyframes popIn {
     0% {
         transform: scale(0.8);
@@ -327,7 +324,7 @@ body {
     animation-delay: calc(var(--tile-index) * 0.1s);
 }
 
-/* Mobile optimizations */
+/* Responsive Design */
 @media (max-width: 480px) {
     :root {
         --tile-size: 52px;
@@ -376,6 +373,7 @@ body {
     }
 }
 
+/* Prevent iOS zoom on form inputs */
 input[type="text"] {
     font-size: 16px !important;
 }
