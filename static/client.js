@@ -483,7 +483,7 @@ window.gameApp = function() {
     };
 }
 
-// Hide virtual keyboard when game is won for cleaner end-game UI
+// Hide virtual keyboard when game is won
 window.addEventListener('gameWon', function() {
     const keyboard = document.querySelector('.keyboard');
     if (keyboard) {
