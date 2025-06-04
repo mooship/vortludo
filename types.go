@@ -2,22 +2,30 @@ package main
 
 import "sync"
 
-// WordList represents the JSON structure for loading valid words
+// WordEntry represents a single word with its hint
+type WordEntry struct {
+	Word string `json:"word"`
+	Hint string `json:"hint"`
+}
+
+// WordList represents the JSON structure for loading valid words with hints
 type WordList struct {
-	Words []string `json:"words"`
+	Words []WordEntry `json:"words"`
 }
 
 // DailyWord holds the current daily word with thread-safe access
 type DailyWord struct {
 	Word string
 	Date string
-	mu   sync.RWMutex // Protects concurrent access to Word and Date
+	Hint string
+	mu   sync.RWMutex // Protects concurrent access to Word, Date, and Hint
 }
 
 // DailyWordJSON is used for JSON serialization (excludes mutex)
 type DailyWordJSON struct {
 	Word string `json:"word"`
 	Date string `json:"date"`
+	Hint string `json:"hint"`
 }
 
 // GameState represents a player's current game session
@@ -54,6 +62,7 @@ func (dw *DailyWord) ToJSON() DailyWordJSON {
 	return DailyWordJSON{
 		Word: dw.Word,
 		Date: dw.Date,
+		Hint: dw.Hint,
 	}
 }
 
@@ -63,6 +72,7 @@ func (dw *DailyWord) FromJSON(dwj DailyWordJSON) {
 	defer dw.mu.Unlock()
 	dw.Word = dwj.Word
 	dw.Date = dwj.Date
+	dw.Hint = dwj.Hint
 }
 
 // GetWord returns the current word with read lock
@@ -79,10 +89,18 @@ func (dw *DailyWord) GetDate() string {
 	return dw.Date
 }
 
+// GetHint returns the current hint with read lock
+func (dw *DailyWord) GetHint() string {
+	dw.mu.RLock()
+	defer dw.mu.RUnlock()
+	return dw.Hint
+}
+
 // toJSONUnsafe creates JSON struct without locking (for internal use when lock is held)
 func (dw *DailyWord) toJSONUnsafe() DailyWordJSON {
 	return DailyWordJSON{
 		Word: dw.Word,
 		Date: dw.Date,
+		Hint: dw.Hint,
 	}
 }

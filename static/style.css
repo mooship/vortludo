@@ -111,13 +111,26 @@ body {
 
 .game-content {
     flex-shrink: 0;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.5rem;
 }
 
 .game-content > p {
-    margin: 0 0 0.6rem 0;
+    margin: 0 0 0.4rem 0;
     font-size: 0.85rem;
     text-align: center;
+}
+
+/* Hint text styling */
+.hint-text {
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 0.8rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.hint-text i {
+    color: #ffc107;
+    margin-right: 0.25rem;
 }
 
 #game-board-container {
@@ -131,7 +144,7 @@ body {
 .game-grid {
     display: grid;
     gap: 0.25rem;
-    margin: 0 auto 0.8rem auto;
+    margin: 0 auto 0.5rem auto;
     width: fit-content;
 }
 
@@ -481,7 +494,7 @@ body {
     
     .game-grid {
         gap: 0.25rem;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.4rem;
     }
     
     .key {
@@ -522,12 +535,17 @@ body {
     }
     
     .game-content > p {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
         font-size: 0.8rem;
     }
     
     .game-content {
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .hint-text {
+        margin: 0 0 0.3rem 0;
+        font-size: 0.75rem;
     }
 }
 
@@ -547,6 +565,15 @@ body {
     .key.wide {
         min-width: 2.7rem;
         font-size: 0.5rem;
+    }
+
+    .game-grid {
+        margin-bottom: 0.3rem;
+    }
+
+    .hint-text {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.7rem;
     }
 }
 
@@ -575,7 +602,7 @@ body {
     
     .game-grid {
         gap: 0.2rem;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
     }
     
     .guess-row {
@@ -591,17 +618,20 @@ body {
     }
     
     .game-content > p {
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.2rem;
         font-size: 0.75rem;
     }
     
     .game-content {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .hint-text {
+        margin: 0 0 0.2rem 0;
+        font-size: 0.65rem;
     }
     
-    .navbar {
-        padding: 0.25rem 0.4rem !important;
-    }
+    /* ...existing code... */
 }
 
 /* Desktop optimizations - Very conservative sizing */
@@ -634,7 +664,7 @@ body {
     
     .game-grid {
         gap: 0.3rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
     }
     
     .keyboard {
@@ -646,7 +676,7 @@ body {
     }
     
     .game-content {
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
     }
 }
 
@@ -678,7 +708,7 @@ body {
     
     .game-grid {
         gap: 0.35rem;
-        margin-bottom: 1.2rem;
+        margin-bottom: 1rem;
     }
     
     .keyboard {
@@ -690,7 +720,7 @@ body {
     }
     
     .game-content {
-        margin-bottom: 1.2rem;
+        margin-bottom: 1rem;
     }
 }
 

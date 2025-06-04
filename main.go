@@ -17,7 +17,8 @@ import (
 
 // Global application state
 var (
-	wordList     []string                      // Valid 5-letter words for the game
+	wordList     []WordEntry                   // Valid 5-letter words with hints for the game
+	wordStrings  []string                      // Just the word strings for validation
 	dailyWord    DailyWord                     // Current daily word with thread safety
 	gameSessions = make(map[string]*GameState) // Session-based game storage
 	sessionMutex sync.RWMutex                  // Protects gameSessions map
@@ -84,6 +85,13 @@ func loadWords() error {
 	}
 
 	wordList = wl.Words
+
+	// Create string-only slice for validation
+	wordStrings = make([]string, len(wordList))
+	for i, entry := range wordList {
+		wordStrings[i] = entry.Word
+	}
+
 	return nil
 }
 
@@ -116,8 +124,11 @@ func setNewDailyWord() error {
 	dailyWord.mu.Lock()
 	defer dailyWord.mu.Unlock()
 
-	dailyWord.Word = wordList[rand.Intn(len(wordList))]
+	// Pick random word entry
+	selectedEntry := wordList[rand.Intn(len(wordList))]
+	dailyWord.Word = selectedEntry.Word
 	dailyWord.Date = time.Now().Format("2006-01-02")
+	dailyWord.Hint = selectedEntry.Hint
 
 	// Save to file (using unsafe version since we hold the lock)
 	dwj := dailyWord.toJSONUnsafe()
@@ -153,6 +164,7 @@ func homeHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"title":   "Vortludo - A Libre Wordle Clone",
 		"message": "Guess the 5-letter word!",
+		"hint":    dailyWord.GetHint(),
 		"game":    game,
 	})
 }
@@ -234,7 +246,10 @@ func guessHandler(c *gin.Context) {
 func gameStateHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
-	c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
+	c.HTML(http.StatusOK, "game-board", gin.H{
+		"game": game,
+		"hint": dailyWord.GetHint(),
+	})
 }
 
 // checkGuess implements Wordle's letter comparison algorithm
@@ -277,7 +292,7 @@ func checkGuess(guess, target string) []GuessResult {
 
 // isValidWord checks if a word exists in the word list
 func isValidWord(word string) bool {
-	return slices.Contains(wordList, word)
+	return slices.Contains(wordStrings, word)
 }
 
 // Session management functions

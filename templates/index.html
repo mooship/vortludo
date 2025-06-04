@@ -38,6 +38,11 @@
     <div class="container game-container" @keydown.window="handleKeyPress($event)">
         <div class="game-content">
             <p class="text-center mb-2">{{.message}}</p>
+            {{if .hint}}
+                <p class="text-center mb-3 hint-text">
+                    <i class="bi bi-lightbulb"></i> Hint: {{.hint}}
+                </p>
+            {{end}}
             
             <div id="game-board-container" 
                  hx-get="/game-state" 
