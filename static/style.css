@@ -34,7 +34,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
     margin: 0;
@@ -382,7 +382,7 @@ body {
     background-color: var(--tile-bg);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.9rem;
     resize: none;
 }
