@@ -1,0 +1,36 @@
+{{define "game-board"}}
+<div id="game-board" class="game-grid">
+    {{range $row, $guesses := .game.Guesses}}
+        <div class="guess-row">
+            {{range $col, $guess := $guesses}}
+                <div class="tile {{if $guess.Letter}}filled {{$guess.Status}}{{end}}{{if and (eq $row $.game.CurrentRow) (not $.game.GameOver) (not $guess.Letter)}} active{{end}}">
+                    {{$guess.Letter}}
+                </div>
+            {{end}}
+        </div>
+    {{end}}
+</div>
+
+{{if .error}}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{.error}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+{{end}}
+
+{{if .game.GameOver}}
+    <div class="game-over-container text-center">
+        {{if .game.Won}}
+            <h3 class="text-success">🎉 Congratulations! 🎉</h3>
+            <p class="mb-3">You guessed the word in {{.game.CurrentRow}} tries!</p>
+        {{else}}
+            <h3 class="text-danger">Game Over!</h3>
+            <p class="mb-3">The word was: <strong>{{.game.TargetWord}}</strong></p>
+        {{end}}
+        
+        <button class="btn btn-primary" onclick="shareResults()">
+            <i class="bi bi-share"></i> Share Results
+        </button>
+    </div>
+{{end}}
+{{end}}
