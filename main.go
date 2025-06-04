@@ -161,18 +161,30 @@ func homeHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
+	// Use the game's hint if it has one, otherwise use daily word hint
+	hint := dailyWord.GetHint()
+	if game.SessionWord != "" {
+		// Find the hint for this game's word
+		for _, entry := range wordList {
+			if entry.Word == game.SessionWord {
+				hint = entry.Hint
+				break
+			}
+		}
+	}
+
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"title":   "Vortludo - A Libre Wordle Clone",
 		"message": "Guess the 5-letter word!",
-		"hint":    dailyWord.GetHint(),
+		"hint":    hint,
 		"game":    game,
 	})
 }
 
-// newGameHandler resets the current session's game
+// newGameHandler resets the current session's game with a new word
 func newGameHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
-	resetGameState(sessionID)
+	createNewGame(sessionID)
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
@@ -194,8 +206,16 @@ func guessHandler(c *gin.Context) {
 		return
 	}
 
+	// Use the game's target word instead of daily word
+	targetWord := game.SessionWord
+	if targetWord == "" {
+		// Fallback to daily word for existing sessions
+		targetWord = dailyWord.GetWord()
+		game.SessionWord = targetWord
+	}
+
 	// Check guess against target word (always done for color feedback)
-	result := checkGuess(guess, dailyWord.GetWord())
+	result := checkGuess(guess, targetWord)
 
 	// Handle invalid words (not in dictionary)
 	if !isValidWord(guess) {
@@ -207,7 +227,7 @@ func guessHandler(c *gin.Context) {
 		// Check for game over
 		if game.CurrentRow >= 6 {
 			game.GameOver = true
-			game.TargetWord = dailyWord.GetWord()
+			game.TargetWord = targetWord
 		}
 
 		saveGameState(sessionID, game)
@@ -223,7 +243,7 @@ func guessHandler(c *gin.Context) {
 	game.GuessHistory = append(game.GuessHistory, guess)
 
 	// Check for win condition
-	if guess == dailyWord.GetWord() {
+	if guess == targetWord {
 		game.Won = true
 		game.GameOver = true
 	} else {
@@ -235,7 +255,7 @@ func guessHandler(c *gin.Context) {
 
 	// Reveal target word when game ends
 	if game.GameOver {
-		game.TargetWord = dailyWord.GetWord()
+		game.TargetWord = targetWord
 	}
 
 	saveGameState(sessionID, game)
@@ -246,9 +266,21 @@ func guessHandler(c *gin.Context) {
 func gameStateHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
+
+	// Use the game's hint if it has one, otherwise use daily word hint
+	hint := dailyWord.GetHint()
+	if game.SessionWord != "" {
+		for _, entry := range wordList {
+			if entry.Word == game.SessionWord {
+				hint = entry.Hint
+				break
+			}
+		}
+	}
+
 	c.HTML(http.StatusOK, "game-board", gin.H{
 		"game": game,
-		"hint": dailyWord.GetHint(),
+		"hint": hint,
 	})
 }
 
@@ -314,34 +346,39 @@ func getGameState(sessionID string) *GameState {
 	sessionMutex.RUnlock()
 
 	if !exists {
-		// Create new game state
-		game = &GameState{
-			Guesses:      make([][]GuessResult, 6),
-			CurrentRow:   0,
-			GameOver:     false,
-			Won:          false,
-			TargetWord:   "",
-			GuessHistory: []string{},
-		}
-
-		// Initialize empty guess rows
-		for i := range game.Guesses {
-			game.Guesses[i] = make([]GuessResult, 5)
-		}
-
-		sessionMutex.Lock()
-		gameSessions[sessionID] = game
-		sessionMutex.Unlock()
+		return createNewGame(sessionID)
 	}
 
 	return game
 }
 
-// resetGameState removes a session's game state to start fresh
-func resetGameState(sessionID string) {
+// createNewGame creates a new game state with a random word
+func createNewGame(sessionID string) *GameState {
+	// Pick a random word for this game session
+	selectedEntry := wordList[rand.Intn(len(wordList))]
+
+	log.Printf("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
+
+	game := &GameState{
+		Guesses:      make([][]GuessResult, 6),
+		CurrentRow:   0,
+		GameOver:     false,
+		Won:          false,
+		TargetWord:   "",
+		SessionWord:  selectedEntry.Word, // The actual target word for this session
+		GuessHistory: []string{},
+	}
+
+	// Initialize empty guess rows
+	for i := range game.Guesses {
+		game.Guesses[i] = make([]GuessResult, 5)
+	}
+
 	sessionMutex.Lock()
-	delete(gameSessions, sessionID)
+	gameSessions[sessionID] = game
 	sessionMutex.Unlock()
+
+	return game
 }
 
 // saveGameState updates the stored game state for a session

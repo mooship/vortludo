@@ -354,7 +354,7 @@ window.gameApp = function() {
          */
         shareResults() {
             const rows = document.querySelectorAll('.guess-row');
-            let emojiGrid = 'VORTLUDO\n\n';
+            let emojiGrid = '';
 
             rows.forEach(row => {
                 const tiles = row.querySelectorAll('.tile.filled');

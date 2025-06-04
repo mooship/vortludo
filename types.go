@@ -34,7 +34,8 @@ type GameState struct {
 	CurrentRow   int             // Which row the player is currently on (0-5)
 	GameOver     bool            // Whether the game has ended
 	Won          bool            // Whether the player won
-	TargetWord   string          // Revealed only when game ends
+	TargetWord   string          // The word for this game session (revealed only when game ends for display)
+	SessionWord  string          // The actual target word for this session (hidden during gameplay)
 	GuessHistory []string        // All guesses made (for accurate try counting)
 }
 
