@@ -1,6 +1,6 @@
 /* Vortludo Styles - A Libre Wordle Clone */
 
-/* CSS Custom Properties (Variables) */
+/* CSS Custom Properties for consistent theming across light/dark modes */
 :root {
     --correct: #6aaa64;
     --present: #c9b458;
@@ -15,7 +15,7 @@
     --tile-bg: #ffffff;
 }
 
-/* Dark Theme Variables */
+/* Dark theme color overrides */
 [data-theme="dark"] {
     --bg-primary: #121213;
     --bg-secondary: #1a1a1b;
@@ -324,10 +324,10 @@ body {
 /* Alert Messages */
 .alert {
     position: fixed;
-    top: 5rem;
+    top: 0.75rem;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1050;
+    z-index: 1060;
     min-width: 280px;
     max-width: 90vw;
     animation: slideDown 0.3s ease;
@@ -362,6 +362,51 @@ body {
 [data-theme="dark"] .alert-primary {
     background-color: rgba(13, 110, 253, 0.9);
     border-color: rgba(13, 110, 253, 0.4);
+}
+
+.copy-dialog .modal-content {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.copy-dialog .modal-header {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.copy-dialog .modal-footer {
+    border-top: 1px solid var(--border-color);
+}
+
+.copy-dialog textarea {
+    background-color: var(--tile-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    resize: none;
+}
+
+.copy-dialog textarea:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    background-color: var(--tile-bg);
+    color: var(--text-primary);
+}
+
+/* Copy notification */
+.copy-notification {
+    position: fixed;
+    top: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1060;
+    min-width: 280px;
+    max-width: 90vw;
+    animation: slideDown 0.3s ease;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+    backdrop-filter: blur(10px);
 }
 
 /* Animation Keyframes */
@@ -467,9 +512,13 @@ body {
     }
     
     .alert {
-        top: 3.5rem;
+        top: 0.5rem;
         min-width: 250px;
         font-size: 0.75rem;
+    }
+    
+    .copy-notification {
+        top: 0.5rem;
     }
     
     .game-content > p {

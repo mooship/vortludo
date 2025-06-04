@@ -1,12 +1,13 @@
 /**
  * HTMX Event Handlers for Game Feedback
+ * Manages server responses and client-side visual feedback
  */
 
-// Shake animation for invalid word errors
+// Handle invalid word submissions with shake animation and auto-dismiss alerts
 document.body.addEventListener('htmx:afterSwap', function(evt) {
     const errorAlert = document.querySelector('.alert-danger');
     if (errorAlert && (errorAlert.textContent.includes('Not in word list') || errorAlert.textContent.includes('Word must be 5 letters'))) {
-        // Auto-dismiss error alerts after 3 seconds
+        // Auto-dismiss error alerts after 3 seconds for better UX
         setTimeout(() => {
             if (errorAlert && errorAlert.parentNode) {
                 const bsAlert = new bootstrap.Alert(errorAlert);
@@ -14,11 +15,12 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
             }
         }, 3000);
 
+        // Apply shake animation to the current guess row for visual feedback
         if (window.Alpine) {
             const alpineData = Alpine.$data(document.querySelector('[x-data]'));
             if (alpineData) {
                 const rows = document.querySelectorAll('.guess-row');
-                // Target the previous row since server already incremented
+                // Target the previous row since server already incremented currentRow
                 const targetRow = Math.max(0, alpineData.currentRow - 1);
                 if (rows[targetRow]) {
                     rows[targetRow].classList.add('shake');
@@ -31,18 +33,19 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
     }
 });
 
-// Preserve current input state before HTMX swap
+// Preserve user input state before HTMX processes server response
 document.body.addEventListener('htmx:beforeSwap', function(evt) {
     if (window.Alpine) {
         const alpineData = Alpine.$data(document.querySelector('[x-data]'));
         if (alpineData && alpineData.currentGuess) {
+            // Store current input temporarily for restoration after invalid guesses
             window.tempCurrentGuess = alpineData.currentGuess;
             window.tempCurrentRow = alpineData.currentRow;
         }
     }
 });
 
-// Restore input state after HTMX swap for invalid guesses
+// Restore user input after invalid guess responses (preserves typing state)
 document.body.addEventListener('htmx:afterSwap', function(evt) {
     if (window.tempCurrentGuess && window.Alpine) {
         const alpineData = Alpine.$data(document.querySelector('[x-data]'));
@@ -51,7 +54,7 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
             alpineData.currentRow = window.tempCurrentRow;
             alpineData.updateDisplay();
         }
-        // Clear temporary storage
+        // Clean up temporary storage
         window.tempCurrentGuess = null;
         window.tempCurrentRow = null;
     }
@@ -59,14 +62,15 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
 
 /**
  * Mobile Touch Event Handlers
+ * Prevents common mobile web app issues like zoom gestures
  */
 
-// Prevent zoom gestures on mobile devices
+// Prevent pinch-zoom gestures on mobile devices for app-like experience
 document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
 
-// Prevent double-tap zoom on mobile devices
+// Prevent double-tap zoom while allowing single taps
 let lastTouchEnd = 0;
 document.addEventListener('touchend', function (event) {
     const now = (new Date()).getTime();
@@ -78,31 +82,34 @@ document.addEventListener('touchend', function (event) {
 
 /**
  * Main Game Application using Alpine.js
+ * Manages all client-side game state and user interactions
  */
 window.gameApp = function() {
     return {
-        // Game State
+        // Core game state properties
         currentGuess: '',
         currentRow: 0,
         gameOver: false,
         isDarkMode: false,
-        keyStatus: {}, // Track keyboard color states
+        keyStatus: {}, // Tracks keyboard key colors based on guessed letters
 
         /**
-         * Initialize the game on page load
+         * Initialize game on page load
+         * Sets up theme and syncs with server state
          */
         initGame() {
-            // Load saved theme preference
+            // Load and apply saved theme preference from localStorage
             const savedTheme = localStorage.getItem('theme') || 'light';
             this.isDarkMode = savedTheme === 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
 
-            // Initialize game state from server
+            // Sync client state with server-rendered game board
             this.updateGameState();
         },
 
         /**
          * Toggle between light and dark themes
+         * Persists preference in localStorage
          */
         toggleTheme() {
             this.isDarkMode = !this.isDarkMode;
@@ -112,7 +119,8 @@ window.gameApp = function() {
         },
 
         /**
-         * Handle physical keyboard input
+         * Handle physical keyboard input events
+         * Processes Enter, Backspace, and letter keys
          */
         handleKeyPress(e) {
             if (this.gameOver) return;
@@ -127,7 +135,8 @@ window.gameApp = function() {
         },
 
         /**
-         * Handle virtual keyboard clicks
+         * Handle virtual on-screen keyboard clicks
+         * Processes special keys (ENTER, BACKSPACE) and letters
          */
         handleVirtualKey(key) {
             if (this.gameOver) return;
@@ -142,7 +151,8 @@ window.gameApp = function() {
         },
 
         /**
-         * Add a letter to the current guess
+         * Add a letter to the current guess (max 5 letters)
+         * Updates display immediately for responsive feedback
          */
         addLetter(letter) {
             if (this.currentGuess.length < 5) {
@@ -153,6 +163,7 @@ window.gameApp = function() {
 
         /**
          * Remove the last letter from current guess
+         * Updates display immediately for responsive feedback
          */
         deleteLetter() {
             if (this.currentGuess.length > 0) {
@@ -162,7 +173,8 @@ window.gameApp = function() {
         },
 
         /**
-         * Update the visual display of the current guess
+         * Update visual display of current guess in game grid
+         * Shows letters as user types before submission
          */
         updateDisplay() {
             const rows = document.querySelectorAll('.guess-row');
@@ -173,6 +185,7 @@ window.gameApp = function() {
             tiles.forEach((tile, i) => {
                 const letter = this.currentGuess[i] || '';
                 tile.textContent = letter;
+                // Add/remove 'filled' class for visual styling
                 if (letter) {
                     tile.classList.add('filled');
                 } else {
@@ -182,19 +195,20 @@ window.gameApp = function() {
         },
 
         /**
-         * Sync client state with server game state after HTMX updates
+         * Synchronize client state with server game state after HTMX updates
+         * Critical for maintaining consistency between client UI and server logic
          */
         updateGameState() {
             const board = document.getElementById('game-board');
             if (!board) return;
 
-            // Clear current guess after any submission
+            // Reset current guess after any server interaction
             this.currentGuess = '';
 
-            // Check if game has ended
+            // Check if game has ended (server sets game-over-container)
             this.gameOver = board.querySelector('.game-over-container') !== null;
 
-            // Find the current active row
+            // Determine current active row by examining board state
             const rows = board.querySelectorAll('.guess-row');
             let foundCurrentRow = false;
 
@@ -203,7 +217,7 @@ window.gameApp = function() {
                 const hasContent = Array.from(tiles).some(tile => tile.textContent.trim() !== '');
                 const activeTiles = row.querySelectorAll('.tile.active');
 
-                // First empty row or row with active tiles
+                // Find first empty row or row with active tiles (server-marked)
                 if (!hasContent && !foundCurrentRow && !this.gameOver) {
                     this.currentRow = index;
                     foundCurrentRow = true;
@@ -213,40 +227,45 @@ window.gameApp = function() {
                 }
             });
 
+            // Default to last row if no active row found and game not over
             if (!foundCurrentRow && !this.gameOver) {
                 this.currentRow = Math.min(5, rows.length);
             }
 
-            // Update UI components
+            // Update UI components based on new state
             this.updateKeyboardColors();
             this.animateNewGuess();
             this.checkForWin();
         },
 
         /**
-         * Submit the current 5-letter guess to the server
+         * Submit current 5-letter guess to server via HTMX
+         * Only submits complete 5-letter words
          */
         submitGuess() {
             if (this.currentGuess.length === 5) {
+                // Add visual feedback during submission
                 const rows = document.querySelectorAll('.guess-row');
                 if (rows[this.currentRow]) {
                     rows[this.currentRow].classList.add('submitting');
                 }
 
+                // Trigger HTMX form submission
                 document.getElementById('guess-input').value = this.currentGuess;
                 document.getElementById('guess-form').dispatchEvent(new Event('submit'));
             }
         },
 
         /**
-         * Update keyboard key colors based on guessed letters
+         * Update virtual keyboard key colors based on letter status in completed guesses
+         * Follows Wordle color priority: correct (green) > present (yellow) > absent (gray)
          */
         updateKeyboardColors() {
             const tiles = document.querySelectorAll('.tile.filled');
             this.keyStatus = {};
 
             tiles.forEach(tile => {
-                // Skip invalid tiles - they don't affect keyboard colors
+                // Skip invalid tiles - they don't provide meaningful letter feedback
                 if (tile.classList.contains('invalid')) return;
                 
                 const letter = tile.textContent;
@@ -255,7 +274,7 @@ window.gameApp = function() {
                                tile.classList.contains('absent') ? 'absent' : '';
 
                 if (letter && status) {
-                    // Prioritize better statuses: correct > present > absent
+                    // Apply color priority logic: correct overrides all, present overrides absent
                     if (!this.keyStatus[letter] ||
                         status === 'correct' ||
                         (status === 'present' && this.keyStatus[letter] === 'absent')) {
@@ -266,14 +285,16 @@ window.gameApp = function() {
         },
 
         /**
-         * Get CSS class for keyboard key based on its status
+         * Get CSS class for virtual keyboard key based on letter status
+         * Returns empty string for unguessed letters
          */
         getKeyClass(letter) {
             return this.keyStatus[letter] || '';
         },
 
         /**
-         * Animate the tile flip effect for newly submitted guesses
+         * Animate tile flip effect for newly submitted valid guesses
+         * Skips animation for invalid words to provide clear feedback distinction
          */
         animateNewGuess() {
             const rows = document.querySelectorAll('.guess-row');
@@ -281,7 +302,7 @@ window.gameApp = function() {
                 const filledTiles = row.querySelectorAll('.tile.filled');
                 const invalidTiles = row.querySelectorAll('.tile.invalid');
                 
-                // Only animate valid guesses (not invalid dictionary words)
+                // Only animate valid dictionary words (no invalid tiles)
                 return filledTiles.length === 5 &&
                        invalidTiles.length === 0 &&
                        !row.classList.contains('animated') &&
@@ -294,6 +315,7 @@ window.gameApp = function() {
                     const letter = tile.textContent;
                     tile.style.setProperty('--tile-index', index);
 
+                    // Stagger flip animation across tiles for visual appeal
                     setTimeout(() => {
                         if (tile.textContent !== letter) {
                             tile.textContent = letter;
@@ -307,7 +329,8 @@ window.gameApp = function() {
         },
 
         /**
-         * Check for winning condition and add celebration animation
+         * Detect winning condition and add celebration animation
+         * Emits custom event when player wins for other components to react
          */
         checkForWin() {
             const rows = document.querySelectorAll('.guess-row');
@@ -319,14 +342,15 @@ window.gameApp = function() {
                         tile.style.setProperty('--tile-index', index);
                     });
                     
-                    // Emit custom event when player wins
+                    // Notify other components that game was won
                     window.dispatchEvent(new CustomEvent('gameWon'));
                 }
             });
         },
 
         /**
-         * Generate and copy share results to clipboard
+         * Generate shareable results as emoji grid and copy to clipboard
+         * Creates Wordle-style emoji pattern for social sharing
          */
         shareResults() {
             const rows = document.querySelectorAll('.guess-row');
@@ -352,37 +376,39 @@ window.gameApp = function() {
         },
 
         /**
-         * Copy text to clipboard using modern API
+         * Copy text to clipboard with fallback for non-secure contexts
+         * Uses modern Clipboard API when available, shows manual copy dialog otherwise
          */
         async copyToClipboard(text) {
             try {
-                // Use modern clipboard API if available
+                // Prefer modern clipboard API for secure contexts (HTTPS/localhost)
                 if (navigator.clipboard && window.isSecureContext) {
                     await navigator.clipboard.writeText(text);
                     this.showCopyNotification("Results copied to clipboard!");
                     return;
                 }
                 
-                // For non-secure contexts or older browsers, show the text to copy manually
+                // Fallback for non-secure contexts or older browsers
                 this.showCopyDialog(text);
                 
             } catch (err) {
-                console.error('Copy failed:', err);
+                console.error('Clipboard copy failed:', err);
                 this.showCopyDialog(text);
             }
         },
 
         /**
-         * Show a dialog with text to copy manually when clipboard API fails
+         * Show modal dialog with text to copy manually when clipboard API unavailable
+         * Provides accessible fallback for all environments
          */
         showCopyDialog(text) {
-            // Remove any existing dialogs
+            // Remove any existing dialogs to prevent duplicates
             const existingDialog = document.querySelector('.copy-dialog');
             if (existingDialog) {
                 existingDialog.remove();
             }
 
-            // Create modal dialog
+            // Create Bootstrap modal with copy-friendly text area
             const dialogHTML = `
                 <div class="modal fade copy-dialog" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
@@ -393,7 +419,7 @@ window.gameApp = function() {
                             </div>
                             <div class="modal-body">
                                 <p>Please copy the text below:</p>
-                                <textarea class="form-control" rows="8" readonly style="font-family: monospace; font-size: 0.9rem;">${text}</textarea>
+                                <textarea class="form-control" rows="8" readonly>${text}</textarea>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -404,45 +430,38 @@ window.gameApp = function() {
                 </div>
             `;
 
-            // Add to DOM and show
+            // Add modal to DOM and display
             document.body.insertAdjacentHTML('beforeend', dialogHTML);
             const modal = new bootstrap.Modal(document.querySelector('.copy-dialog'));
             modal.show();
 
-            // Auto-select text when modal is shown
+            // Auto-select text when modal opens for easy copying
             document.querySelector('.copy-dialog').addEventListener('shown.bs.modal', function() {
                 const textarea = this.querySelector('textarea');
                 textarea.select();
                 textarea.focus();
             });
 
-            // Clean up when modal is hidden
+            // Clean up modal element when closed
             document.querySelector('.copy-dialog').addEventListener('hidden.bs.modal', function() {
                 this.remove();
             });
         },
 
         /**
-         * Show a temporary notification for copy operations
+         * Display temporary floating notification for copy operations
+         * Shows success/error feedback with auto-dismiss in navbar area
          */
         showCopyNotification(message, isError = false) {
-            // Remove any existing notifications
+            // Remove any existing notifications to prevent stacking
             const existingAlert = document.querySelector('.copy-notification');
             if (existingAlert) {
                 existingAlert.remove();
             }
 
-            // Create the notification element
+            // Create styled notification element positioned in navbar area
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert ${isError ? 'alert-danger' : 'alert-primary'} alert-dismissible fade show copy-notification`;
-            alertDiv.style.position = 'fixed';
-            alertDiv.style.top = '5rem';
-            alertDiv.style.left = '50%';
-            alertDiv.style.transform = 'translateX(-50%)';
-            alertDiv.style.zIndex = '1050';
-            alertDiv.style.minWidth = '280px';
-            alertDiv.style.maxWidth = '90vw';
-            alertDiv.style.animation = 'slideDown 0.3s ease';
             alertDiv.setAttribute('role', 'alert');
             
             alertDiv.innerHTML = `
@@ -450,10 +469,10 @@ window.gameApp = function() {
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
 
-            // Add to DOM
+            // Add to DOM - positioned by CSS in navbar area
             document.body.appendChild(alertDiv);
 
-            // Auto-dismiss after 3 seconds
+            // Auto-dismiss after 3 seconds for non-intrusive UX
             setTimeout(() => {
                 if (alertDiv && alertDiv.parentNode) {
                     const bsAlert = new bootstrap.Alert(alertDiv);
@@ -464,7 +483,7 @@ window.gameApp = function() {
     };
 }
 
-// Listen for game won event to hide keyboard
+// Hide virtual keyboard when game is won for cleaner end-game UI
 window.addEventListener('gameWon', function() {
     const keyboard = document.querySelector('.keyboard');
     if (keyboard) {
@@ -472,7 +491,7 @@ window.addEventListener('gameWon', function() {
     }
 });
 
-// Global function for share button in template
+// Global function accessible from HTML template share button
 window.shareResults = function() {
     const alpineData = Alpine.$data(document.querySelector('[x-data]'));
     alpineData.shareResults();
