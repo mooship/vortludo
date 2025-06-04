@@ -1,7 +1,2 @@
 # Normalize all text files to LF in the repo; convert to CRLF on Windows checkout
 * text=auto
-
-# Use CRLF for Windows-native scripts
-*.bat     text eol=crlf
-*.cmd     text eol=crlf
-*.ps1     text eol=crlf
