@@ -6,6 +6,14 @@
 document.body.addEventListener('htmx:afterSwap', function(evt) {
     const errorAlert = document.querySelector('.alert-danger');
     if (errorAlert && (errorAlert.textContent.includes('Not in word list') || errorAlert.textContent.includes('Word must be 5 letters'))) {
+        // Auto-dismiss error alerts after 3 seconds
+        setTimeout(() => {
+            if (errorAlert && errorAlert.parentNode) {
+                const bsAlert = new bootstrap.Alert(errorAlert);
+                bsAlert.close();
+            }
+        }, 3000);
+
         if (window.Alpine) {
             const alpineData = Alpine.$data(document.querySelector('[x-data]'));
             if (alpineData) {
@@ -310,6 +318,9 @@ window.gameApp = function() {
                     tiles.forEach((tile, index) => {
                         tile.style.setProperty('--tile-index', index);
                     });
+                    
+                    // Emit custom event when player wins
+                    window.dispatchEvent(new CustomEvent('gameWon'));
                 }
             });
         },
@@ -341,30 +352,125 @@ window.gameApp = function() {
         },
 
         /**
-         * Copy text to clipboard with fallback for older browsers
+         * Copy text to clipboard using modern API
          */
         async copyToClipboard(text) {
             try {
-                await navigator.clipboard.writeText(text);
-                alert("Results copied to clipboard!");
-            } catch (err) {
-                // Fallback for older browsers
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    document.execCommand('copy');
-                    alert("Results copied to clipboard!");
-                } catch {
-                    alert("Failed to copy to clipboard.");
+                // Use modern clipboard API if available
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    this.showCopyNotification("Results copied to clipboard!");
+                    return;
                 }
-                document.body.removeChild(textarea);
+                
+                // For non-secure contexts or older browsers, show the text to copy manually
+                this.showCopyDialog(text);
+                
+            } catch (err) {
+                console.error('Copy failed:', err);
+                this.showCopyDialog(text);
             }
+        },
+
+        /**
+         * Show a dialog with text to copy manually when clipboard API fails
+         */
+        showCopyDialog(text) {
+            // Remove any existing dialogs
+            const existingDialog = document.querySelector('.copy-dialog');
+            if (existingDialog) {
+                existingDialog.remove();
+            }
+
+            // Create modal dialog
+            const dialogHTML = `
+                <div class="modal fade copy-dialog" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Copy Results</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Please copy the text below:</p>
+                                <textarea class="form-control" rows="8" readonly style="font-family: monospace; font-size: 0.9rem;">${text}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="this.parentElement.parentElement.querySelector('textarea').select(); this.parentElement.parentElement.querySelector('textarea').focus();">Select All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add to DOM and show
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+            const modal = new bootstrap.Modal(document.querySelector('.copy-dialog'));
+            modal.show();
+
+            // Auto-select text when modal is shown
+            document.querySelector('.copy-dialog').addEventListener('shown.bs.modal', function() {
+                const textarea = this.querySelector('textarea');
+                textarea.select();
+                textarea.focus();
+            });
+
+            // Clean up when modal is hidden
+            document.querySelector('.copy-dialog').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        },
+
+        /**
+         * Show a temporary notification for copy operations
+         */
+        showCopyNotification(message, isError = false) {
+            // Remove any existing notifications
+            const existingAlert = document.querySelector('.copy-notification');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            // Create the notification element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${isError ? 'alert-danger' : 'alert-primary'} alert-dismissible fade show copy-notification`;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '5rem';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.style.zIndex = '1050';
+            alertDiv.style.minWidth = '280px';
+            alertDiv.style.maxWidth = '90vw';
+            alertDiv.style.animation = 'slideDown 0.3s ease';
+            alertDiv.setAttribute('role', 'alert');
+            
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            // Add to DOM
+            document.body.appendChild(alertDiv);
+
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                if (alertDiv && alertDiv.parentNode) {
+                    const bsAlert = new bootstrap.Alert(alertDiv);
+                    bsAlert.close();
+                }
+            }, 3000);
         }
     };
 }
+
+// Listen for game won event to hide keyboard
+window.addEventListener('gameWon', function() {
+    const keyboard = document.querySelector('.keyboard');
+    if (keyboard) {
+        keyboard.style.display = 'none';
+    }
+});
 
 // Global function for share button in template
 window.shareResults = function() {
