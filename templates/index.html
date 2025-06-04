@@ -21,7 +21,7 @@
 <body x-data="gameApp()" x-init="initGame()">
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <a class="navbar-brand text-gradient" href="/">VORTLUDO</a>
+            <span class="navbar-brand text-gradient">VORTLUDO</span>
             <div class="d-flex align-items-center">
                 <button class="theme-toggle me-3" @click="toggleTheme()" aria-label="Toggle theme">
                     <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
@@ -34,13 +34,15 @@
     </nav>
 
     <div class="container game-container" @keydown.window="handleKeyPress($event)">
-        <p class="text-center">{{.message}}</p>
-        
-        <div id="game-board-container" 
-             hx-get="/game-state" 
-             hx-trigger="load once"
-             x-on:htmx:after-swap="updateGameState()">
-            {{template "game-board" .}}
+        <div class="game-content">
+            <p class="text-center mb-2">{{.message}}</p>
+            
+            <div id="game-board-container" 
+                 hx-get="/game-state" 
+                 hx-trigger="load once"
+                 x-on:htmx:after-swap="updateGameState()">
+                {{template "game-board" .}}
+            </div>
         </div>
 
         <form id="guess-form" 
