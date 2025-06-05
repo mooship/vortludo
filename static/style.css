@@ -174,40 +174,78 @@
     -webkit-tap-highlight-color: transparent;
     font-size: 0.875rem;
     font-weight: 600;
+    border-radius: 0.4rem;
+    border-width: 2px;
+    transition: background 0.15s, color 0.15s, border 0.15s;
 }
-[data-bs-theme="light"] .key-correct,
-[data-bs-theme="light"] .key-present,
-[data-bs-theme="light"] .key-absent {
-    color: #faf8f3 !important;
+
+/* Themed keyboard base colors */
+[data-bs-theme="light"] .key-button,
+[data-bs-theme="light"] .btn-secondary.key-button {
+    background-color: var(--sepia-tile-bg);
+    border-color: var(--sepia-tile-border);
+    color: var(--sepia-text);
 }
+[data-bs-theme="light"] .key-button:hover,
+[data-bs-theme="light"] .key-button:focus {
+    background-color: var(--sepia-surface);
+    border-color: var(--sepia-border);
+    color: var(--sepia-text);
+}
+
+[data-bs-theme="dark"] .key-button,
+[data-bs-theme="dark"] .btn-secondary.key-button {
+    background-color: var(--sepia-dark-tile-bg);
+    border-color: var(--sepia-dark-tile-border);
+    color: var(--sepia-dark-text);
+}
+[data-bs-theme="dark"] .key-button:hover,
+[data-bs-theme="dark"] .key-button:focus {
+    background-color: var(--sepia-dark-surface);
+    border-color: var(--sepia-dark-border);
+    color: var(--sepia-dark-text);
+}
+
+/* Keyboard key state coloring (Wordle style) */
 [data-bs-theme="light"] .key-correct {
     background-color: var(--sepia-correct) !important;
     border-color: var(--sepia-correct) !important;
+    color: #faf8f3 !important;
 }
 [data-bs-theme="light"] .key-present {
     background-color: var(--sepia-present) !important;
     border-color: var(--sepia-present) !important;
+    color: #faf8f3 !important;
 }
 [data-bs-theme="light"] .key-absent {
     background-color: var(--sepia-absent) !important;
     border-color: var(--sepia-absent) !important;
-}
-[data-bs-theme="dark"] .key-correct,
-[data-bs-theme="dark"] .key-present,
-[data-bs-theme="dark"] .key-absent {
-    color: #f4f1e8 !important;
+    color: #faf8f3 !important;
 }
 [data-bs-theme="dark"] .key-correct {
     background-color: var(--sepia-dark-correct) !important;
     border-color: var(--sepia-dark-correct) !important;
+    color: #f4f1e8 !important;
 }
 [data-bs-theme="dark"] .key-present {
     background-color: var(--sepia-dark-present) !important;
     border-color: var(--sepia-dark-present) !important;
+    color: #f4f1e8 !important;
 }
 [data-bs-theme="dark"] .key-absent {
     background-color: var(--sepia-dark-absent) !important;
     border-color: var(--sepia-dark-absent) !important;
+    color: #f4f1e8 !important;
+}
+[data-bs-theme="light"] .btn-secondary.key-button {
+    background-color: var(--sepia-tile-bg);
+    border-color: var(--sepia-tile-border);
+    color: var(--sepia-text);
+}
+[data-bs-theme="dark"] .btn-secondary.key-button {
+    background-color: var(--sepia-dark-tile-bg);
+    border-color: var(--sepia-dark-tile-border);
+    color: var(--sepia-dark-text);
 }
 
 /* Keyboard layout tweaks */
