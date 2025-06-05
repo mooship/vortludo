@@ -296,7 +296,7 @@ func guessHandler(c *gin.Context) {
 
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
-	
+
 	guess := strings.ToUpper(strings.TrimSpace(c.PostForm("guess")))
 	log.Printf("Session %s guessed: %s (attempt %d/6)", sessionID, guess, game.CurrentRow+1)
 

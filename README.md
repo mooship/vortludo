@@ -136,24 +136,23 @@ This approach is:
 
 1. **Connect your GitHub repository** to Render
 2. **Create a new Web Service** with these settings:
-   - **Root Directory**: `/` (or leave empty)
    - **Runtime**: `Go`
    - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o app`
    - **Start Command**: `./app`
 3. **Set Environment Variables**:
    - `GIN_MODE=release`
-   - `PORT=10000` 
    - `ENV=production`
+   - `PORT=10000`
 4. **Deploy** - Render will automatically build and deploy your app
 
-Alternatively, you can use the included `render.yaml` file for automatic configuration.
+Alternatively, you can use the included `render.yaml` file for automatic configuration by connecting your repo and Render will detect it automatically.
 
 Your app will be available at `https://your-app-name.onrender.com`
 
 ### Local Production Testing
 
 ```bash
-# Build for production
+# Build for production (same as Render)
 make render-build
 
 # Test production build locally
