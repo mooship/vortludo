@@ -75,7 +75,7 @@ go mod tidy && go mod download
 go build -o vortludo.exe .
 
 # Build for Render deployment
-go build -tags netgo -ldflags '-s -w' -o app
+go build -tags netgo -ldflags '-s -w' -o vortludo
 
 # Run tests
 go test -v ./...
@@ -150,8 +150,8 @@ This approach is:
 1. **Connect your GitHub repository** to Render
 2. **Create a new Web Service** with these settings:
    - **Runtime**: `Go`
-   - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o app`
-   - **Start Command**: `./app`
+   - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o vortludo`
+   - **Start Command**: `./vortludo`
 3. **Set Environment Variables**:
    - `GIN_MODE=release`
    - `ENV=production`
@@ -169,7 +169,7 @@ Your app will be available at `https://your-app-name.onrender.com`
 make render-build
 
 # Test production build locally
-GIN_MODE=release PORT=8080 ENV=production ./app
+GIN_MODE=release PORT=8080 ENV=production ./vortludo
 ```
 
 ### Other Platforms
