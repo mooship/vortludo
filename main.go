@@ -53,6 +53,12 @@ func main() {
 	}
 	log.Printf("Daily word loaded for date: %s", dailyWord.GetDate())
 
+	// Clean up expired sessions on startup
+	log.Printf("Performing startup session cleanup")
+	if err := cleanupOldSessions(SessionTimeout); err != nil {
+		log.Printf("Warning: Failed to cleanup old sessions on startup: %v", err)
+	}
+
 	// Start daily word rotation scheduler
 	go dailyWordScheduler()
 
