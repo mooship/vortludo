@@ -31,15 +31,18 @@ var (
 func main() {
 	// Determine environment for proper asset serving
 	isProduction = os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
+	log.Printf("Starting Vortludo in %s mode", map[bool]string{true: "production", false: "development"}[isProduction])
 
 	// Load game data
 	if err := loadWords(); err != nil {
 		log.Fatalf("Failed to load words: %v", err)
 	}
+	log.Printf("Loaded %d words from dictionary", len(wordList))
 
 	if err := loadDailyWord(); err != nil {
 		log.Fatalf("Failed to load daily word: %v", err)
 	}
+	log.Printf("Daily word loaded for date: %s", dailyWord.GetDate())
 
 	// Start daily word rotation scheduler
 	go dailyWordScheduler()
@@ -109,6 +112,7 @@ func main() {
 
 // loadWords reads the word list from JSON file
 func loadWords() error {
+	log.Printf("Loading words from data/words.json")
 	data, err := os.ReadFile("data/words.json")
 	if err != nil {
 		return err
@@ -127,14 +131,17 @@ func loadWords() error {
 		wordStrings[i] = entry.Word
 	}
 
+	log.Printf("Successfully loaded %d words", len(wordList))
 	return nil
 }
 
 // loadDailyWord loads or creates today's word
 func loadDailyWord() error {
+	log.Printf("Loading daily word from data/daily-word.json")
 	data, err := os.ReadFile("data/daily-word.json")
 	if err != nil {
 		// File doesn't exist, create with random word
+		log.Printf("Daily word file not found, creating new daily word")
 		return setNewDailyWord()
 	}
 
@@ -148,9 +155,11 @@ func loadDailyWord() error {
 	// Check if word is still valid for today
 	today := time.Now().Format("2006-01-02")
 	if dailyWord.GetDate() != today {
+		log.Printf("Daily word expired (was %s, now %s), generating new word", dailyWord.GetDate(), today)
 		return setNewDailyWord()
 	}
 
+	log.Printf("Daily word is current for date: %s", today)
 	return nil
 }
 
@@ -165,6 +174,8 @@ func setNewDailyWord() error {
 	dailyWord.Date = time.Now().Format("2006-01-02")
 	dailyWord.Hint = selectedEntry.Hint
 
+	log.Printf("Generated new daily word: %s (hint: %s) for date: %s", selectedEntry.Word, selectedEntry.Hint, dailyWord.Date)
+
 	// Save to file (using unsafe version since we hold the lock)
 	dwj := dailyWord.toJSONUnsafe()
 	data, err := json.MarshalIndent(dwj, "", "  ")
@@ -177,28 +188,38 @@ func setNewDailyWord() error {
 
 // dailyWordScheduler updates the daily word at midnight
 func dailyWordScheduler() {
+	log.Printf("Daily word scheduler started")
 	for {
 		now := time.Now()
 		next := now.Add(24 * time.Hour)
 		next = time.Date(next.Year(), next.Month(), next.Day(), 0, 0, 0, 0, next.Location())
 
-		timer := time.NewTimer(next.Sub(now))
+		timeUntilNext := next.Sub(now)
+		log.Printf("Next daily word update scheduled in %v (at %v)", timeUntilNext, next)
+		timer := time.NewTimer(timeUntilNext)
 		<-timer.C
 
+		log.Printf("Updating daily word at scheduled time")
 		if err := setNewDailyWord(); err != nil {
 			log.Printf("Failed to set new daily word: %v", err)
+		} else {
+			log.Printf("Successfully updated daily word")
 		}
 	}
 }
 
 // sessionCleanupScheduler removes old session files every hour
 func sessionCleanupScheduler() {
+	log.Printf("Session cleanup scheduler started")
 	for {
 		timer := time.NewTimer(time.Hour)
 		<-timer.C
 
+		log.Printf("Running session cleanup")
 		if err := cleanupOldSessions(2 * time.Hour); err != nil {
 			log.Printf("Failed to cleanup old sessions: %v", err)
+		} else {
+			log.Printf("Session cleanup completed successfully")
 		}
 	}
 }
@@ -241,11 +262,13 @@ func newGameHandler(c *gin.Context) {
 	c.Header("Expires", "0")
 
 	sessionID := getOrCreateSession(c)
+	log.Printf("Creating new game for session: %s", sessionID)
 
 	// Remove old session data completely
 	sessionMutex.Lock()
 	delete(gameSessions, sessionID)
 	sessionMutex.Unlock()
+	log.Printf("Cleared old session data for: %s", sessionID)
 
 	// Also remove session file
 	sessionFile := filepath.Join("data/sessions", sessionID+".json")
@@ -257,6 +280,7 @@ func newGameHandler(c *gin.Context) {
 	// Create completely new session with current timestamp
 	newSessionID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), rand.Int63())
 	c.SetCookie("session_id", newSessionID, 7200, "/", "", false, true)
+	log.Printf("Created new session ID: %s", newSessionID)
 
 	// Create new game and redirect
 	createNewGame(newSessionID)
@@ -272,16 +296,19 @@ func guessHandler(c *gin.Context) {
 
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
+	
+	guess := strings.ToUpper(strings.TrimSpace(c.PostForm("guess")))
+	log.Printf("Session %s guessed: %s (attempt %d/6)", sessionID, guess, game.CurrentRow+1)
 
 	if game.GameOver {
+		log.Printf("Session %s attempted guess on completed game", sessionID)
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Game is over!"})
 		return
 	}
 
-	guess := strings.ToUpper(strings.TrimSpace(c.PostForm("guess")))
-
 	// Validate guess length
 	if len(guess) != 5 {
+		log.Printf("Session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Word must be 5 letters!"})
 		return
 	}
@@ -299,6 +326,7 @@ func guessHandler(c *gin.Context) {
 
 	// Handle invalid words (not in dictionary)
 	if !isValidWord(guess) {
+		log.Printf("Session %s guessed invalid word: %s", sessionID, guess)
 		// Store guess with color feedback but mark as invalid
 		game.Guesses[game.CurrentRow] = result
 		game.GuessHistory = append(game.GuessHistory, guess)
@@ -326,10 +354,12 @@ func guessHandler(c *gin.Context) {
 	if guess == targetWord {
 		game.Won = true
 		game.GameOver = true
+		log.Printf("Session %s won the game! Target word was: %s", sessionID, targetWord)
 	} else {
 		game.CurrentRow++
 		if game.CurrentRow >= 6 {
 			game.GameOver = true
+			log.Printf("Session %s lost the game. Target word was: %s", sessionID, targetWord)
 		}
 	}
 
@@ -421,6 +451,7 @@ func getOrCreateSession(c *gin.Context) string {
 		sessionID = fmt.Sprintf("%d", time.Now().UnixNano())
 		// Set cookie for 2 hours to match session cleanup
 		c.SetCookie("session_id", sessionID, 7200, "/", "", false, true)
+		log.Printf("Created new session: %s", sessionID)
 	}
 	return sessionID
 }
@@ -432,17 +463,20 @@ func getGameState(sessionID string) *GameState {
 	sessionMutex.RUnlock()
 
 	if exists {
+		log.Printf("Retrieved cached game state for session: %s", sessionID)
 		return game
 	}
 
 	// For debugging: don't load from file initially, always create fresh
 	// This will prevent loading stale sessions during development
 	if !isProduction {
+		log.Printf("Development mode: creating fresh game for session: %s", sessionID)
 		return createNewGame(sessionID)
 	}
 
 	// In production, try to load from file only if we have a valid sessionID
 	if sessionID != "" && len(sessionID) > 10 {
+		log.Printf("Attempting to load game state from file for session: %s", sessionID)
 		if game, err := loadGameSessionFromFile(sessionID); err == nil {
 			// Validate the loaded game state
 			if game.SessionWord != "" && len(game.Guesses) == 6 {
@@ -450,12 +484,18 @@ func getGameState(sessionID string) *GameState {
 				sessionMutex.Lock()
 				gameSessions[sessionID] = game
 				sessionMutex.Unlock()
+				log.Printf("Successfully loaded and cached game state for session: %s", sessionID)
 				return game
+			} else {
+				log.Printf("Loaded game state for session %s was invalid, creating new game", sessionID)
 			}
+		} else {
+			log.Printf("Failed to load game state for session %s: %v", sessionID, err)
 		}
 	}
 
 	// Create new game if not found anywhere or invalid
+	log.Printf("Creating new game for session: %s", sessionID)
 	return createNewGame(sessionID)
 }
 
@@ -493,10 +533,13 @@ func saveGameState(sessionID string, game *GameState) {
 	sessionMutex.Lock()
 	gameSessions[sessionID] = game
 	sessionMutex.Unlock()
+	log.Printf("Updated in-memory game state for session: %s", sessionID)
 
 	// Also save to file for persistence across server restarts
 	if err := saveGameSessionToFile(sessionID, game); err != nil {
 		log.Printf("Failed to save session %s to file: %v", sessionID, err)
+	} else {
+		log.Printf("Successfully saved game state to file for session: %s", sessionID)
 	}
 }
 
