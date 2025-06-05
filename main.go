@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -50,6 +51,34 @@ func main() {
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"127.0.0.1"})
 
+	// Apply cache control middleware BEFORE loading templates and static files
+	if isProduction {
+		// Cache static assets for 1 day, but not HTML pages
+		router.Use(func(c *gin.Context) {
+			if strings.HasPrefix(c.Request.URL.Path, "/static/") {
+				cachecontrol.New(cachecontrol.Config{
+					Public:    true,
+					MaxAge:    cachecontrol.Duration(24 * time.Hour),
+					Immutable: true,
+				})(c)
+			} else {
+				// No cache for HTML pages and API endpoints
+				cachecontrol.New(cachecontrol.Config{
+					NoStore:        true,
+					NoCache:        true,
+					MustRevalidate: true,
+				})(c)
+			}
+		})
+	} else {
+		// Disable all caching for development
+		router.Use(cachecontrol.New(cachecontrol.Config{
+			NoStore:        true,
+			NoCache:        true,
+			MustRevalidate: true,
+		}))
+	}
+
 	// Serve static files from appropriate directory
 	if isProduction && dirExists("dist") {
 		router.LoadHTMLGlob("dist/templates/*.html")
@@ -65,23 +94,6 @@ func main() {
 	router.POST("/new-game", newGameHandler)
 	router.POST("/guess", guessHandler)
 	router.GET("/game-state", gameStateHandler)
-
-	// Apply cache control middleware using gin-cachecontrol
-	if isProduction {
-		// 1 day, immutable for production
-		router.Use(cachecontrol.New(cachecontrol.Config{
-			Public:    true,
-			MaxAge:    cachecontrol.Duration(24 * time.Hour),
-			Immutable: true,
-		}))
-	} else {
-		// Disable caching for development
-		router.Use(cachecontrol.New(cachecontrol.Config{
-			NoStore:        true,
-			NoCache:        true,
-			MustRevalidate: true,
-		}))
-	}
 
 	// Start server
 	port := os.Getenv("PORT")
@@ -193,6 +205,11 @@ func sessionCleanupScheduler() {
 
 // homeHandler serves the main game page
 func homeHandler(c *gin.Context) {
+	// Add cache control headers to prevent stale content
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
+
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
@@ -218,13 +235,41 @@ func homeHandler(c *gin.Context) {
 
 // newGameHandler resets the current session's game with a new word
 func newGameHandler(c *gin.Context) {
+	// Add cache control headers
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
+
 	sessionID := getOrCreateSession(c)
-	createNewGame(sessionID)
+
+	// Remove old session data completely
+	sessionMutex.Lock()
+	delete(gameSessions, sessionID)
+	sessionMutex.Unlock()
+
+	// Also remove session file
+	sessionFile := filepath.Join("data/sessions", sessionID+".json")
+	os.Remove(sessionFile)
+
+	// Force a completely new session by clearing the cookie
+	c.SetCookie("session_id", "", -1, "/", "", false, true)
+
+	// Create completely new session with current timestamp
+	newSessionID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), rand.Int63())
+	c.SetCookie("session_id", newSessionID, 7200, "/", "", false, true)
+
+	// Create new game and redirect
+	createNewGame(newSessionID)
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
 // guessHandler processes a player's word guess
 func guessHandler(c *gin.Context) {
+	// Add cache control headers
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
+
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
@@ -299,6 +344,11 @@ func guessHandler(c *gin.Context) {
 
 // gameStateHandler returns current game state (for HTMX)
 func gameStateHandler(c *gin.Context) {
+	// Add cache control headers
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
+
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
@@ -385,16 +435,27 @@ func getGameState(sessionID string) *GameState {
 		return game
 	}
 
-	// Try to load from file
-	if game, err := loadGameSessionFromFile(sessionID); err == nil {
-		// Cache in memory for faster access
-		sessionMutex.Lock()
-		gameSessions[sessionID] = game
-		sessionMutex.Unlock()
-		return game
+	// For debugging: don't load from file initially, always create fresh
+	// This will prevent loading stale sessions during development
+	if !isProduction {
+		return createNewGame(sessionID)
 	}
 
-	// Create new game if not found anywhere
+	// In production, try to load from file only if we have a valid sessionID
+	if sessionID != "" && len(sessionID) > 10 {
+		if game, err := loadGameSessionFromFile(sessionID); err == nil {
+			// Validate the loaded game state
+			if game.SessionWord != "" && len(game.Guesses) == 6 {
+				// Cache in memory for faster access
+				sessionMutex.Lock()
+				gameSessions[sessionID] = game
+				sessionMutex.Unlock()
+				return game
+			}
+		}
+	}
+
+	// Create new game if not found anywhere or invalid
 	return createNewGame(sessionID)
 }
 

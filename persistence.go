@@ -9,6 +9,11 @@ import (
 
 // saveGameSessionToFile persists a game session to disk
 func saveGameSessionToFile(sessionID string, game *GameState) error {
+	// Validate session ID to prevent path traversal
+	if sessionID == "" || len(sessionID) < 10 {
+		return nil // Skip saving invalid sessions
+	}
+
 	// Create sessions directory if it doesn't exist
 	sessionDir := "data/sessions"
 	if err := os.MkdirAll(sessionDir, 0755); err != nil {
@@ -27,7 +32,24 @@ func saveGameSessionToFile(sessionID string, game *GameState) error {
 
 // loadGameSessionFromFile loads a game session from disk
 func loadGameSessionFromFile(sessionID string) (*GameState, error) {
+	// Validate session ID to prevent path traversal
+	if sessionID == "" || len(sessionID) < 10 {
+		return nil, os.ErrNotExist
+	}
+
 	sessionFile := filepath.Join("data/sessions", sessionID+".json")
+
+	// Check if file exists and is not too old (more than 24 hours)
+	info, err := os.Stat(sessionFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if time.Since(info.ModTime()) > 24*time.Hour {
+		// Remove old session file
+		os.Remove(sessionFile)
+		return nil, os.ErrNotExist
+	}
 
 	data, err := os.ReadFile(sessionFile)
 	if err != nil {
@@ -35,8 +57,20 @@ func loadGameSessionFromFile(sessionID string) (*GameState, error) {
 	}
 
 	var game GameState
-	err = json.Unmarshal(data, &game)
-	return &game, err
+	if err := json.Unmarshal(data, &game); err != nil {
+		// Remove corrupted session file
+		os.Remove(sessionFile)
+		return nil, err
+	}
+
+	// Validate game state structure
+	if len(game.Guesses) != 6 || game.SessionWord == "" {
+		// Remove invalid session file
+		os.Remove(sessionFile)
+		return nil, os.ErrNotExist
+	}
+
+	return &game, nil
 }
 
 // cleanupOldSessions removes session files older than specified duration
