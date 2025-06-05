@@ -215,16 +215,19 @@ func newGameHandler(c *gin.Context) {
 	sessionFile := filepath.Join("data/sessions", sessionID+".json")
 	os.Remove(sessionFile)
 
-	// Force a completely new session by clearing the cookie
-	c.SetCookie("session_id", "", -1, "/", "", false, true)
-
-	// Create completely new session with current timestamp
-	newSessionID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), rand.Int63())
-	c.SetCookie("session_id", newSessionID, 7200, "/", "", false, true)
-	log.Printf("Created new session ID: %s", newSessionID)
-
-	// Create new game and redirect
-	createNewGame(newSessionID)
+	// Only create a new session ID if explicitly requested (e.g., via query param "reset=1")
+	if c.Query("reset") == "1" {
+		// Force a completely new session by clearing the cookie
+		c.SetCookie("session_id", "", -1, "/", "", false, true)
+		// Create completely new session with current timestamp
+		newSessionID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), rand.Int63())
+		c.SetCookie("session_id", newSessionID, 7200, "/", "", false, true)
+		log.Printf("Created new session ID: %s", newSessionID)
+		createNewGame(newSessionID)
+	} else {
+		// Just create a new game for the current session
+		createNewGame(sessionID)
+	}
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
