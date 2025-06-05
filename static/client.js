@@ -172,6 +172,13 @@ window.gameApp = function() {
         handleVirtualKey(key) {
             if (this.gameOver) return;
 
+            // Prevent rapid double clicks from being dropped by disabling the button briefly
+            const active = event?.target;
+            if (active && active.disabled !== undefined) {
+                active.disabled = true;
+                setTimeout(() => { active.disabled = false; }, 120);
+            }
+
             if (key === 'ENTER') this.submitGuess();
             else if (key === 'BACKSPACE') this.deleteLetter();
             else this.addLetter(key);
