@@ -18,7 +18,6 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
 ### Prerequisites
 
 - Go 1.24 or higher
-- Make (optional, for convenience scripts)
 
 ### Installation
 
@@ -28,58 +27,47 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
    cd vortludo
    ```
 
-2. **Setup the project**
+2. **Install dependencies**
    ```bash
-   make setup
+   go mod tidy && go mod download
    ```
 
-3. **Start development server**
+3. **Create required directories**
    ```bash
-   make dev
+   mkdir -p data
    ```
 
-4. **Open your browser**
+4. **Start development server**
+   ```bash
+   go run .
+   ```
+
+5. **Open your browser**
    Navigate to `http://localhost:8080`
 
-## Development Scripts
-
-We use Make for convenient development workflows:
+## Building and Running
 
 ```bash
-# Development
-make dev          # Start development server
-make deps         # Install/update dependencies
-make setup        # First-time project setup
+# Build for your OS
+go build -o vortludo .
 
-# Building
-make build        # Build binary for current OS
-make render-build # Build for Render deployment
-make prod         # Build and run in production mode
-make run          # Run in production mode without rebuild
+# Run in development mode
+./vortludo
 
-# Maintenance
-make test         # Run tests
-make clean        # Clean build artifacts and game data
+# Run in production mode
+GIN_MODE=release ./vortludo
 ```
 
-### Manual Commands (without Make)
+## Testing
+
+Unit tests for the core game logic are provided in `core_test.go`.  
+To run all tests:
 
 ```bash
-# Development
-go run .
-
-# Install dependencies
-go mod tidy && go mod download
-
-# Build for local use
-go build -o vortludo.exe .
-
-# Build for Render deployment
-go build -tags netgo -ldflags '-s -w' -o vortludo
-
-# Run tests
 go test -v ./...
 ```
+
+Tests are automatically discovered and run by the GitHub Actions workflow in `.github/workflows/go.yml`.
 
 ## Project Structure
 
@@ -88,15 +76,15 @@ vortludo/
 ├── main.go              # Main application and HTTP handlers
 ├── types.go             # Data structures and types
 ├── persistence.go       # File-based game session storage
+├── core_test.go         # Unit tests for core game logic
 ├── data/
 │   ├── words.json       # Dictionary of valid words with hints
 │   ├── daily-word.json  # Current daily word (auto-generated)
 │   └── sessions/        # Game session files (auto-generated)
 ├── templates/           # HTML templates
-├── static/             # CSS, JS, and favicon assets
-├── render.yaml         # Render.com deployment configuration
-├── Makefile           # Development and build scripts
-└── .github/workflows/ # GitHub Actions CI/CD
+├── static/              # CSS, JS, and favicon assets
+├── render.yaml          # Render.com deployment configuration
+└── .github/workflows/   # GitHub Actions CI/CD
 ```
 
 ## How It Works
@@ -166,7 +154,7 @@ Your app will be available at `https://your-app-name.onrender.com`
 
 ```bash
 # Build for production (same as Render)
-make render-build
+go build -tags netgo -ldflags '-s -w' -o vortludo
 
 # Test production build locally
 GIN_MODE=release PORT=8080 ENV=production ./vortludo
@@ -215,7 +203,7 @@ The application can be deployed to any platform that supports Go:
 - **AJAX/Partial Updates**: [HTMX](https://htmx.org/) (CDN)
 - **Storage**: JSON files (no database required)
 - **Templating**: Go's html/template
-- **Build Tools**: Make + Go modules
+- **Build Tools**: Go modules
 - **Deployment**: Render.com with GitHub Actions
 
 ## License
