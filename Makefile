@@ -1,4 +1,4 @@
-.PHONY: build dev clean prod deps test setup
+.PHONY: build dev clean prod deps test setup render-build run
 
 # Development mode
 dev:
@@ -8,12 +8,20 @@ dev:
 # Build application
 build:
 	@echo "🔨 Building application..."
-	go build -o vortludo.exe .
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		go build -o vortludo.exe .; \
+	else \
+		go build -o vortludo .; \
+	fi
 
 # Production mode - build and run
 prod: build
 	@echo "🚀 Starting production server..."
-	GIN_MODE=release ./vortludo.exe || GIN_MODE=release ./vortludo
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		set GIN_MODE=release && ./vortludo.exe; \
+	else \
+		GIN_MODE=release ./vortludo; \
+	fi
 
 # Build for Render deployment
 render-build:
@@ -23,7 +31,11 @@ render-build:
 # Run in production mode without rebuild
 run:
 	@echo "🚀 Starting production server..."
-	GIN_MODE=release ./vortludo.exe || GIN_MODE=release ./vortludo
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		set GIN_MODE=release && ./vortludo.exe; \
+	else \
+		GIN_MODE=release ./vortludo; \
+	fi
 
 # Clean all build artifacts
 clean:
