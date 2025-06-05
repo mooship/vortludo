@@ -18,6 +18,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Constants for game configuration
+const (
+	MaxGuesses     = 6
+	WordLength     = 5
+	SessionTimeout = 2 * time.Hour
+	CookieMaxAge   = 7200 // 2 hours in seconds
+	StaticCacheAge = 24 * time.Hour
+)
+
 // Global application state
 var (
 	wordList     []WordEntry                   // Valid 5-letter words with hints for the game
@@ -211,12 +220,12 @@ func dailyWordScheduler() {
 // sessionCleanupScheduler removes old session files every hour
 func sessionCleanupScheduler() {
 	log.Printf("Session cleanup scheduler started")
-	for {
-		timer := time.NewTimer(time.Hour)
-		<-timer.C
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
 
+	for range ticker.C {
 		log.Printf("Running session cleanup")
-		if err := cleanupOldSessions(2 * time.Hour); err != nil {
+		if err := cleanupOldSessions(SessionTimeout); err != nil {
 			log.Printf("Failed to cleanup old sessions: %v", err)
 		} else {
 			log.Printf("Session cleanup completed successfully")
@@ -297,69 +306,87 @@ func guessHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
-	guess := strings.ToUpper(strings.TrimSpace(c.PostForm("guess")))
-	log.Printf("Session %s guessed: %s (attempt %d/6)", sessionID, guess, game.CurrentRow+1)
-
-	if game.GameOver {
-		log.Printf("Session %s attempted guess on completed game", sessionID)
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Game is over!"})
+	// Validate game state
+	if err := validateGameState(c, game); err != nil {
 		return
 	}
+
+	// Process guess
+	guess := normalizeGuess(c.PostForm("guess"))
+	if err := processGuess(c, sessionID, game, guess); err != nil {
+		return
+	}
+}
+
+// validateGameState checks if the game can accept guesses
+func validateGameState(c *gin.Context, game *GameState) error {
+	if game.GameOver {
+		log.Printf("Session attempted guess on completed game")
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Game is over!"})
+		return fmt.Errorf("game is over")
+	}
+	return nil
+}
+
+// normalizeGuess converts input to uppercase and trims whitespace
+func normalizeGuess(input string) string {
+	return strings.ToUpper(strings.TrimSpace(input))
+}
+
+// processGuess handles the guess logic
+func processGuess(c *gin.Context, sessionID string, game *GameState, guess string) error {
+	log.Printf("Session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
 
 	// Validate guess length
-	if len(guess) != 5 {
+	if len(guess) != WordLength {
 		log.Printf("Session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Word must be 5 letters!"})
-		return
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": fmt.Sprintf("Word must be %d letters!", WordLength)})
+		return fmt.Errorf("invalid word length")
 	}
 
-	// Use the game's target word instead of daily word
-	targetWord := game.SessionWord
-	if targetWord == "" {
-		// Fallback to daily word for existing sessions
-		targetWord = dailyWord.GetWord()
-		game.SessionWord = targetWord
-	}
+	// Get target word
+	targetWord := getTargetWord(game)
 
-	// Check guess against target word (always done for color feedback)
+	// Process the guess
 	result := checkGuess(guess, targetWord)
+	updateGameState(game, guess, targetWord, result, !isValidWord(guess))
 
-	// Handle invalid words (not in dictionary)
+	// Save and render
+	saveGameState(sessionID, game)
+
 	if !isValidWord(guess) {
-		log.Printf("Session %s guessed invalid word: %s", sessionID, guess)
-		// Store guess with color feedback but mark as invalid
-		game.Guesses[game.CurrentRow] = result
-		game.GuessHistory = append(game.GuessHistory, guess)
-		game.CurrentRow++
-
-		// Check for game over
-		if game.CurrentRow >= 6 {
-			game.GameOver = true
-			game.TargetWord = targetWord
-		}
-
-		saveGameState(sessionID, game)
-		c.HTML(http.StatusOK, "game-board", gin.H{
-			"game":  game,
-			"error": "Not in word list!",
-		})
-		return
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Not in word list!"})
+	} else {
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 	}
 
-	// Process valid guess
+	return nil
+}
+
+// getTargetWord returns the target word for the game
+func getTargetWord(game *GameState) string {
+	if game.SessionWord == "" {
+		// Fallback to daily word for existing sessions
+		game.SessionWord = dailyWord.GetWord()
+	}
+	return game.SessionWord
+}
+
+// updateGameState updates the game based on the guess
+func updateGameState(game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
 	game.Guesses[game.CurrentRow] = result
 	game.GuessHistory = append(game.GuessHistory, guess)
 
-	// Check for win condition
-	if guess == targetWord {
+	// Check for win
+	if !isInvalid && guess == targetWord {
 		game.Won = true
 		game.GameOver = true
-		log.Printf("Session %s won the game! Target word was: %s", sessionID, targetWord)
+		log.Printf("Player won! Target word was: %s", targetWord)
 	} else {
 		game.CurrentRow++
-		if game.CurrentRow >= 6 {
+		if game.CurrentRow >= MaxGuesses {
 			game.GameOver = true
-			log.Printf("Session %s lost the game. Target word was: %s", sessionID, targetWord)
+			log.Printf("Player lost. Target word was: %s", targetWord)
 		}
 	}
 
@@ -367,9 +394,6 @@ func guessHandler(c *gin.Context) {
 	if game.GameOver {
 		game.TargetWord = targetWord
 	}
-
-	saveGameState(sessionID, game)
-	c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 }
 
 // gameStateHandler returns current game state (for HTMX)
@@ -450,7 +474,7 @@ func getOrCreateSession(c *gin.Context) string {
 	if err != nil {
 		sessionID = fmt.Sprintf("%d", time.Now().UnixNano())
 		// Set cookie for 2 hours to match session cleanup
-		c.SetCookie("session_id", sessionID, 7200, "/", "", false, true)
+		c.SetCookie("session_id", sessionID, CookieMaxAge, "/", "", false, true)
 		log.Printf("Created new session: %s", sessionID)
 	}
 	return sessionID

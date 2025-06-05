@@ -63,7 +63,7 @@
                     <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control">
                 </form>
 
-                <div class="keyboard mx-auto w-100" style="max-width: 500px;">
+                <div class="keyboard mx-auto w-100" style="max-width: 500px;" x-show="!shouldHideKeyboard()" x-transition>
                     <div class="d-flex justify-content-center mb-1">
                         <template x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']">
                             <button class="btn btn-secondary btn-sm m-1 key-button" 

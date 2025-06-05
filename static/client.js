@@ -40,30 +40,43 @@ window.gameApp = function() {
         showToast: false,
         toastMessage: '',
         toastType: 'primary',
+        
+        // Constants
+        WORD_LENGTH: 5,
+        MAX_GUESSES: 6,
+        ANIMATION_DELAY: 100,
+        TOAST_DURATION: 3000,
 
         /**
          * Initialize game on page load
          * Sets up theme, event listeners, and syncs with server state
          */
         initGame() {
-            // Clear any cached game state
+            this.resetGameState();
+            this.initTheme();
+            this.setupHTMXHandlers();
+            
+            // Force a small delay before syncing to ensure DOM is ready
+            setTimeout(() => this.updateGameState(), 100);
+        },
+        
+        /**
+         * Reset game state to initial values
+         */
+        resetGameState() {
             this.currentGuess = '';
             this.currentRow = 0;
             this.gameOver = false;
             this.keyStatus = {};
-            
-            // Load and apply saved theme preference from localStorage
+        },
+        
+        /**
+         * Initialize theme from localStorage
+         */
+        initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             this.isDarkMode = savedTheme === 'dark';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
-
-            // Set up HTMX event handlers
-            this.setupHTMXHandlers();
-
-            // Force a small delay before syncing to ensure DOM is ready
-            setTimeout(() => {
-                this.updateGameState();
-            }, 100);
         },
 
         /**
@@ -87,32 +100,58 @@ window.gameApp = function() {
          * Handle HTMX after swap events
          */
         handleHTMXAfterSwap(evt) {
+            this.handleErrorAlerts();
+            this.restoreUserInput();
+            this.updateGameState();
+        },
+        
+        /**
+         * Handle error alerts with auto-dismiss
+         */
+        handleErrorAlerts() {
             const errorAlert = document.querySelector('.alert-danger');
-            if (errorAlert && (errorAlert.textContent.includes('Not in word list') || errorAlert.textContent.includes('Word must be 5 letters'))) {
-                // Auto-dismiss error alerts after 3 seconds for better UX
-                setTimeout(() => {
-                    if (errorAlert && errorAlert.parentNode) {
-                        const bsAlert = bootstrap.Alert.getOrCreateInstance(errorAlert);
-                        bsAlert.close();
-                    }
-                }, 3000);
-
-                // Apply shake animation to the current guess row for visual feedback
+            if (!errorAlert) return;
+            
+            const isInvalidWordError = 
+                errorAlert.textContent.includes('Not in word list') || 
+                errorAlert.textContent.includes('Word must be 5 letters');
+                
+            if (isInvalidWordError) {
+                this.autoDismissAlert(errorAlert);
                 this.shakeCurrentRow();
             }
-
-            // Restore user input after invalid guess responses
+        },
+        
+        /**
+         * Auto-dismiss an alert after timeout
+         */
+        autoDismissAlert(alertElement, timeout = this.TOAST_DURATION) {
+            setTimeout(() => {
+                if (alertElement?.parentNode) {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alertElement);
+                    bsAlert.close();
+                }
+            }, timeout);
+        },
+        
+        /**
+         * Restore user input after server response
+         */
+        restoreUserInput() {
             if (this.tempCurrentGuess) {
                 this.currentGuess = this.tempCurrentGuess;
                 this.currentRow = this.tempCurrentRow;
                 this.updateDisplay();
-                // Clean up temporary storage
-                this.tempCurrentGuess = null;
-                this.tempCurrentRow = null;
+                this.clearTempStorage();
             }
-
-            // Update game state after any HTMX swap
-            this.updateGameState();
+        },
+        
+        /**
+         * Clear temporary storage
+         */
+        clearTempStorage() {
+            this.tempCurrentGuess = null;
+            this.tempCurrentRow = null;
         },
 
         /**
@@ -158,14 +197,19 @@ window.gameApp = function() {
          */
         handleKeyPress(e) {
             if (this.gameOver) return;
-
-            if (e.key === 'Enter') {
-                this.submitGuess();
-            } else if (e.key === 'Backspace') {
-                this.deleteLetter();
-            } else if (/^[a-zA-Z]$/.test(e.key)) {
-                this.addLetter(e.key.toUpperCase());
-            }
+            
+            const handlers = {
+                'Enter': () => this.submitGuess(),
+                'Backspace': () => this.deleteLetter(),
+                'default': (key) => {
+                    if (/^[a-zA-Z]$/.test(key)) {
+                        this.addLetter(key.toUpperCase());
+                    }
+                }
+            };
+            
+            const handler = handlers[e.key] || handlers.default;
+            handler(e.key);
         },
 
         /**
@@ -211,21 +255,28 @@ window.gameApp = function() {
          * Shows letters as user types before submission
          */
         updateDisplay() {
-            const rows = document.querySelectorAll('#game-board > div');
-            const row = rows[this.currentRow];
+            const row = this.getCurrentRowElement();
             if (!row) return;
             
             const tiles = row.querySelectorAll('.tile');
-            tiles.forEach((tile, i) => {
-                const letter = this.currentGuess[i] || '';
-                tile.textContent = letter;
-                // Add/remove 'filled' class for visual styling
-                if (letter) {
-                    tile.classList.add('filled');
-                } else {
-                    tile.classList.remove('filled');
-                }
-            });
+            tiles.forEach((tile, i) => this.updateTile(tile, i));
+        },
+        
+        /**
+         * Get current row DOM element
+         */
+        getCurrentRowElement() {
+            const rows = document.querySelectorAll('#game-board > div');
+            return rows[this.currentRow];
+        },
+        
+        /**
+         * Update individual tile display
+         */
+        updateTile(tile, index) {
+            const letter = this.currentGuess[index] || '';
+            tile.textContent = letter;
+            tile.classList.toggle('filled', Boolean(letter));
         },
 
         /**
@@ -241,7 +292,7 @@ window.gameApp = function() {
             this.keyStatus = {};
 
             // Check if game has ended by looking for the game over container
-            const gameOverContainer = board.parentElement.querySelector('.mt-3.p-3.bg-light');
+            const gameOverContainer = board.parentElement.querySelector('.mt-3.p-3.bg-body-secondary');
             this.gameOver = gameOverContainer !== null;
 
             // Count rows that have filled tiles with status classes (completed guesses)
@@ -326,33 +377,38 @@ window.gameApp = function() {
          * Skips animation for invalid words to provide clear feedback distinction
          */
         animateNewGuess() {
+            const lastFilledRow = this.findRowToAnimate();
+            if (!lastFilledRow) return;
+            
+            const tiles = lastFilledRow.querySelectorAll('.tile.filled');
+            this.animateTiles(tiles);
+            lastFilledRow.classList.add('animated');
+            lastFilledRow.classList.remove('submitting');
+        },
+        
+        /**
+         * Find row that needs animation
+         */
+        findRowToAnimate() {
             const rows = document.querySelectorAll('#game-board > div');
-            const lastFilledRow = Array.from(rows).find((row, index) => {
+            return Array.from(rows).find((row, index) => {
                 const filledTiles = row.querySelectorAll('.tile.filled');
-                
-                // Only animate valid dictionary words
-                return filledTiles.length === 5 &&
+                return filledTiles.length === this.WORD_LENGTH &&
                        !row.classList.contains('animated') &&
                        (row.classList.contains('submitting') || index < this.currentRow);
             });
-
-            if (lastFilledRow) {
-                const tiles = lastFilledRow.querySelectorAll('.tile.filled');
-                tiles.forEach((tile, index) => {
-                    const letter = tile.textContent;
-                    tile.style.setProperty('--tile-index', index);
-
-                    // Stagger flip animation across tiles for visual appeal
-                    setTimeout(() => {
-                        if (tile.textContent !== letter) {
-                            tile.textContent = letter;
-                        }
-                        tile.classList.add('flip');
-                    }, index * 100);
-                });
-                lastFilledRow.classList.add('animated');
-                lastFilledRow.classList.remove('submitting');
-            }
+        },
+        
+        /**
+         * Animate tiles with staggered delay
+         */
+        animateTiles(tiles) {
+            tiles.forEach((tile, index) => {
+                tile.style.setProperty('--tile-index', index);
+                setTimeout(() => {
+                    tile.classList.add('flip');
+                }, index * this.ANIMATION_DELAY);
+            });
         },
 
         /**
@@ -361,18 +417,25 @@ window.gameApp = function() {
          */
         checkForWin() {
             const rows = document.querySelectorAll('#game-board > div');
+            let hasWinner = false;
+            
             rows.forEach(row => {
                 const tiles = row.querySelectorAll('.tile-correct');
-                if (tiles.length === 5 && !row.classList.contains('winner')) {
-                    row.classList.add('winner');
-                    tiles.forEach((tile, index) => {
-                        tile.style.setProperty('--tile-index', index);
-                    });
-                    
-                    // Hide virtual keyboard when game is won
-                    this.gameOver = true;
+                if (tiles.length === 5) {
+                    hasWinner = true;
+                    if (!row.classList.contains('winner')) {
+                        row.classList.add('winner');
+                        tiles.forEach((tile, index) => {
+                            tile.style.setProperty('--tile-index', index);
+                        });
+                    }
                 }
             });
+            
+            // Update game over state if we found a winner
+            if (hasWinner) {
+                this.gameOver = true;
+            }
         },
 
         /**
