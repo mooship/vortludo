@@ -65,13 +65,13 @@ func main() {
 
 	// Apply cache control middleware BEFORE loading templates and static files
 	if isProduction {
-		// Cache static assets for a short period (no hashes in filenames)
+		// Force browsers to always revalidate static assets
 		router.Use(func(c *gin.Context) {
 			if strings.HasPrefix(c.Request.URL.Path, "/static/") {
 				cachecontrol.New(cachecontrol.Config{
-					Public:    true,
-					MaxAge:    cachecontrol.Duration(5 * time.Minute), // 5 minutes for static assets
-					Immutable: false,
+					NoCache:        true,
+					MustRevalidate: true,
+					Public:         true,
 				})(c)
 				c.Header("Vary", "Accept-Encoding")
 			} else {
