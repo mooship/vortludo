@@ -3,63 +3,6 @@
  * Manages server responses and client-side visual feedback
  */
 
-// Handle invalid word submissions with shake animation and auto-dismiss alerts
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    const errorAlert = document.querySelector('.alert-danger');
-    if (errorAlert && (errorAlert.textContent.includes('Not in word list') || errorAlert.textContent.includes('Word must be 5 letters'))) {
-        // Auto-dismiss error alerts after 3 seconds for better UX
-        setTimeout(() => {
-            if (errorAlert && errorAlert.parentNode) {
-                const bsAlert = bootstrap.Alert.getOrCreateInstance(errorAlert);
-                bsAlert.close();
-            }
-        }, 3000);
-
-        // Apply shake animation to the current guess row for visual feedback
-        if (window.Alpine) {
-            const alpineData = Alpine.$data(document.querySelector('[x-data]'));
-            if (alpineData) {
-                const rows = document.querySelectorAll('.d-flex.justify-content-center.mb-1');
-                // Target the previous row since server already incremented currentRow
-                const targetRow = Math.max(0, alpineData.currentRow - 1);
-                if (rows[targetRow]) {
-                    rows[targetRow].classList.add('shake');
-                    setTimeout(() => {
-                        rows[targetRow].classList.remove('shake');
-                    }, 500);
-                }
-            }
-        }
-    }
-});
-
-// Preserve user input state before HTMX processes server response
-document.body.addEventListener('htmx:beforeSwap', function(evt) {
-    if (window.Alpine) {
-        const alpineData = Alpine.$data(document.querySelector('[x-data]'));
-        if (alpineData && alpineData.currentGuess) {
-            // Store current input temporarily for restoration after invalid guesses
-            window.tempCurrentGuess = alpineData.currentGuess;
-            window.tempCurrentRow = alpineData.currentRow;
-        }
-    }
-});
-
-// Restore user input after invalid guess responses (preserves typing state)
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    if (window.tempCurrentGuess && window.Alpine) {
-        const alpineData = Alpine.$data(document.querySelector('[x-data]'));
-        if (alpineData) {
-            alpineData.currentGuess = window.tempCurrentGuess;
-            alpineData.currentRow = window.tempCurrentRow;
-            alpineData.updateDisplay();
-        }
-        // Clean up temporary storage
-        window.tempCurrentGuess = null;
-        window.tempCurrentRow = null;
-    }
-});
-
 /**
  * Mobile Touch Event Handlers
  * Prevents common mobile web app issues like zoom gestures
@@ -92,10 +35,15 @@ window.gameApp = function() {
         gameOver: false,
         isDarkMode: false,
         keyStatus: {}, // Tracks keyboard key colors based on guessed letters
+        showCopyModal: false,
+        copyModalText: '',
+        showToast: false,
+        toastMessage: '',
+        toastType: 'primary',
 
         /**
          * Initialize game on page load
-         * Sets up theme and syncs with server state
+         * Sets up theme, event listeners, and syncs with server state
          */
         initGame() {
             // Clear any cached game state
@@ -109,10 +57,88 @@ window.gameApp = function() {
             this.isDarkMode = savedTheme === 'dark';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
 
+            // Set up HTMX event handlers
+            this.setupHTMXHandlers();
+
             // Force a small delay before syncing to ensure DOM is ready
             setTimeout(() => {
                 this.updateGameState();
             }, 100);
+        },
+
+        /**
+         * Setup HTMX event handlers using Alpine context
+         */
+        setupHTMXHandlers() {
+            const self = this;
+
+            // Handle invalid word submissions with shake animation and auto-dismiss alerts
+            document.body.addEventListener('htmx:afterSwap', function(evt) {
+                self.handleHTMXAfterSwap(evt);
+            });
+
+            // Preserve user input state before HTMX processes server response
+            document.body.addEventListener('htmx:beforeSwap', function(evt) {
+                self.handleHTMXBeforeSwap(evt);
+            });
+        },
+
+        /**
+         * Handle HTMX after swap events
+         */
+        handleHTMXAfterSwap(evt) {
+            const errorAlert = document.querySelector('.alert-danger');
+            if (errorAlert && (errorAlert.textContent.includes('Not in word list') || errorAlert.textContent.includes('Word must be 5 letters'))) {
+                // Auto-dismiss error alerts after 3 seconds for better UX
+                setTimeout(() => {
+                    if (errorAlert && errorAlert.parentNode) {
+                        const bsAlert = bootstrap.Alert.getOrCreateInstance(errorAlert);
+                        bsAlert.close();
+                    }
+                }, 3000);
+
+                // Apply shake animation to the current guess row for visual feedback
+                this.shakeCurrentRow();
+            }
+
+            // Restore user input after invalid guess responses
+            if (this.tempCurrentGuess) {
+                this.currentGuess = this.tempCurrentGuess;
+                this.currentRow = this.tempCurrentRow;
+                this.updateDisplay();
+                // Clean up temporary storage
+                this.tempCurrentGuess = null;
+                this.tempCurrentRow = null;
+            }
+
+            // Update game state after any HTMX swap
+            this.updateGameState();
+        },
+
+        /**
+         * Handle HTMX before swap events
+         */
+        handleHTMXBeforeSwap(evt) {
+            if (this.currentGuess) {
+                // Store current input temporarily for restoration after invalid guesses
+                this.tempCurrentGuess = this.currentGuess;
+                this.tempCurrentRow = this.currentRow;
+            }
+        },
+
+        /**
+         * Apply shake animation to current guess row
+         */
+        shakeCurrentRow() {
+            const rows = document.querySelectorAll('.d-flex.justify-content-center.mb-1');
+            // Target the previous row since server already incremented currentRow
+            const targetRow = Math.max(0, this.currentRow - 1);
+            if (rows[targetRow]) {
+                rows[targetRow].classList.add('shake');
+                setTimeout(() => {
+                    rows[targetRow].classList.remove('shake');
+                }, 500);
+            }
         },
 
         /**
@@ -331,7 +357,7 @@ window.gameApp = function() {
 
         /**
          * Detect winning condition and add celebration animation
-         * Emits custom event when player wins for other components to react
+         * Hides virtual keyboard when game is won
          */
         checkForWin() {
             const rows = document.querySelectorAll('#game-board > div');
@@ -343,8 +369,8 @@ window.gameApp = function() {
                         tile.style.setProperty('--tile-index', index);
                     });
                     
-                    // Notify other components that game was won
-                    window.dispatchEvent(new CustomEvent('gameWon'));
+                    // Hide virtual keyboard when game is won
+                    this.gameOver = true;
                 }
             });
         },
@@ -385,118 +411,68 @@ window.gameApp = function() {
                 // Prefer modern clipboard API for secure contexts (HTTPS/localhost)
                 if (navigator.clipboard && window.isSecureContext) {
                     await navigator.clipboard.writeText(text);
-                    this.showCopyNotification("Results copied to clipboard!");
+                    this.showToastNotification("Results copied to clipboard!");
                     return;
                 }
                 
                 // Fallback for non-secure contexts or older browsers
-                this.showCopyDialog(text);
+                this.openCopyModal(text);
                 
             } catch (err) {
                 console.error('Clipboard copy failed:', err);
-                this.showCopyDialog(text);
+                this.openCopyModal(text);
             }
         },
 
         /**
-         * Show modal dialog with text to copy manually when clipboard API unavailable
-         * Provides accessible fallback for all environments
+         * Open copy modal with text to copy manually
          */
-        showCopyDialog(text) {
-            // Remove any existing dialogs to prevent duplicates
-            const existingDialog = document.querySelector('.modal.copy-dialog');
-            if (existingDialog) {
-                bootstrap.Modal.getInstance(existingDialog)?.dispose();
-                existingDialog.remove();
-            }
+        openCopyModal(text) {
+            this.copyModalText = text;
+            this.showCopyModal = true;
+        },
 
-            // Create Bootstrap modal with copy-friendly text area
-            const dialogHTML = `
-                <div class="modal fade copy-dialog" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Copy Results</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p>Please copy the text below:</p>
-                                <textarea class="form-control font-monospace" rows="8" readonly>${text}</textarea>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-primary" onclick="this.closest('.modal-body').querySelector('textarea').select(); this.closest('.modal-body').querySelector('textarea').focus();">Select All</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+        /**
+         * Close copy modal
+         */
+        closeCopyModal() {
+            this.showCopyModal = false;
+            this.copyModalText = '';
+        },
 
-            // Add modal to DOM and display
-            document.body.insertAdjacentHTML('beforeend', dialogHTML);
-            const modalElement = document.querySelector('.copy-dialog');
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
-
-            // Auto-select text when modal opens for easy copying
-            modalElement.addEventListener('shown.bs.modal', function() {
-                const textarea = this.querySelector('textarea');
+        /**
+         * Select all text in copy modal textarea
+         */
+        selectAllText() {
+            const textarea = document.querySelector('.copy-modal textarea');
+            if (textarea) {
                 textarea.select();
                 textarea.focus();
-            });
-
-            // Clean up modal element when closed
-            modalElement.addEventListener('hidden.bs.modal', function() {
-                bootstrap.Modal.getInstance(this)?.dispose();
-                this.remove();
-            });
+            }
         },
 
         /**
-         * Display temporary floating notification for copy operations
-         * Shows success/error feedback with auto-dismiss
+         * Display temporary toast notification
          */
-        showCopyNotification(message, isError = false) {
-            // Create Bootstrap toast instead of custom alert
-            const toastHTML = `
-                <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
-                    <div class="toast align-items-center text-bg-${isError ? 'danger' : 'primary'}" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="toast-body">
-                                ${message}
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                        </div>
-                    </div>
-                </div>
-            `;
+        showToastNotification(message, isError = false) {
+            this.toastMessage = message;
+            this.toastType = isError ? 'danger' : 'primary';
+            this.showToast = true;
 
-            // Remove any existing toasts
-            document.querySelectorAll('.toast-container').forEach(el => el.remove());
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                this.showToast = false;
+            }, 3000);
+        },
 
-            // Add to DOM
-            document.body.insertAdjacentHTML('beforeend', toastHTML);
-            
-            // Show toast
-            const toastElement = document.querySelector('.toast');
-            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
-            toast.show();
-
-            // Clean up after hide
-            toastElement.addEventListener('hidden.bs.toast', function() {
-                this.closest('.toast-container').remove();
-            });
+        /**
+         * Check if virtual keyboard should be hidden
+         */
+        shouldHideKeyboard() {
+            return this.gameOver;
         }
     };
 }
-
-// Hide virtual keyboard when game is won
-window.addEventListener('gameWon', function() {
-    const keyboard = document.querySelector('.keyboard');
-    if (keyboard) {
-        keyboard.classList.add('d-none');
-    }
-});
 
 // Global function accessible from HTML template share button
 window.shareResults = function() {

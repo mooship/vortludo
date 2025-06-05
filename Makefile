@@ -15,6 +15,11 @@ prod: build
 	@echo "🚀 Starting production server..."
 	GIN_MODE=release ./vortludo.exe || GIN_MODE=release ./vortludo
 
+# Build for Render deployment
+render-build:
+	@echo "🚀 Building for Render deployment..."
+	go build -tags netgo -ldflags '-s -w' -o app
+
 # Clean build artifacts and data
 clean:
 	@echo "🧹 Cleaning build artifacts..."

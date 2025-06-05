@@ -132,19 +132,29 @@ This approach is:
 
 ### Production Deployment
 
+### Render.com Deployment
+
+1. **Connect your GitHub repository** to Render
+2. **Create a new Web Service** with these settings:
+   - **Root Directory**: *(leave empty)*
+   - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o app`
+   - **Start Command**: `./app`
+3. **Set Environment Variables**:
+   - `GIN_MODE=release`
+   - `PORT=10000` 
+   - `ENV=production`
+4. **Deploy** - Render will automatically build and deploy your app
+
+Your app will be available at `https://your-app-name.onrender.com`
+
+### Local Production Testing
+
 ```bash
 # Build for production
-make build
+make render-build
 
-# Run in production mode
-export GIN_MODE=release
-export PORT=8080
-./vortludo.exe
-```
-
-Or use the convenience command:
-```bash
-make prod
+# Test production build locally
+GIN_MODE=release PORT=8080 ENV=production ./app
 ```
 
 ## API Endpoints
