@@ -368,7 +368,7 @@ func checkGuess(guess, target string) []GuessResult {
 	targetCopy := []rune(target)
 
 	// First pass: mark exact matches (green)
-	for i := 0; i < WordLength; i++ {
+	for i := range WordLength {
 		if guess[i] == target[i] {
 			result[i] = GuessResult{Letter: string(guess[i]), Status: "correct"}
 			targetCopy[i] = ' ' // Mark as used
