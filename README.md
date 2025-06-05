@@ -210,7 +210,9 @@ The application can be deployed to any platform that supports Go:
 
 ## License
 
-This project is open source and available under the MIT License.
+This project is open source and available under the GNU Affero General Public License v3.0 (AGPL-3.0).
+
+See [LICENSE](./LICENSE) for details.
 
 ## Acknowledgments
 
