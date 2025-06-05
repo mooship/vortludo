@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -25,12 +24,13 @@ const (
 	SessionTimeout = 2 * time.Hour
 	CookieMaxAge   = 7200 // 2 hours in seconds
 	StaticCacheAge = 24 * time.Hour
+	sessionCookie  = "session_id"
 )
 
 // Global application state
 var (
 	wordList     []WordEntry                   // Valid 5-letter words with hints for the game
-	wordStrings  []string                      // Just the word strings for validation
+	wordSet      map[string]struct{}           // For O(1) word validation
 	gameSessions = make(map[string]*GameState) // Session-based game storage
 	sessionMutex sync.RWMutex                  // Protects gameSessions map
 	isProduction bool                          // Environment flag for static file serving
@@ -138,10 +138,9 @@ func loadWords() error {
 
 	wordList = wl.Words
 
-	// Create string-only slice for validation
-	wordStrings = make([]string, len(wordList))
-	for i, entry := range wordList {
-		wordStrings[i] = entry.Word
+	wordSet = make(map[string]struct{}, len(wordList))
+	for _, entry := range wordList {
+		wordSet[entry.Word] = struct{}{}
 	}
 
 	log.Printf("Successfully loaded %d words", len(wordList))
@@ -282,14 +281,17 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 	// Get target word
 	targetWord := getTargetWord(game)
 
+	// Only call isValidWord once
+	isInvalid := !isValidWord(guess)
+
 	// Process the guess
 	result := checkGuess(guess, targetWord)
-	updateGameState(game, guess, targetWord, result, !isValidWord(guess))
+	updateGameState(game, guess, targetWord, result, isInvalid)
 
 	// Save and render
 	saveGameState(sessionID, game)
 
-	if !isValidWord(guess) {
+	if isInvalid {
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Not in word list!"})
 	} else {
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
@@ -361,11 +363,11 @@ func gameStateHandler(c *gin.Context) {
 
 // checkGuess implements Wordle's letter comparison algorithm
 func checkGuess(guess, target string) []GuessResult {
-	result := make([]GuessResult, 5)
+	result := make([]GuessResult, WordLength)
 	targetCopy := []rune(target)
 
 	// First pass: mark exact matches (green)
-	for i := range 5 {
+	for i := 0; i < WordLength; i++ {
 		if guess[i] == target[i] {
 			result[i] = GuessResult{Letter: string(guess[i]), Status: "correct"}
 			targetCopy[i] = ' ' // Mark as used
@@ -373,13 +375,13 @@ func checkGuess(guess, target string) []GuessResult {
 	}
 
 	// Second pass: mark present letters in wrong position (yellow)
-	for i := range 5 {
+	for i := 0; i < WordLength; i++ {
 		if result[i].Status == "" {
 			letter := string(guess[i])
 			result[i].Letter = letter
 
 			found := false
-			for j := 0; j < 5; j++ {
+			for j := 0; j < WordLength; j++ {
 				if targetCopy[j] == rune(guess[i]) {
 					result[i].Status = "present"
 					targetCopy[j] = ' ' // Mark as used
@@ -399,18 +401,19 @@ func checkGuess(guess, target string) []GuessResult {
 
 // isValidWord checks if a word exists in the word list
 func isValidWord(word string) bool {
-	return slices.Contains(wordStrings, word)
+	_, ok := wordSet[word]
+	return ok
 }
 
 // Session management functions
 
 // getOrCreateSession retrieves or creates a session ID cookie
 func getOrCreateSession(c *gin.Context) string {
-	sessionID, err := c.Cookie("session_id")
+	sessionID, err := c.Cookie(sessionCookie)
 	if err != nil {
 		sessionID = fmt.Sprintf("%d", time.Now().UnixNano())
 		// Set cookie for 2 hours to match session cleanup
-		c.SetCookie("session_id", sessionID, CookieMaxAge, "/", "", false, true)
+		c.SetCookie(sessionCookie, sessionID, CookieMaxAge, "/", "", false, true)
 		log.Printf("Created new session: %s", sessionID)
 	}
 	return sessionID
