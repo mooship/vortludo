@@ -31,7 +31,6 @@ const (
 var (
 	wordList     []WordEntry                   // Valid 5-letter words with hints for the game
 	wordStrings  []string                      // Just the word strings for validation
-	dailyWord    DailyWord                     // Current daily word with thread safety
 	gameSessions = make(map[string]*GameState) // Session-based game storage
 	sessionMutex sync.RWMutex                  // Protects gameSessions map
 	isProduction bool                          // Environment flag for static file serving
@@ -42,25 +41,20 @@ func main() {
 	isProduction = os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
 	log.Printf("Starting Vortludo in %s mode", map[bool]string{true: "production", false: "development"}[isProduction])
 
+	// Initialize random seed
+	rand.Seed(time.Now().UnixNano())
+
 	// Load game data
 	if err := loadWords(); err != nil {
 		log.Fatalf("Failed to load words: %v", err)
 	}
 	log.Printf("Loaded %d words from dictionary", len(wordList))
 
-	if err := loadDailyWord(); err != nil {
-		log.Fatalf("Failed to load daily word: %v", err)
-	}
-	log.Printf("Daily word loaded for date: %s", dailyWord.GetDate())
-
 	// Clean up expired sessions on startup
 	log.Printf("Performing startup session cleanup")
 	if err := cleanupOldSessions(SessionTimeout); err != nil {
 		log.Printf("Warning: Failed to cleanup old sessions on startup: %v", err)
 	}
-
-	// Start daily word rotation scheduler
-	go dailyWordScheduler()
 
 	// Start session cleanup scheduler (every hour, removes sessions older than 2 hours)
 	go sessionCleanupScheduler()
@@ -154,77 +148,9 @@ func loadWords() error {
 	return nil
 }
 
-// loadDailyWord loads or creates today's word
-func loadDailyWord() error {
-	log.Printf("Loading daily word from data/daily-word.json")
-	data, err := os.ReadFile("data/daily-word.json")
-	if err != nil {
-		// File doesn't exist, create with random word
-		log.Printf("Daily word file not found, creating new daily word")
-		return setNewDailyWord()
-	}
-
-	var dwj DailyWordJSON
-	if err := json.Unmarshal(data, &dwj); err != nil {
-		return err
-	}
-
-	dailyWord.FromJSON(dwj)
-
-	// Check if word is still valid for today
-	today := time.Now().Format("2006-01-02")
-	if dailyWord.GetDate() != today {
-		log.Printf("Daily word expired (was %s, now %s), generating new word", dailyWord.GetDate(), today)
-		return setNewDailyWord()
-	}
-
-	log.Printf("Daily word is current for date: %s", today)
-	return nil
-}
-
-// setNewDailyWord generates and saves a new daily word
-func setNewDailyWord() error {
-	dailyWord.mu.Lock()
-	defer dailyWord.mu.Unlock()
-
-	// Pick random word entry
-	selectedEntry := wordList[rand.Intn(len(wordList))]
-	dailyWord.Word = selectedEntry.Word
-	dailyWord.Date = time.Now().Format("2006-01-02")
-	dailyWord.Hint = selectedEntry.Hint
-
-	log.Printf("Generated new daily word: %s (hint: %s) for date: %s", selectedEntry.Word, selectedEntry.Hint, dailyWord.Date)
-
-	// Save to file (using unsafe version since we hold the lock)
-	dwj := dailyWord.toJSONUnsafe()
-	data, err := json.MarshalIndent(dwj, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile("data/daily-word.json", data, 0644)
-}
-
-// dailyWordScheduler updates the daily word at midnight
-func dailyWordScheduler() {
-	log.Printf("Daily word scheduler started")
-	for {
-		now := time.Now()
-		next := now.Add(24 * time.Hour)
-		next = time.Date(next.Year(), next.Month(), next.Day(), 0, 0, 0, 0, next.Location())
-
-		timeUntilNext := next.Sub(now)
-		log.Printf("Next daily word update scheduled in %v (at %v)", timeUntilNext, next)
-		timer := time.NewTimer(timeUntilNext)
-		<-timer.C
-
-		log.Printf("Updating daily word at scheduled time")
-		if err := setNewDailyWord(); err != nil {
-			log.Printf("Failed to set new daily word: %v", err)
-		} else {
-			log.Printf("Successfully updated daily word")
-		}
-	}
+// getRandomWordEntry returns a random word entry from the word list
+func getRandomWordEntry() WordEntry {
+	return wordList[rand.Intn(len(wordList))]
 }
 
 // sessionCleanupScheduler removes old session files every hour
@@ -253,10 +179,9 @@ func homeHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
-	// Use the game's hint if it has one, otherwise use daily word hint
-	hint := dailyWord.GetHint()
+	// Get the hint for this game's word
+	hint := ""
 	if game.SessionWord != "" {
-		// Find the hint for this game's word
 		for _, entry := range wordList {
 			if entry.Word == game.SessionWord {
 				hint = entry.Hint
@@ -376,8 +301,9 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 // getTargetWord returns the target word for the game
 func getTargetWord(game *GameState) string {
 	if game.SessionWord == "" {
-		// Fallback to daily word for existing sessions
-		game.SessionWord = dailyWord.GetWord()
+		selectedEntry := getRandomWordEntry()
+		game.SessionWord = selectedEntry.Word
+		log.Printf("Warning: SessionWord was empty, assigned random word: %s", selectedEntry.Word)
 	}
 	return game.SessionWord
 }
@@ -416,8 +342,8 @@ func gameStateHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
-	// Use the game's hint if it has one, otherwise use daily word hint
-	hint := dailyWord.GetHint()
+	// Get the hint for this game's word
+	hint := ""
 	if game.SessionWord != "" {
 		for _, entry := range wordList {
 			if entry.Word == game.SessionWord {
@@ -536,7 +462,7 @@ func getGameState(sessionID string) *GameState {
 // createNewGame creates a new game state with a random word
 func createNewGame(sessionID string) *GameState {
 	// Pick a random word for this game session
-	selectedEntry := wordList[rand.Intn(len(wordList))]
+	selectedEntry := getRandomWordEntry()
 
 	log.Printf("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
 
