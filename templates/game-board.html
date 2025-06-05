@@ -6,9 +6,9 @@
             {{range $col, $guess := $guesses}}
                 <!-- Tile with Bootstrap utilities and custom game classes -->
                 <div class="tile border border-2 rounded d-flex align-items-center justify-content-center fw-bold text-uppercase mx-1
-                           {{if $guess.Letter}}filled tile-{{$guess.Status}}{{end}}
+                           {{if $guess.Letter}}filled tile-{{$guess.Status | html}}{{end}}
                            {{if and (eq $row $.game.CurrentRow) (not $.game.GameOver) (not $guess.Letter)}}tile-active{{end}}">
-                    {{$guess.Letter}}
+                    {{$guess.Letter | html}}
                 </div>
             {{end}}
         </div>
@@ -19,7 +19,7 @@
 {{if .error}}
     <div class="alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" 
          role="alert" style="z-index: 1050; min-width: 280px;">
-        {{.error}}
+        {{.error | html}}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 {{end}}
@@ -32,7 +32,7 @@
             <p class="text-center mb-3 small">You guessed the word in {{len .game.GuessHistory}} {{if eq (len .game.GuessHistory) 1}}try{{else}}tries{{end}}!</p>
         {{else}}
             <h3 class="text-danger text-center h5 mb-2">Game Over!</h3>
-            <p class="text-center mb-3 small">The word was: <strong>{{.game.TargetWord}}</strong></p>
+            <p class="text-center mb-3 small">The word was: <strong>{{.game.TargetWord | html}}</strong></p>
         {{end}}
         
         <div class="text-center">

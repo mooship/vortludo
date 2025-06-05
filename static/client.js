@@ -1,17 +1,12 @@
 /**
- * HTMX Event Handlers for Game Feedback
- * Manages server responses and client-side visual feedback
+ * Vortludo Client-Side Game Logic
+ * Handles UI interactions, animations, and state synchronization with server
  */
 
-/**
- * Mobile Touch Event Handlers
- * Prevents common mobile web app issues like zoom gestures
- */
-
-// Prevent pinch-zoom gestures on mobile devices for app-like experience
+// Mobile gesture prevention for app-like experience
 document.addEventListener('gesturestart', e => e.preventDefault());
 
-// Prevent double-tap zoom while allowing single taps
+// Prevent double-tap zoom while preserving single tap
 let lastTouchEnd = 0;
 document.addEventListener('touchend', function (event) {
     const now = Date.now();
@@ -22,54 +17,103 @@ document.addEventListener('touchend', function (event) {
 }, false);
 
 /**
- * Main Game Application using Alpine.js
- * Manages all client-side game state and user interactions
+ * Main game controller using Alpine.js
  */
 window.gameApp = function() {
     return {
-        // Core game state properties
+        // Game state
         currentGuess: '',
         currentRow: 0,
         gameOver: false,
         isDarkMode: false,
-        keyStatus: {}, // Tracks keyboard key colors based on guessed letters
+        keyStatus: new Map(), // O(1) keyboard color lookups
         showCopyModal: false,
         copyModalText: '',
         showToast: false,
         toastMessage: '',
         toastType: 'primary',
         
-        // Constants
+        // Performance optimizations
+        domCache: new Map(),
+        animationFrameIds: new Set(),
+        
+        // Configuration
         WORD_LENGTH: 5,
         MAX_GUESSES: 6,
         ANIMATION_DELAY: 100,
         TOAST_DURATION: 3000,
+        VALID_LETTER_REGEX: /^[A-Z]$/,
 
         /**
          * Initialize game on page load
-         * Sets up theme, event listeners, and syncs with server state
          */
         initGame() {
             this.resetGameState();
             this.initTheme();
             this.setupHTMXHandlers();
+            this.cacheDOMElements();
             
-            // Force a small delay before syncing to ensure DOM is ready
-            setTimeout(() => this.updateGameState(), 100);
+            // Sync with server state after DOM is ready
+            requestAnimationFrame(() => this.updateGameState());
         },
         
         /**
-         * Reset game state to initial values
+         * Cache frequently accessed DOM elements
+         */
+        cacheDOMElements() {
+            this.domCache.set('gameBoard', document.getElementById('game-board'));
+            this.domCache.set('guessForm', document.getElementById('guess-form'));
+            this.domCache.set('guessInput', document.getElementById('guess-input'));
+        },
+        
+        /**
+         * Get cached element or query and cache it
+         */
+        getCachedElement(key, selector = null) {
+            if (!this.domCache.has(key) && selector) {
+                const element = document.querySelector(selector);
+                if (element) {
+                    this.domCache.set(key, element);
+                }
+            }
+            return this.domCache.get(key);
+        },
+        
+        /**
+         * Clear non-essential DOM cache after HTMX updates
+         */
+        clearDOMCache() {
+            const essentials = ['guessForm', 'guessInput'];
+            for (const [key, element] of this.domCache) {
+                if (!essentials.includes(key)) {
+                    this.domCache.delete(key);
+                }
+            }
+        },
+        
+        /**
+         * Reset game to initial state
          */
         resetGameState() {
             this.currentGuess = '';
             this.currentRow = 0;
             this.gameOver = false;
-            this.keyStatus = {};
+            this.keyStatus.clear();
+            this.cancelAllAnimations();
         },
         
         /**
-         * Initialize theme from localStorage
+         * Cancel pending animation frames
+         */
+        cancelAllAnimations() {
+            for (const id of this.animationFrameIds) {
+                cancelAnimationFrame(id);
+            }
+            this.animationFrameIds.clear();
+        },
+        
+        /**
+         * Load theme preference from localStorage
          */
         initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -78,16 +122,21 @@ window.gameApp = function() {
         },
 
         /**
-         * Setup HTMX event handlers using Alpine context
+         * Setup HTMX response handlers
          */
         setupHTMXHandlers() {
             document.body.addEventListener('htmx:afterSwap', (evt) => {
+                // Refresh cache after content update
+                this.clearDOMCache();
+                this.cacheDOMElements();
+                
                 this.handleErrorAlerts();
                 this.restoreUserInput();
                 this.updateGameState();
             });
 
             document.body.addEventListener('htmx:beforeSwap', (evt) => {
+                // Save current input before server update
                 if (this.currentGuess) {
                     this.tempCurrentGuess = this.currentGuess;
                     this.tempCurrentRow = this.currentRow;
@@ -96,7 +145,7 @@ window.gameApp = function() {
         },
         
         /**
-         * Handle error alerts with auto-dismiss
+         * Auto-dismiss error alerts
          */
         handleErrorAlerts() {
             const errorAlert = document.querySelector('.alert-danger');
@@ -117,7 +166,7 @@ window.gameApp = function() {
         },
         
         /**
-         * Restore user input after server response
+         * Restore input after server response
          */
         restoreUserInput() {
             if (this.tempCurrentGuess) {
@@ -130,21 +179,29 @@ window.gameApp = function() {
         },
 
         /**
-         * Apply shake animation to current guess row
+         * Shake animation for invalid guesses
          */
         shakeCurrentRow() {
-            const rows = document.querySelectorAll('.d-flex.justify-content-center.mb-1');
-            // Target the previous row since server already incremented currentRow
+            const board = this.getCachedElement('gameBoard');
+            if (!board) return;
+            
+            const rows = board.querySelectorAll('.guess-row');
             const targetRow = Math.max(0, this.currentRow - 1);
+            
             if (rows[targetRow]) {
-                rows[targetRow].classList.add('shake');
-                setTimeout(() => rows[targetRow].classList.remove('shake'), 500);
+                const animId = requestAnimationFrame(() => {
+                    rows[targetRow].classList.add('shake');
+                    setTimeout(() => {
+                        rows[targetRow].classList.remove('shake');
+                        this.animationFrameIds.delete(animId);
+                    }, 500);
+                });
+                this.animationFrameIds.add(animId);
             }
         },
 
         /**
-         * Toggle between light and dark themes using Bootstrap 5.3 color modes
-         * Persists preference in localStorage
+         * Toggle dark/light theme
          */
         toggleTheme() {
             this.isDarkMode = !this.isDarkMode;
@@ -154,43 +211,54 @@ window.gameApp = function() {
         },
 
         /**
-         * Handle physical keyboard input events
-         * Processes Enter, Backspace, and letter keys
+         * Handle physical keyboard input
          */
         handleKeyPress(e) {
             if (this.gameOver) return;
             
-            if (e.key === 'Enter') this.submitGuess();
-            else if (e.key === 'Backspace') this.deleteLetter();
-            else if (/^[a-zA-Z]$/.test(e.key)) this.addLetter(e.key.toUpperCase());
+            const key = e.key.toUpperCase();
+            
+            if (key === 'ENTER') {
+                e.preventDefault();
+                this.submitGuess();
+            } else if (key === 'BACKSPACE') {
+                e.preventDefault();
+                this.deleteLetter();
+            } else if (this.VALID_LETTER_REGEX.test(key)) {
+                e.preventDefault();
+                this.addLetter(key);
+            }
         },
 
         /**
-         * Handle virtual on-screen keyboard clicks
-         * Processes special keys (ENTER, BACKSPACE) and letters
+         * Handle virtual keyboard clicks
          */
         handleVirtualKey(key) {
-            if (this.gameOver) return;
+            if (this.gameOver || typeof key !== 'string') return;
 
-            if (key === 'ENTER') this.submitGuess();
-            else if (key === 'BACKSPACE') this.deleteLetter();
-            else this.addLetter(key);
+            key = key.toUpperCase().trim();
+
+            if (key === 'ENTER') {
+                this.submitGuess();
+            } else if (key === 'BACKSPACE') {
+                this.deleteLetter();
+            } else if (this.VALID_LETTER_REGEX.test(key)) {
+                this.addLetter(key);
+            }
         },
 
         /**
-         * Add a letter to the current guess (max 5 letters)
-         * Updates display immediately for responsive feedback
+         * Add letter to current guess
          */
         addLetter(letter) {
-            if (this.currentGuess.length < 5) {
+            if (this.currentGuess.length < this.WORD_LENGTH && this.VALID_LETTER_REGEX.test(letter)) {
                 this.currentGuess += letter;
                 this.updateDisplay();
             }
         },
 
         /**
-         * Remove the last letter from current guess
-         * Updates display immediately for responsive feedback
+         * Remove last letter from guess
          */
         deleteLetter() {
             if (this.currentGuess.length > 0) {
@@ -200,43 +268,47 @@ window.gameApp = function() {
         },
 
         /**
-         * Update visual display of current guess in game grid
-         * Shows letters as user types before submission
+         * Update tile display with current guess
          */
         updateDisplay() {
-            const row = document.querySelectorAll('#game-board > div')[this.currentRow];
+            const board = this.getCachedElement('gameBoard');
+            if (!board) return;
+            
+            const row = board.querySelectorAll('.guess-row')[this.currentRow];
             if (!row) return;
             
-            row.querySelectorAll('.tile').forEach((tile, i) => {
-                const letter = this.currentGuess[i] || '';
-                tile.textContent = letter;
-                tile.classList.toggle('filled', Boolean(letter));
+            const animId = requestAnimationFrame(() => {
+                row.querySelectorAll('.tile').forEach((tile, i) => {
+                    const letter = this.currentGuess[i] || '';
+                    tile.textContent = letter;
+                    tile.classList.toggle('filled', Boolean(letter));
+                });
+                this.animationFrameIds.delete(animId);
             });
+            this.animationFrameIds.add(animId);
         },
 
         /**
-         * Synchronize client state with server game state after HTMX updates
-         * Critical for maintaining consistency between client UI and server logic
+         * Sync client state with server after HTMX updates
          */
         updateGameState() {
-            const board = document.getElementById('game-board');
+            const board = this.getCachedElement('gameBoard');
             if (!board) return;
 
-            // Always reset current guess after any server interaction
+            // Reset for new state
             this.currentGuess = '';
-            this.keyStatus = {};
+            this.keyStatus.clear();
 
-            // Check if game has ended by looking for the game over container
+            // Check game status
             const gameOverContainer = board.parentElement.querySelector('.mt-3.p-3.bg-body-secondary');
             this.gameOver = gameOverContainer !== null;
 
-            // Count rows that have filled tiles with status classes (completed guesses)
-            const rows = document.querySelectorAll('.guess-row');
+            // Count completed rows
+            const rows = board.querySelectorAll('.guess-row');
             let completedRows = 0;
             
             rows.forEach((row) => {
                 const tiles = row.querySelectorAll('.tile.filled');
-                // Check if this row has status tiles (correct/present/absent) - means it's completed
                 const hasStatusTiles = Array.from(tiles).some(tile => 
                     tile.classList.contains('tile-correct') || 
                     tile.classList.contains('tile-present') || 
@@ -245,40 +317,48 @@ window.gameApp = function() {
                 if (hasStatusTiles) completedRows++;
             });
 
-            // Current row should be the next empty row after completed ones
             this.currentRow = Math.min(completedRows, rows.length - 1);
 
-            // Update UI components based on new state
+            // Update UI
             this.updateKeyboardColors();
             this.animateNewGuess();
             this.checkForWin();
         },
 
         /**
-         * Submit current 5-letter guess to server via HTMX
-         * Only submits complete 5-letter words
+         * Submit guess to server
          */
         submitGuess() {
-            if (this.currentGuess.length === 5) {
-                // Add visual feedback during submission
-                const rows = document.querySelectorAll('.guess-row');
+            if (this.currentGuess.length === this.WORD_LENGTH) {
+                const board = this.getCachedElement('gameBoard');
+                if (!board) return;
+                
+                // Visual feedback
+                const rows = board.querySelectorAll('.guess-row');
                 if (rows[this.currentRow]) {
                     rows[this.currentRow].classList.add('submitting');
                 }
 
-                // Trigger HTMX form submission
-                document.getElementById('guess-input').value = this.currentGuess;
-                document.getElementById('guess-form').dispatchEvent(new Event('submit'));
+                // Submit via HTMX
+                const guessInput = this.getCachedElement('guessInput');
+                const guessForm = this.getCachedElement('guessForm');
+                
+                if (guessInput && guessForm) {
+                    guessInput.value = this.currentGuess;
+                    guessForm.dispatchEvent(new Event('submit'));
+                }
             }
         },
 
         /**
-         * Update virtual keyboard key colors based on letter status in completed guesses
-         * Follows Wordle color priority: correct (green) > present (yellow) > absent (gray)
+         * Update keyboard colors based on guessed letters
          */
         updateKeyboardColors() {
-            const tiles = document.querySelectorAll('.tile.filled');
-            this.keyStatus = {};
+            const board = this.getCachedElement('gameBoard');
+            if (!board) return;
+            
+            const tiles = board.querySelectorAll('.tile.filled');
+            this.keyStatus.clear();
 
             tiles.forEach(tile => {
                 const letter = tile.textContent;
@@ -287,30 +367,32 @@ window.gameApp = function() {
                                tile.classList.contains('tile-absent') ? 'absent' : '';
 
                 if (letter && status) {
-                    // Apply color priority logic: correct overrides all, present overrides absent
-                    if (!this.keyStatus[letter] ||
+                    const currentStatus = this.keyStatus.get(letter);
+                    // Priority: correct > present > absent
+                    if (!currentStatus ||
                         status === 'correct' ||
-                        (status === 'present' && this.keyStatus[letter] === 'absent')) {
-                        this.keyStatus[letter] = status;
+                        (status === 'present' && currentStatus === 'absent')) {
+                        this.keyStatus.set(letter, status);
                     }
                 }
             });
         },
 
         /**
-         * Get CSS class for virtual keyboard key based on letter status
-         * Returns empty string for unguessed letters
+         * Get keyboard key styling
          */
         getKeyClass(letter) {
-            return this.keyStatus[letter] || '';
+            return this.keyStatus.get(letter) || '';
         },
 
         /**
-         * Animate tile flip effect for newly submitted valid guesses
-         * Skips animation for invalid words to provide clear feedback distinction
+         * Animate tile flip for new guesses
          */
         animateNewGuess() {
-            const rows = document.querySelectorAll('#game-board > div');
+            const board = this.getCachedElement('gameBoard');
+            if (!board) return;
+            
+            const rows = board.querySelectorAll('.guess-row');
             const lastFilledRow = Array.from(rows).find((row, index) => {
                 const filledTiles = row.querySelectorAll('.tile.filled');
                 return filledTiles.length === this.WORD_LENGTH &&
@@ -323,7 +405,13 @@ window.gameApp = function() {
             const tiles = lastFilledRow.querySelectorAll('.tile.filled');
             tiles.forEach((tile, index) => {
                 tile.style.setProperty('--tile-index', index);
-                setTimeout(() => tile.classList.add('flip'), index * this.ANIMATION_DELAY);
+                const animId = requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        tile.classList.add('flip');
+                        this.animationFrameIds.delete(animId);
+                    }, index * this.ANIMATION_DELAY);
+                });
+                this.animationFrameIds.add(animId);
             });
             
             lastFilledRow.classList.add('animated');
@@ -331,35 +419,39 @@ window.gameApp = function() {
         },
 
         /**
-         * Detect winning condition and add celebration animation
-         * Hides virtual keyboard when game is won
+         * Check for winning condition
          */
         checkForWin() {
-            const rows = document.querySelectorAll('#game-board > div');
+            const board = this.getCachedElement('gameBoard');
+            if (!board) return;
+            
+            const rows = board.querySelectorAll('.guess-row');
             let hasWinner = false;
             
             rows.forEach(row => {
                 const tiles = row.querySelectorAll('.tile-correct');
-                if (tiles.length === 5) {
+                if (tiles.length === this.WORD_LENGTH) {
                     hasWinner = true;
                     if (!row.classList.contains('winner')) {
-                        row.classList.add('winner');
-                        tiles.forEach((tile, index) => {
-                            tile.style.setProperty('--tile-index', index);
+                        const animId = requestAnimationFrame(() => {
+                            row.classList.add('winner');
+                            tiles.forEach((tile, index) => {
+                                tile.style.setProperty('--tile-index', index);
+                            });
+                            this.animationFrameIds.delete(animId);
                         });
+                        this.animationFrameIds.add(animId);
                     }
                 }
             });
             
-            // Update game over state if we found a winner
             if (hasWinner) {
                 this.gameOver = true;
             }
         },
 
         /**
-         * Generate shareable results as emoji grid and copy to clipboard
-         * Creates Wordle-style emoji pattern for social sharing
+         * Generate shareable emoji grid
          */
         shareResults() {
             const rows = document.querySelectorAll('#game-board > div');
@@ -381,19 +473,17 @@ window.gameApp = function() {
         },
 
         /**
-         * Copy text to clipboard with fallback for non-secure contexts
-         * Uses modern Clipboard API when available, shows manual copy dialog otherwise
+         * Copy text to clipboard with fallback
          */
         async copyToClipboard(text) {
             try {
-                // Prefer modern clipboard API for secure contexts (HTTPS/localhost)
                 if (navigator.clipboard && window.isSecureContext) {
                     await navigator.clipboard.writeText(text);
                     this.showToastNotification("Results copied to clipboard!");
                     return;
                 }
                 
-                // Fallback for non-secure contexts or older browsers
+                // Fallback for non-secure contexts
                 this.openCopyModal(text);
                 
             } catch (err) {
@@ -403,7 +493,7 @@ window.gameApp = function() {
         },
 
         /**
-         * Open copy modal with text to copy manually
+         * Show manual copy modal
          */
         openCopyModal(text) {
             this.copyModalText = text;
@@ -419,7 +509,7 @@ window.gameApp = function() {
         },
 
         /**
-         * Select all text in copy modal textarea
+         * Select all text in textarea
          */
         selectAllText() {
             const textarea = document.querySelector('.copy-modal textarea');
@@ -430,19 +520,18 @@ window.gameApp = function() {
         },
 
         /**
-         * Display temporary toast notification
+         * Show temporary notification
          */
         showToastNotification(message, isError = false) {
             this.toastMessage = message;
             this.toastType = isError ? 'danger' : 'primary';
             this.showToast = true;
 
-            // Auto-hide after 3 seconds
             setTimeout(() => this.showToast = false, 3000);
         },
 
         /**
-         * Check if virtual keyboard should be hidden
+         * Check if keyboard should be hidden
          */
         shouldHideKeyboard() {
             return this.gameOver;
@@ -450,8 +539,10 @@ window.gameApp = function() {
     };
 }
 
-// Global function accessible from HTML template share button
+// Global share function for HTML button
 window.shareResults = function() {
     const alpineData = Alpine.$data(document.querySelector('[x-data]'));
-    alpineData.shareResults();
+    if (alpineData) {
+        alpineData.shareResults();
+    }
 };

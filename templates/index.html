@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{.title}}</title>
+    <title>{{.title | html}}</title>
     <link rel="icon" type="image/x-icon" href="/static/favicons/favicon.ico">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicons/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicons/favicon-32x32.png">
@@ -28,9 +28,11 @@
                 <button class="btn btn-link text-decoration-none me-2 p-1 text-body" @click="toggleTheme()" aria-label="Toggle theme">
                     <i class="bi fs-4" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
                 </button>
-                <button class="btn btn-primary btn-sm" onclick="location.href='/new-game'">
-                    <i class="bi bi-arrow-clockwise"></i> New Game
-                </button>
+                <form method="post" action="/new-game" style="margin: 0;">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-arrow-clockwise"></i> New Game
+                    </button>
+                </form>
             </div>
         </div>
     </nav>
@@ -39,10 +41,10 @@
         <div class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2">
             <div class="d-flex flex-column align-items-center w-100" style="max-width: 500px;">
                 <div class="text-center">
-                    <p class="mb-1 small">{{.message}}</p>
+                    <p class="mb-1 small">{{.message | html}}</p>
                     {{if .hint}}
                         <p class="mb-1 text-muted fst-italic small">
-                            <i class="bi bi-lightbulb text-warning"></i> Hint: {{.hint}}
+                            <i class="bi bi-lightbulb text-warning"></i> Hint: {{.hint | html}}
                         </p>
                     {{end}}
                 </div>
@@ -60,7 +62,17 @@
                       hx-target="#game-board-container" 
                       hx-swap="innerHTML" 
                       class="d-none">
-                    <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control">
+                    <input type="text" 
+                           id="guess-input" 
+                           name="guess" 
+                           maxlength="5" 
+                           pattern="[A-Za-z]{5}" 
+                           title="Please enter exactly 5 letters"
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           class="form-control">
                 </form>
 
                 <div class="keyboard mx-auto w-100" style="max-width: 500px;" x-show="!shouldHideKeyboard()" x-transition>
