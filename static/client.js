@@ -361,7 +361,34 @@ window.gameApp = function() {
             // Update game over state if we found a winner
             if (hasWinner) {
                 this.gameOver = true;
+                this.launchConfetti();
             }
+        },
+
+        /**
+         * Launch confetti animation using canvas-confetti
+         */
+        launchConfetti() {
+            // If confetti is not loaded, load it from CDN
+            if (typeof window.confetti !== "function") {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js";
+                script.onload = () => this._doConfetti();
+                document.body.appendChild(script);
+            } else {
+                this._doConfetti();
+            }
+        },
+
+        /**
+         * Actually fire confetti burst (only once)
+         */
+        _doConfetti() {
+            window.confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.6 }
+            });
         },
 
         /**
