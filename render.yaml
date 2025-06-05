@@ -3,11 +3,15 @@ services:
     name: vortludo
     env: go
     buildCommand: |
-      mkdir -p dist/static dist/templates &&
-      cp -r static/* dist/static/ &&
-      go run cmd/minify/main.go -type=css -input=static/style.css -output=dist/static/style.css &&
-      go run cmd/minify/main.go -type=js -input=static/client.js -output=dist/static/client.js &&
-      for template in templates/*.html; do filename=$(basename "$template"); go run cmd/minify/main.go -type=html -input="$template" -output="dist/templates/$filename"; done &&
+      set -e
+      mkdir -p dist/static dist/templates
+      cp -r static/* dist/static/
+      go run cmd/minify/main.go -type=css -input=static/style.css -output=dist/static/style.css
+      go run cmd/minify/main.go -type=js -input=static/client.js -output=dist/static/client.js
+      for template in templates/*.html; do
+        filename=$(basename "$template")
+        go run cmd/minify/main.go -type=html -input="$template" -output="dist/templates/$filename"
+      done
       go build -tags netgo -ldflags '-s -w' -o vortludo
     startCommand: ./vortludo
     envVars:

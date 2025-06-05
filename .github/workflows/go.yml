@@ -21,10 +21,26 @@ jobs:
           go-version: '1.24'
 
       - name: Install dependencies
-        run: go mod tidy
+        run: go mod tidy && go mod download
 
-      - name: Build
+      - name: Create required directories
+        run: mkdir -p data
+
+      - name: Test minification tool
+        run: |
+          mkdir -p test-dist/static test-dist/templates
+          go run cmd/minify/main.go -type=css -input=static/style.css -output=test-dist/static/style.css
+          go run cmd/minify/main.go -type=js -input=static/client.js -output=test-dist/static/client.js
+          for template in templates/*.html; do 
+            filename=$(basename "$template")
+            go run cmd/minify/main.go -type=html -input="$template" -output="test-dist/templates/$filename"
+          done
+
+      - name: Build application
         run: go build -v ./...
 
       - name: Test
         run: go test -v ./...
+
+      - name: Build production binary
+        run: go build -tags netgo -ldflags '-s -w' -o vortludo
