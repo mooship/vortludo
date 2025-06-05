@@ -65,14 +65,16 @@ func main() {
 
 	// Apply cache control middleware BEFORE loading templates and static files
 	if isProduction {
-		// Cache static assets for 1 day, but not HTML pages
+		// Cache static assets aggressively for production
 		router.Use(func(c *gin.Context) {
 			if strings.HasPrefix(c.Request.URL.Path, "/static/") {
 				cachecontrol.New(cachecontrol.Config{
 					Public:    true,
-					MaxAge:    cachecontrol.Duration(24 * time.Hour),
+					MaxAge:    cachecontrol.Duration(30 * 24 * time.Hour), // 30 days for minified assets
 					Immutable: true,
 				})(c)
+				// Add compression headers for better performance
+				c.Header("Vary", "Accept-Encoding")
 			} else {
 				// No cache for HTML pages and API endpoints
 				cachecontrol.New(cachecontrol.Config{
@@ -91,11 +93,13 @@ func main() {
 		}))
 	}
 
-	// Serve static files from appropriate directory
+	// Serve static files from appropriate directory with minified assets in production
 	if isProduction && dirExists("dist") {
+		log.Printf("Serving minified assets from dist/ directory")
 		router.LoadHTMLGlob("dist/templates/*.html")
 		router.Static("/static", "./dist/static")
 	} else {
+		log.Printf("Serving development assets from source directories")
 		router.LoadHTMLGlob("templates/*.html")
 		router.Static("/static", "./static")
 	}

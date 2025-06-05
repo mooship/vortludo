@@ -9,14 +9,12 @@
  */
 
 // Prevent pinch-zoom gestures on mobile devices for app-like experience
-document.addEventListener('gesturestart', function(e) {
-    e.preventDefault();
-});
+document.addEventListener('gesturestart', e => e.preventDefault());
 
 // Prevent double-tap zoom while allowing single taps
 let lastTouchEnd = 0;
 document.addEventListener('touchend', function (event) {
-    const now = (new Date()).getTime();
+    const now = Date.now();
     if (now - lastTouchEnd <= 300) {
         event.preventDefault();
     }
@@ -83,26 +81,18 @@ window.gameApp = function() {
          * Setup HTMX event handlers using Alpine context
          */
         setupHTMXHandlers() {
-            const self = this;
-
-            // Handle invalid word submissions with shake animation and auto-dismiss alerts
-            document.body.addEventListener('htmx:afterSwap', function(evt) {
-                self.handleHTMXAfterSwap(evt);
+            document.body.addEventListener('htmx:afterSwap', (evt) => {
+                this.handleErrorAlerts();
+                this.restoreUserInput();
+                this.updateGameState();
             });
 
-            // Preserve user input state before HTMX processes server response
-            document.body.addEventListener('htmx:beforeSwap', function(evt) {
-                self.handleHTMXBeforeSwap(evt);
+            document.body.addEventListener('htmx:beforeSwap', (evt) => {
+                if (this.currentGuess) {
+                    this.tempCurrentGuess = this.currentGuess;
+                    this.tempCurrentRow = this.currentRow;
+                }
             });
-        },
-
-        /**
-         * Handle HTMX after swap events
-         */
-        handleHTMXAfterSwap(evt) {
-            this.handleErrorAlerts();
-            this.restoreUserInput();
-            this.updateGameState();
         },
         
         /**
@@ -117,21 +107,13 @@ window.gameApp = function() {
                 errorAlert.textContent.includes('Word must be 5 letters');
                 
             if (isInvalidWordError) {
-                this.autoDismissAlert(errorAlert);
+                setTimeout(() => {
+                    if (errorAlert?.parentNode) {
+                        bootstrap.Alert.getOrCreateInstance(errorAlert).close();
+                    }
+                }, this.TOAST_DURATION);
                 this.shakeCurrentRow();
             }
-        },
-        
-        /**
-         * Auto-dismiss an alert after timeout
-         */
-        autoDismissAlert(alertElement, timeout = this.TOAST_DURATION) {
-            setTimeout(() => {
-                if (alertElement?.parentNode) {
-                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alertElement);
-                    bsAlert.close();
-                }
-            }, timeout);
         },
         
         /**
@@ -142,26 +124,8 @@ window.gameApp = function() {
                 this.currentGuess = this.tempCurrentGuess;
                 this.currentRow = this.tempCurrentRow;
                 this.updateDisplay();
-                this.clearTempStorage();
-            }
-        },
-        
-        /**
-         * Clear temporary storage
-         */
-        clearTempStorage() {
-            this.tempCurrentGuess = null;
-            this.tempCurrentRow = null;
-        },
-
-        /**
-         * Handle HTMX before swap events
-         */
-        handleHTMXBeforeSwap(evt) {
-            if (this.currentGuess) {
-                // Store current input temporarily for restoration after invalid guesses
-                this.tempCurrentGuess = this.currentGuess;
-                this.tempCurrentRow = this.currentRow;
+                this.tempCurrentGuess = null;
+                this.tempCurrentRow = null;
             }
         },
 
@@ -174,9 +138,7 @@ window.gameApp = function() {
             const targetRow = Math.max(0, this.currentRow - 1);
             if (rows[targetRow]) {
                 rows[targetRow].classList.add('shake');
-                setTimeout(() => {
-                    rows[targetRow].classList.remove('shake');
-                }, 500);
+                setTimeout(() => rows[targetRow].classList.remove('shake'), 500);
             }
         },
 
@@ -198,18 +160,9 @@ window.gameApp = function() {
         handleKeyPress(e) {
             if (this.gameOver) return;
             
-            const handlers = {
-                'Enter': () => this.submitGuess(),
-                'Backspace': () => this.deleteLetter(),
-                'default': (key) => {
-                    if (/^[a-zA-Z]$/.test(key)) {
-                        this.addLetter(key.toUpperCase());
-                    }
-                }
-            };
-            
-            const handler = handlers[e.key] || handlers.default;
-            handler(e.key);
+            if (e.key === 'Enter') this.submitGuess();
+            else if (e.key === 'Backspace') this.deleteLetter();
+            else if (/^[a-zA-Z]$/.test(e.key)) this.addLetter(e.key.toUpperCase());
         },
 
         /**
@@ -219,13 +172,9 @@ window.gameApp = function() {
         handleVirtualKey(key) {
             if (this.gameOver) return;
 
-            if (key === 'ENTER') {
-                this.submitGuess();
-            } else if (key === 'BACKSPACE') {
-                this.deleteLetter();
-            } else {
-                this.addLetter(key);
-            }
+            if (key === 'ENTER') this.submitGuess();
+            else if (key === 'BACKSPACE') this.deleteLetter();
+            else this.addLetter(key);
         },
 
         /**
@@ -255,28 +204,14 @@ window.gameApp = function() {
          * Shows letters as user types before submission
          */
         updateDisplay() {
-            const row = this.getCurrentRowElement();
+            const row = document.querySelectorAll('#game-board > div')[this.currentRow];
             if (!row) return;
             
-            const tiles = row.querySelectorAll('.tile');
-            tiles.forEach((tile, i) => this.updateTile(tile, i));
-        },
-        
-        /**
-         * Get current row DOM element
-         */
-        getCurrentRowElement() {
-            const rows = document.querySelectorAll('#game-board > div');
-            return rows[this.currentRow];
-        },
-        
-        /**
-         * Update individual tile display
-         */
-        updateTile(tile, index) {
-            const letter = this.currentGuess[index] || '';
-            tile.textContent = letter;
-            tile.classList.toggle('filled', Boolean(letter));
+            row.querySelectorAll('.tile').forEach((tile, i) => {
+                const letter = this.currentGuess[i] || '';
+                tile.textContent = letter;
+                tile.classList.toggle('filled', Boolean(letter));
+            });
         },
 
         /**
@@ -307,9 +242,7 @@ window.gameApp = function() {
                     tile.classList.contains('tile-present') || 
                     tile.classList.contains('tile-absent')
                 );
-                if (hasStatusTiles) {
-                    completedRows++;
-                }
+                if (hasStatusTiles) completedRows++;
             });
 
             // Current row should be the next empty row after completed ones
@@ -377,38 +310,24 @@ window.gameApp = function() {
          * Skips animation for invalid words to provide clear feedback distinction
          */
         animateNewGuess() {
-            const lastFilledRow = this.findRowToAnimate();
-            if (!lastFilledRow) return;
-            
-            const tiles = lastFilledRow.querySelectorAll('.tile.filled');
-            this.animateTiles(tiles);
-            lastFilledRow.classList.add('animated');
-            lastFilledRow.classList.remove('submitting');
-        },
-        
-        /**
-         * Find row that needs animation
-         */
-        findRowToAnimate() {
             const rows = document.querySelectorAll('#game-board > div');
-            return Array.from(rows).find((row, index) => {
+            const lastFilledRow = Array.from(rows).find((row, index) => {
                 const filledTiles = row.querySelectorAll('.tile.filled');
                 return filledTiles.length === this.WORD_LENGTH &&
                        !row.classList.contains('animated') &&
                        (row.classList.contains('submitting') || index < this.currentRow);
             });
-        },
-        
-        /**
-         * Animate tiles with staggered delay
-         */
-        animateTiles(tiles) {
+            
+            if (!lastFilledRow) return;
+            
+            const tiles = lastFilledRow.querySelectorAll('.tile.filled');
             tiles.forEach((tile, index) => {
                 tile.style.setProperty('--tile-index', index);
-                setTimeout(() => {
-                    tile.classList.add('flip');
-                }, index * this.ANIMATION_DELAY);
+                setTimeout(() => tile.classList.add('flip'), index * this.ANIMATION_DELAY);
             });
+            
+            lastFilledRow.classList.add('animated');
+            lastFilledRow.classList.remove('submitting');
         },
 
         /**
@@ -450,13 +369,9 @@ window.gameApp = function() {
                 const tiles = row.querySelectorAll('.tile.filled');
                 if (tiles.length === 5) {
                     tiles.forEach(tile => {
-                        if (tile.classList.contains('tile-correct')) {
-                            emojiGrid += '🟩';
-                        } else if (tile.classList.contains('tile-present')) {
-                            emojiGrid += '🟨';
-                        } else {
-                            emojiGrid += '⬛';
-                        }
+                        if (tile.classList.contains('tile-correct')) emojiGrid += '🟩';
+                        else if (tile.classList.contains('tile-present')) emojiGrid += '🟨';
+                        else emojiGrid += '⬛';
                     });
                     emojiGrid += '\n';
                 }
@@ -523,9 +438,7 @@ window.gameApp = function() {
             this.showToast = true;
 
             // Auto-hide after 3 seconds
-            setTimeout(() => {
-                this.showToast = false;
-            }, 3000);
+            setTimeout(() => this.showToast = false, 3000);
         },
 
         /**

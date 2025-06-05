@@ -1,12 +1,12 @@
-/* Vortludo Game-Specific Styles - Minimal Custom CSS */
+/* Vortludo Game-Specific Styles */
 
-/* CSS Custom Properties for game colors */
+/* CSS Custom Properties */
 :root {
     --wordle-correct: #6aaa64;
     --wordle-present: #c9b458;
     --wordle-absent: #787c7e;
     
-    /* Sepia theme colors for light mode */
+    /* Sepia theme colors */
     --sepia-bg: #f4f1e8;
     --sepia-surface: #ebe5d6;
     --sepia-border: #d4c5a9;
@@ -14,14 +14,11 @@
     --sepia-text-muted: #8b7355;
     --sepia-tile-bg: #faf8f3;
     --sepia-tile-border: #e0d0b7;
-    
-    /* Sepia-friendly Wordle colors for light mode */
-    --sepia-correct: #6b8e23;    /* Olive drab green - still earthy but clearly green */
-    --sepia-present: #b8860b;    /* Dark goldenrod for present */
-    --sepia-absent: #696969;     /* Dim gray for absent */
+    --sepia-correct: #6b8e23;
+    --sepia-present: #b8860b;
+    --sepia-absent: #696969;
 }
 
-/* Dark mode color overrides */
 [data-bs-theme="dark"] {
     --wordle-absent: #3a3a3c;
 }
@@ -31,14 +28,12 @@
     background-color: var(--sepia-bg);
 }
 
-/* Component theming with higher specificity */
 [data-bs-theme="light"] body {
     color: var(--sepia-text);
     background-color: var(--sepia-bg);
 }
 
 [data-bs-theme="light"] .navbar,
-[data-bs-theme="light"] .navbar.bg-body-tertiary,
 [data-bs-theme="light"] .bg-body-tertiary,
 [data-bs-theme="light"] .bg-body-secondary {
     background-color: var(--sepia-surface) !important;
@@ -52,7 +47,6 @@
     color: var(--sepia-text) !important;
 }
 
-/* Text utilities */
 [data-bs-theme="light"] .text-body {
     color: var(--sepia-text);
 }
@@ -61,7 +55,7 @@
     color: var(--sepia-text-muted);
 }
 
-/* Game tiles base styles */
+/* Game tiles */
 .tile {
     width: 3.2rem;
     height: 3.2rem;
@@ -75,7 +69,6 @@
     color: var(--sepia-text);
 }
 
-/* Tile states with proper specificity */
 .tile.tile-active {
     border-color: #878a8c;
     animation: pulse 2s infinite;
@@ -89,7 +82,7 @@
     border-color: var(--sepia-text-muted);
 }
 
-/* Wordle color states - using attribute selectors for higher specificity */
+/* Tile states */
 .tile[class*="tile-correct"] {
     background-color: var(--wordle-correct);
     color: white;
@@ -108,7 +101,7 @@
     border-color: var(--wordle-absent);
 }
 
-/* Light mode tile state overrides */
+/* Light mode overrides */
 [data-bs-theme="light"] .tile[class*="tile-correct"] {
     background-color: var(--sepia-correct);
     color: #faf8f3;
@@ -127,26 +120,28 @@
     border-color: var(--sepia-absent);
 }
 
-/* Apply sepia colors to keyboard keys as well */
+/* Keyboard styling */
+[data-bs-theme="light"] .key-correct,
+[data-bs-theme="light"] .key-present,
+[data-bs-theme="light"] .key-absent {
+    color: #faf8f3 !important;
+}
+
 [data-bs-theme="light"] .key-correct {
     background-color: var(--sepia-correct) !important;
     border-color: var(--sepia-correct) !important;
-    color: #faf8f3 !important;
 }
 
 [data-bs-theme="light"] .key-present {
     background-color: var(--sepia-present) !important;
     border-color: var(--sepia-present) !important;
-    color: #faf8f3 !important;
 }
 
 [data-bs-theme="light"] .key-absent {
     background-color: var(--sepia-absent) !important;
     border-color: var(--sepia-absent) !important;
-    color: #faf8f3 !important;
 }
 
-/* Keyboard consistent sizing */
 .key-button {
     min-width: 2.5rem;
     height: 3rem;
@@ -158,30 +153,7 @@
     font-weight: 600;
 }
 
-@media (max-width: 576px) {
-    .key-button {
-        min-width: 2.2rem;
-        height: 2.8rem;
-        padding: 0.4rem 0.2rem;
-        font-size: 0.8rem;
-    }
-}
-
-@media (max-width: 390px) {
-    .key-button {
-        min-width: 1.9rem;
-        height: 2.5rem;
-        padding: 0.3rem 0.15rem;
-        font-size: 0.75rem;
-    }
-}
-
 /* Keyboard layout */
-.keyboard {
-    margin: 0;
-    padding: 0;
-}
-
 .keyboard .d-flex {
     margin-bottom: 0.25rem;
 }
@@ -190,7 +162,6 @@
     margin-bottom: 0;
 }
 
-/* Special key sizing */
 .keyboard .btn.px-3 {
     min-width: 4rem;
     padding-left: 0.5rem !important;
@@ -203,33 +174,7 @@
     padding-right: 0.4rem !important;
 }
 
-@media (max-width: 576px) {
-    .keyboard .btn.px-3 {
-        min-width: 3.5rem;
-        font-size: 0.75rem;
-    }
-    
-    .keyboard .btn.px-2 {
-        min-width: 2.8rem;
-        font-size: 0.8rem;
-    }
-}
-
 /* Animations */
-@keyframes popIn {
-    0% {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-    40% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
@@ -257,54 +202,33 @@
     animation-delay: calc(var(--tile-index) * 0.1s);
 }
 
-/* Tile flip animation */
-.tile.flip {
-    animation: flip 0.6s ease-in-out forwards;
-    animation-delay: calc(var(--tile-index) * 0.1s);
-}
-
 @keyframes flip {
     0% { transform: rotateX(0); }
     50% { transform: rotateX(-90deg); }
     100% { transform: rotateX(0); }
 }
 
-/* Prevent iOS zoom on inputs */
+.tile.flip {
+    animation: flip 0.6s ease-in-out forwards;
+    animation-delay: calc(var(--tile-index) * 0.1s);
+}
+
+/* Mobile optimizations */
 input[type="text"] {
     font-size: 16px !important;
 }
 
-/* Mobile touch optimizations */
 @media (hover: none) {
     .btn:hover {
         background-color: inherit;
     }
 }
 
-/* Prevent unnecessary scrolling */
 body {
     overflow-x: hidden;
 }
 
-/* Responsive Design - Mobile First */
-/* Base styles are for mobile, then enhance for larger screens */
-
-/* Tablet and up */
-@media (min-width: 577px) {
-    .tile {
-        width: 3.2rem;
-        height: 3.2rem;
-        font-size: 1.5rem;
-    }
-    
-    .key-button {
-        min-width: 2.5rem;
-        height: 3rem;
-        font-size: 0.875rem;
-    }
-}
-
-/* Mobile overrides */
+/* Responsive breakpoints */
 @media (max-width: 576px) {
     .tile {
         width: 2.8rem;
@@ -318,12 +242,21 @@ body {
         font-size: 0.8rem;
     }
     
+    .keyboard .btn.px-3 {
+        min-width: 3.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .keyboard .btn.px-2 {
+        min-width: 2.8rem;
+        font-size: 0.8rem;
+    }
+    
     #game-board-container {
         margin-bottom: 0.75rem;
     }
 }
 
-/* Small mobile overrides */
 @media (max-width: 390px) {
     .tile {
         width: 2.4rem;

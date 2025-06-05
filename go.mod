@@ -2,7 +2,11 @@ module vortludo
 
 go 1.24.0
 
-require github.com/gin-gonic/gin v1.10.1
+require (
+	github.com/gin-gonic/gin v1.10.1
+	github.com/tdewolff/minify/v2 v2.23.8
+	go.eigsys.de/gin-cachecontrol/v2 v2.3.0
+)
 
 require (
 	github.com/bytedance/sonic v1.13.3 // indirect
@@ -21,9 +25,9 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
+	github.com/tdewolff/parse/v2 v2.8.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.14 // indirect
-	go.eigsys.de/gin-cachecontrol/v2 v2.3.0 // direct
 	golang.org/x/arch v0.17.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
