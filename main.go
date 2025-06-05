@@ -22,8 +22,8 @@ const (
 	MaxGuesses     = 6
 	WordLength     = 5
 	SessionTimeout = 2 * time.Hour
-	CookieMaxAge   = 7200 // 2 hours in seconds
-	StaticCacheAge = 24 * time.Hour
+	CookieMaxAge   = 2 * time.Hour
+	StaticCacheAge = 5 * time.Minute // Decreased cache time for static assets
 	sessionCookie  = "session_id"
 )
 
@@ -65,18 +65,16 @@ func main() {
 
 	// Apply cache control middleware BEFORE loading templates and static files
 	if isProduction {
-		// Cache static assets aggressively for production
+		// Cache static assets for a short period (no hashes in filenames)
 		router.Use(func(c *gin.Context) {
 			if strings.HasPrefix(c.Request.URL.Path, "/static/") {
 				cachecontrol.New(cachecontrol.Config{
 					Public:    true,
-					MaxAge:    cachecontrol.Duration(30 * 24 * time.Hour), // 30 days for minified assets
-					Immutable: true,
+					MaxAge:    cachecontrol.Duration(5 * time.Minute), // 5 minutes for static assets
+					Immutable: false,
 				})(c)
-				// Add compression headers for better performance
 				c.Header("Vary", "Accept-Encoding")
 			} else {
-				// No cache for HTML pages and API endpoints
 				cachecontrol.New(cachecontrol.Config{
 					NoStore:        true,
 					NoCache:        true,
@@ -413,7 +411,7 @@ func getOrCreateSession(c *gin.Context) string {
 	if err != nil {
 		sessionID = fmt.Sprintf("%d", time.Now().UnixNano())
 		// Set cookie for 2 hours to match session cleanup
-		c.SetCookie(sessionCookie, sessionID, CookieMaxAge, "/", "", false, true)
+		c.SetCookie(sessionCookie, sessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session: %s", sessionID)
 	}
 	return sessionID
