@@ -313,6 +313,9 @@ func getTargetWord(game *GameState) string {
 
 // updateGameState updates the game based on the guess
 func updateGameState(game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
+	if game.CurrentRow >= MaxGuesses {
+		return
+	}
 	game.Guesses[game.CurrentRow] = result
 	game.GuessHistory = append(game.GuessHistory, guess)
 
@@ -482,7 +485,7 @@ func createNewGame(sessionID string) *GameState {
 
 	// Initialize empty guess rows
 	for i := range game.Guesses {
-		game.Guesses[i] = make([]GuessResult, 5)
+		game.Guesses[i] = make([]GuessResult, WordLength)
 	}
 
 	sessionMutex.Lock()
