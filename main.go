@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	cachecontrol "go.eigsys.de/gin-cachecontrol/v2"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,6 +48,7 @@ func main() {
 
 	// Setup web server
 	router := gin.Default()
+	router.SetTrustedProxies([]string{"127.0.0.1"})
 
 	// Serve static files from appropriate directory
 	if isProduction && dirExists("dist") {
@@ -62,6 +65,23 @@ func main() {
 	router.POST("/new-game", newGameHandler)
 	router.POST("/guess", guessHandler)
 	router.GET("/game-state", gameStateHandler)
+
+	// Apply cache control middleware using gin-cachecontrol
+	if isProduction {
+		// 1 day, immutable for production
+		router.Use(cachecontrol.New(cachecontrol.Config{
+			Public:    true,
+			MaxAge:    cachecontrol.Duration(24 * time.Hour),
+			Immutable: true,
+		}))
+	} else {
+		// Disable caching for development
+		router.Use(cachecontrol.New(cachecontrol.Config{
+			NoStore:        true,
+			NoCache:        true,
+			MustRevalidate: true,
+		}))
+	}
 
 	// Start server
 	port := os.Getenv("PORT")

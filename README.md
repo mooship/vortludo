@@ -174,6 +174,9 @@ make prod
 
 - **Backend**: Go 1.24 + Gin web framework
 - **Frontend**: HTML5, CSS3, vanilla JavaScript
+- **UI Framework**: [Bootstrap 5](https://getbootstrap.com/) (CDN)
+- **Reactive UI**: [Alpine.js](https://alpinejs.dev/) (CDN)
+- **AJAX/Partial Updates**: [HTMX](https://htmx.org/) (CDN)
 - **Storage**: JSON files (no database required)
 - **Templating**: Go's html/template
 - **Build**: Make + GitHub Actions
