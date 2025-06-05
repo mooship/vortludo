@@ -1,5 +1,7 @@
 # Vortludo 🎯
 
+[![Go](https://github.com/mooship/vortludo/actions/workflows/go.yml/badge.svg)](https://github.com/mooship/vortludo/actions/workflows/go.yml)
+
 A libre (free and open source) Wordle clone built with Go and Gin. Each game session uses a random word from the dictionary, making it replayable with fresh challenges!
 
 ## Features
