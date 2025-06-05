@@ -12,7 +12,6 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
 - 🌙 **Automatic cleanup** - Old game sessions are cleaned up automatically
 - 🚀 **Zero database** - Simple file-based storage
 - 🔒 **Session security** - HTTPOnly cookies and session validation
-- ⚡ **Optimized assets** - Automatic minification of CSS, JS, and HTML in production
 
 ## Quick Start
 
@@ -54,7 +53,7 @@ make setup        # First-time project setup
 
 # Building
 make build        # Build binary for current OS
-make render-build # Build for Render deployment with minification
+make render-build # Build for Render deployment
 make prod         # Build and run in production mode
 make run          # Run in production mode without rebuild
 
@@ -75,15 +74,7 @@ go mod tidy && go mod download
 # Build for local use
 go build -o vortludo.exe .
 
-# Build for production with minification
-mkdir -p dist/static dist/templates
-cp -r static/* dist/static/
-go run cmd/minify/main.go -type=css -input=static/style.css -output=dist/static/style.css
-go run cmd/minify/main.go -type=js -input=static/client.js -output=dist/static/client.js
-for template in templates/*.html; do
-  filename=$(basename "${template}")
-  go run cmd/minify/main.go -type=html -input="${template}" -output="dist/templates/${filename}"
-done
+# Build for Render deployment
 go build -tags netgo -ldflags '-s -w' -o vortludo
 
 # Run tests
@@ -97,18 +88,12 @@ vortludo/
 ├── main.go              # Main application and HTTP handlers
 ├── types.go             # Data structures and types
 ├── persistence.go       # File-based game session storage
-├── cmd/
-│   └── minify/         # Asset minification tool
-│       └── main.go     # Minifier for CSS, JS, and HTML
 ├── data/
 │   ├── words.json       # Dictionary of valid words with hints
 │   ├── daily-word.json  # Current daily word (auto-generated)
 │   └── sessions/        # Game session files (auto-generated)
 ├── templates/           # HTML templates
 ├── static/             # CSS, JS, and favicon assets
-├── dist/               # Minified assets (production build)
-│   ├── static/         # Minified CSS and JS
-│   └── templates/      # Minified HTML templates
 ├── render.yaml         # Render.com deployment configuration
 ├── Makefile           # Development and build scripts
 └── .github/workflows/ # GitHub Actions CI/CD
@@ -145,15 +130,6 @@ This approach is:
 3. **Persistence**: State is saved to both memory and file after each guess
 4. **Cleanup**: Sessions older than 2 hours are automatically deleted
 
-### Asset Optimization
-
-In production builds, all assets are automatically minified:
-- **CSS**: Removes whitespace, comments, and optimizes rules
-- **JavaScript**: Minifies code while preserving functionality
-- **HTML**: Compresses templates by removing unnecessary whitespace
-
-The minification tool (`cmd/minify/main.go`) is run during the build process and outputs optimized files to the `dist/` directory.
-
 ## Configuration
 
 ### Environment Variables
@@ -172,25 +148,24 @@ The minification tool (`cmd/minify/main.go`) is run during the build process and
 ### Render.com Deployment
 
 1. **Connect your GitHub repository** to Render
-2. **Create a new Web Service** - Render will automatically detect the `render.yaml` configuration
-3. **Deploy** - Render will automatically build and deploy your app with:
-   - Minified CSS, JS, and HTML templates
-   - Optimized binary with stripped debug symbols
-   - Production environment variables
+2. **Create a new Web Service** with these settings:
+   - **Runtime**: `Go`
+   - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o vortludo`
+   - **Start Command**: `./vortludo`
+3. **Set Environment Variables**:
+   - `GIN_MODE=release`
+   - `ENV=production`
+   - `PORT=10000`
+4. **Deploy** - Render will automatically build and deploy your app
+
+Alternatively, you can use the included `render.yaml` file for automatic configuration by connecting your repo and Render will detect it automatically.
 
 Your app will be available at `https://your-app-name.onrender.com`
-
-The build process on Render:
-1. Creates distribution directories
-2. Copies static assets
-3. Minifies CSS, JavaScript, and HTML templates
-4. Builds an optimized Go binary
-5. Starts the server with production settings
 
 ### Local Production Testing
 
 ```bash
-# Build for production with minification (same as Render)
+# Build for production (same as Render)
 make render-build
 
 # Test production build locally
@@ -205,8 +180,6 @@ The application can be deployed to any platform that supports Go:
 - Fly.io
 - DigitalOcean App Platform
 - Traditional VPS with systemd
-
-For platforms without automatic build detection, use the build commands from the `render.yaml` file.
 
 ## API Endpoints
 
@@ -232,7 +205,6 @@ For platforms without automatic build detection, use the build commands from the
 - Update documentation as needed
 - Test on both development and production modes
 - Ensure proper error handling and logging
-- Test minification process for any new assets
 
 ## Technology Stack
 
@@ -243,7 +215,7 @@ For platforms without automatic build detection, use the build commands from the
 - **AJAX/Partial Updates**: [HTMX](https://htmx.org/) (CDN)
 - **Storage**: JSON files (no database required)
 - **Templating**: Go's html/template
-- **Build Tools**: Make + Go modules + Custom minification
+- **Build Tools**: Make + Go modules
 - **Deployment**: Render.com with GitHub Actions
 
 ## License
