@@ -1,4 +1,4 @@
-.PHONY: build dev clean run prod deps
+.PHONY: build dev clean run prod deps test setup
 
 # Development mode - run without minification
 dev:
@@ -15,10 +15,12 @@ prod: build
 	@echo "🚀 Starting production server..."
 	set GIN_MODE=release && vortludo.exe
 
-# Clean build artifacts
+# Clean build artifacts and data
 clean:
 	@echo "🧹 Cleaning build artifacts..."
 	@if exist vortludo.exe del vortludo.exe
+	@if exist data\daily-word.json del data\daily-word.json
+	@if exist data\sessions rmdir /s /q data\sessions
 
 # Run in production mode (no minification)
 run:
@@ -30,3 +32,14 @@ deps:
 	@echo "📥 Installing dependencies..."
 	go mod tidy
 	go mod download
+
+# Run tests
+test:
+	@echo "🧪 Running tests..."
+	go test -v ./...
+
+# Setup project for first time
+setup: deps
+	@echo "🚀 Setting up project..."
+	@if not exist data mkdir data
+	@echo "✅ Project setup complete! Run 'make dev' to start development server."

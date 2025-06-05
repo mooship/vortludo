@@ -41,6 +41,9 @@ func main() {
 	// Start daily word rotation scheduler
 	go dailyWordScheduler()
 
+	// Start session cleanup scheduler (every hour, removes sessions older than 2 hours)
+	go sessionCleanupScheduler()
+
 	// Setup web server
 	router := gin.Default()
 
@@ -152,6 +155,18 @@ func dailyWordScheduler() {
 
 		if err := setNewDailyWord(); err != nil {
 			log.Printf("Failed to set new daily word: %v", err)
+		}
+	}
+}
+
+// sessionCleanupScheduler removes old session files every hour
+func sessionCleanupScheduler() {
+	for {
+		timer := time.NewTimer(time.Hour)
+		<-timer.C
+
+		if err := cleanupOldSessions(2 * time.Hour); err != nil {
+			log.Printf("Failed to cleanup old sessions: %v", err)
 		}
 	}
 }
@@ -334,7 +349,8 @@ func getOrCreateSession(c *gin.Context) string {
 	sessionID, err := c.Cookie("session_id")
 	if err != nil {
 		sessionID = fmt.Sprintf("%d", time.Now().UnixNano())
-		c.SetCookie("session_id", sessionID, 86400, "/", "", false, true)
+		// Set cookie for 2 hours to match session cleanup
+		c.SetCookie("session_id", sessionID, 7200, "/", "", false, true)
 	}
 	return sessionID
 }
@@ -345,11 +361,21 @@ func getGameState(sessionID string) *GameState {
 	game, exists := gameSessions[sessionID]
 	sessionMutex.RUnlock()
 
-	if !exists {
-		return createNewGame(sessionID)
+	if exists {
+		return game
 	}
 
-	return game
+	// Try to load from file
+	if game, err := loadGameSessionFromFile(sessionID); err == nil {
+		// Cache in memory for faster access
+		sessionMutex.Lock()
+		gameSessions[sessionID] = game
+		sessionMutex.Unlock()
+		return game
+	}
+
+	// Create new game if not found anywhere
+	return createNewGame(sessionID)
 }
 
 // createNewGame creates a new game state with a random word
@@ -386,6 +412,11 @@ func saveGameState(sessionID string, game *GameState) {
 	sessionMutex.Lock()
 	gameSessions[sessionID] = game
 	sessionMutex.Unlock()
+
+	// Also save to file for persistence across server restarts
+	if err := saveGameSessionToFile(sessionID, game); err != nil {
+		log.Printf("Failed to save session %s to file: %v", sessionID, err)
+	}
 }
 
 // dirExists checks if a directory path exists

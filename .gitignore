@@ -32,6 +32,7 @@ go.work.sum
 
 # Generated game data
 data/daily-word.json
+data/sessions/
 
 # Editor/IDE
 # .idea/
