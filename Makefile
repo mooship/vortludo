@@ -13,19 +13,20 @@ build:
 # Production mode - build and run
 prod: build
 	@echo "🚀 Starting production server..."
-	set GIN_MODE=release && vortludo.exe
+	GIN_MODE=release ./vortludo.exe || GIN_MODE=release ./vortludo
 
 # Clean build artifacts and data
 clean:
 	@echo "🧹 Cleaning build artifacts..."
-	@if exist vortludo.exe del vortludo.exe
-	@if exist data\daily-word.json del data\daily-word.json
-	@if exist data\sessions rmdir /s /q data\sessions
+	@if [ -f vortludo.exe ]; then rm vortludo.exe; fi; \
+	if [ -f vortludo ]; then rm vortludo; fi; \
+	if [ -f data/daily-word.json ]; then rm data/daily-word.json; fi; \
+	if [ -d data/sessions ]; then rm -rf data/sessions; fi
 
 # Run in production mode (no minification)
 run:
 	@echo "🔧 Running in production mode..."
-	set ENV=production && go run .
+	ENV=production go run .
 
 # Install dependencies
 deps:
@@ -41,5 +42,5 @@ test:
 # Setup project for first time
 setup: deps
 	@echo "🚀 Setting up project..."
-	@if not exist data mkdir data
+	@if [ ! -d data ]; then mkdir -p data; fi
 	@echo "✅ Project setup complete! Run 'make dev' to start development server."
