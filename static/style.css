@@ -1,13 +1,12 @@
-/* Vortludo Game Styles */
+/* Vortludo Game-Specific Styles */
 
-/* Theme Variables */
+/* CSS Custom Properties */
 :root {
-    /* Wordle colors */
     --wordle-correct: #6aaa64;
     --wordle-present: #c9b458;
     --wordle-absent: #787c7e;
     
-    /* Sepia theme */
+    /* Sepia theme colors */
     --sepia-bg: #f4f1e8;
     --sepia-surface: #ebe5d6;
     --sepia-border: #d4c5a9;
@@ -24,7 +23,7 @@
     --wordle-absent: #3a3a3c;
 }
 
-/* Sepia theme overrides */
+/* Base theme application */
 [data-bs-theme="light"] {
     background-color: var(--sepia-bg);
 }
@@ -83,7 +82,7 @@
     border-color: var(--sepia-text-muted);
 }
 
-/* Tile status colors */
+/* Tile states */
 .tile[class*="tile-correct"] {
     background-color: var(--wordle-correct);
     color: white;
@@ -102,7 +101,7 @@
     border-color: var(--wordle-absent);
 }
 
-/* Light mode tile colors */
+/* Light mode overrides */
 [data-bs-theme="light"] .tile[class*="tile-correct"] {
     background-color: var(--sepia-correct);
     color: #faf8f3;
@@ -121,7 +120,7 @@
     border-color: var(--sepia-absent);
 }
 
-/* Virtual keyboard */
+/* Keyboard styling */
 [data-bs-theme="light"] .key-correct,
 [data-bs-theme="light"] .key-present,
 [data-bs-theme="light"] .key-absent {
@@ -216,7 +215,7 @@
 
 /* Mobile optimizations */
 input[type="text"] {
-    font-size: 16px !important; /* Prevent zoom on iOS */
+    font-size: 16px !important;
 }
 
 @media (hover: none) {
@@ -229,7 +228,7 @@ body {
     overflow-x: hidden;
 }
 
-/* Responsive design */
+/* Responsive breakpoints */
 @media (max-width: 576px) {
     .tile {
         width: 2.8rem;
