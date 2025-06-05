@@ -136,7 +136,8 @@ This approach is:
 
 1. **Connect your GitHub repository** to Render
 2. **Create a new Web Service** with these settings:
-   - **Root Directory**: *(leave empty)*
+   - **Root Directory**: `/` (or leave empty)
+   - **Runtime**: `Go`
    - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o app`
    - **Start Command**: `./app`
 3. **Set Environment Variables**:
@@ -144,6 +145,8 @@ This approach is:
    - `PORT=10000` 
    - `ENV=production`
 4. **Deploy** - Render will automatically build and deploy your app
+
+Alternatively, you can use the included `render.yaml` file for automatic configuration.
 
 Your app will be available at `https://your-app-name.onrender.com`
 
