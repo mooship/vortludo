@@ -1,17 +1,21 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	cachecontrol "go.eigsys.de/gin-cachecontrol/v2"
 
 	"github.com/gin-gonic/gin"
@@ -65,30 +69,13 @@ func main() {
 
 	// Apply cache control middleware BEFORE loading templates and static files
 	if isProduction {
-		// Force browsers to always revalidate static assets
 		router.Use(func(c *gin.Context) {
-			if strings.HasPrefix(c.Request.URL.Path, "/static/") {
-				cachecontrol.New(cachecontrol.Config{
-					NoCache:        true,
-					MustRevalidate: true,
-					Public:         true,
-				})(c)
-				c.Header("Vary", "Accept-Encoding")
-			} else {
-				cachecontrol.New(cachecontrol.Config{
-					NoStore:        true,
-					NoCache:        true,
-					MustRevalidate: true,
-				})(c)
-			}
+			applyCacheHeaders(c, true)
 		})
 	} else {
-		// Disable all caching for development
-		router.Use(cachecontrol.New(cachecontrol.Config{
-			NoStore:        true,
-			NoCache:        true,
-			MustRevalidate: true,
-		}))
+		router.Use(func(c *gin.Context) {
+			applyCacheHeaders(c, false)
+		})
 	}
 
 	// Serve static files from appropriate directory with minified assets in production
@@ -109,15 +96,62 @@ func main() {
 	router.POST("/guess", guessHandler)
 	router.GET("/game-state", gameStateHandler)
 
-	// Start server
+	// Start server with graceful shutdown
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: router,
+	}
+
+	// Graceful shutdown
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)
+		<-sigint
+		log.Println("Shutdown signal received, shutting down server gracefully...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("HTTP server Shutdown: %v", err)
+		}
+		close(idleConnsClosed)
+	}()
 
 	log.Printf("Server starting on http://localhost:%s", port)
-	if err := router.Run(":" + port); err != nil {
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("Server failed to start: %v", err)
+	}
+	<-idleConnsClosed
+	log.Println("Server shutdown complete")
+}
+
+// Helper to apply cache headers
+func applyCacheHeaders(c *gin.Context, production bool) {
+	if production {
+		if strings.HasPrefix(c.Request.URL.Path, "/static/") {
+			cachecontrol.New(cachecontrol.Config{
+				NoCache:        true,
+				MustRevalidate: true,
+				Public:         true,
+			})(c)
+			c.Header("Vary", "Accept-Encoding")
+		} else {
+			cachecontrol.New(cachecontrol.Config{
+				NoStore:        true,
+				NoCache:        true,
+				MustRevalidate: true,
+			})(c)
+		}
+	} else {
+		cachecontrol.New(cachecontrol.Config{
+			NoStore:        true,
+			NoCache:        true,
+			MustRevalidate: true,
+		})(c)
 	}
 }
 
@@ -168,10 +202,7 @@ func sessionCleanupScheduler() {
 
 // homeHandler serves the main game page
 func homeHandler(c *gin.Context) {
-	// Add cache control headers to prevent stale content
-	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
-	c.Header("Pragma", "no-cache")
-	c.Header("Expires", "0")
+	applyNoCacheHeaders(c)
 
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
@@ -197,10 +228,7 @@ func homeHandler(c *gin.Context) {
 
 // newGameHandler resets the current session's game with a new word
 func newGameHandler(c *gin.Context) {
-	// Add cache control headers
-	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
-	c.Header("Pragma", "no-cache")
-	c.Header("Expires", "0")
+	applyNoCacheHeaders(c)
 
 	sessionID := getOrCreateSession(c)
 	log.Printf("Creating new game for session: %s", sessionID)
@@ -219,9 +247,9 @@ func newGameHandler(c *gin.Context) {
 	if c.Query("reset") == "1" {
 		// Force a completely new session by clearing the cookie
 		c.SetCookie("session_id", "", -1, "/", "", false, true)
-		// Create completely new session with current timestamp
-		newSessionID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), rand.Int63())
-		c.SetCookie("session_id", newSessionID, 7200, "/", "", false, true)
+		// Create completely new session with UUID
+		newSessionID := uuid.NewString()
+		c.SetCookie("session_id", newSessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session ID: %s", newSessionID)
 		createNewGame(newSessionID)
 	} else {
@@ -233,10 +261,7 @@ func newGameHandler(c *gin.Context) {
 
 // guessHandler processes a player's word guess
 func guessHandler(c *gin.Context) {
-	// Add cache control headers
-	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
-	c.Header("Pragma", "no-cache")
-	c.Header("Expires", "0")
+	applyNoCacheHeaders(c)
 
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
@@ -279,6 +304,13 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 		return fmt.Errorf("invalid word length")
 	}
 
+	// Prevent guess overflow
+	if game.CurrentRow >= MaxGuesses {
+		log.Printf("Session %s attempted guess after max guesses reached", sessionID)
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "No more guesses allowed!"})
+		return fmt.Errorf("guess overflow")
+	}
+
 	// Get target word
 	targetWord := getTargetWord(game)
 
@@ -314,7 +346,7 @@ func getTargetWord(game *GameState) string {
 // updateGameState updates the game based on the guess
 func updateGameState(game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
 	if game.CurrentRow >= MaxGuesses {
-		return
+		return // Prevent out-of-bounds write
 	}
 	game.Guesses[game.CurrentRow] = result
 	game.GuessHistory = append(game.GuessHistory, guess)
@@ -340,10 +372,7 @@ func updateGameState(game *GameState, guess, targetWord string, result []GuessRe
 
 // gameStateHandler returns current game state (for HTMX)
 func gameStateHandler(c *gin.Context) {
-	// Add cache control headers
-	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
-	c.Header("Pragma", "no-cache")
-	c.Header("Expires", "0")
+	applyNoCacheHeaders(c)
 
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
@@ -371,7 +400,7 @@ func checkGuess(guess, target string) []GuessResult {
 	targetCopy := []rune(target)
 
 	// First pass: mark exact matches (green)
-	for i := range WordLength {
+	for i := 0; i < WordLength; i++ {
 		if guess[i] == target[i] {
 			result[i] = GuessResult{Letter: string(guess[i]), Status: "correct"}
 			targetCopy[i] = ' ' // Mark as used
@@ -414,8 +443,8 @@ func isValidWord(word string) bool {
 // getOrCreateSession retrieves or creates a session ID cookie
 func getOrCreateSession(c *gin.Context) string {
 	sessionID, err := c.Cookie(sessionCookie)
-	if err != nil {
-		sessionID = fmt.Sprintf("%d", time.Now().UnixNano())
+	if err != nil || len(sessionID) < 10 {
+		sessionID = uuid.NewString()
 		// Set cookie for 2 hours to match session cleanup
 		c.SetCookie(sessionCookie, sessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session: %s", sessionID)
@@ -446,7 +475,7 @@ func getGameState(sessionID string) *GameState {
 		log.Printf("Attempting to load game state from file for session: %s", sessionID)
 		if game, err := loadGameSessionFromFile(sessionID); err == nil {
 			// Validate the loaded game state
-			if game.SessionWord != "" && len(game.Guesses) == 6 {
+			if game.SessionWord != "" && len(game.Guesses) == MaxGuesses {
 				// Cache in memory for faster access
 				sessionMutex.Lock()
 				gameSessions[sessionID] = game
@@ -474,7 +503,7 @@ func createNewGame(sessionID string) *GameState {
 	log.Printf("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
 
 	game := &GameState{
-		Guesses:      make([][]GuessResult, 6),
+		Guesses:      make([][]GuessResult, MaxGuesses),
 		CurrentRow:   0,
 		GameOver:     false,
 		Won:          false,
@@ -508,6 +537,13 @@ func saveGameState(sessionID string, game *GameState) {
 	} else {
 		log.Printf("Successfully saved game state to file for session: %s", sessionID)
 	}
+}
+
+// Helper to apply no-cache headers (for handlers)
+func applyNoCacheHeaders(c *gin.Context) {
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
 }
 
 // dirExists checks if a directory path exists
