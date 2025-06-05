@@ -11,6 +11,7 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
 - 💾 **Session persistence** - Games are saved across browser sessions
 - 🌙 **Automatic cleanup** - Old game sessions are cleaned up automatically
 - 🚀 **Zero database** - Simple file-based storage
+- 🔒 **Session security** - HTTPOnly cookies and session validation
 
 ## Quick Start
 
@@ -23,7 +24,7 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/vortludo.git
+   git clone https://github.com/mooship/vortludo.git
    cd vortludo
    ```
 
@@ -51,7 +52,8 @@ make deps         # Install/update dependencies
 make setup        # First-time project setup
 
 # Building
-make build        # Build binary
+make build        # Build binary for current OS
+make render-build # Build for Render deployment
 make prod         # Build and run in production mode
 make run          # Run in production mode without rebuild
 
@@ -67,10 +69,13 @@ make clean        # Clean build artifacts and game data
 go run .
 
 # Install dependencies
-go mod tidy
+go mod tidy && go mod download
 
-# Build
+# Build for local use
 go build -o vortludo.exe .
+
+# Build for Render deployment
+go build -tags netgo -ldflags '-s -w' -o app
 
 # Run tests
 go test -v ./...
@@ -89,7 +94,9 @@ vortludo/
 │   └── sessions/        # Game session files (auto-generated)
 ├── templates/           # HTML templates
 ├── static/             # CSS, JS, and favicon assets
-└── .github/workflows/  # GitHub Actions CI/CD
+├── render.yaml         # Render.com deployment configuration
+├── Makefile           # Development and build scripts
+└── .github/workflows/ # GitHub Actions CI/CD
 ```
 
 ## How It Works
@@ -97,9 +104,9 @@ vortludo/
 ### Game Logic
 
 1. **Word Selection**: Each new game randomly selects a word from `data/words.json`
-2. **Session Management**: Games are tied to browser sessions via cookies
+2. **Session Management**: Games are tied to browser sessions via HTTPOnly cookies
 3. **Persistence**: Game state is saved to JSON files in `data/sessions/`
-4. **Cleanup**: Old sessions (>2 hours) are automatically removed
+4. **Cleanup**: Old sessions (>2 hours) are automatically removed every hour
 
 ### File-Based Storage
 
@@ -107,19 +114,20 @@ Instead of a database, Vortludo uses simple JSON files:
 
 - **Game sessions**: `data/sessions/{sessionId}.json`
 - **Word dictionary**: `data/words.json` (static)
-- **Daily word**: `data/daily-word.json` (rotates daily)
+- **Daily word**: `data/daily-word.json` (rotates daily at midnight)
 
 This approach is:
 - ✅ Simple and lightweight
 - ✅ Easy to backup and restore
 - ✅ No database setup required
 - ✅ Perfect for single-server deployments
+- ✅ Automatic cleanup prevents disk bloat
 
 ### Session Lifecycle
 
-1. **Creation**: New session gets a random word and 6 empty guess rows
-2. **Gameplay**: Guesses are validated and stored with color feedback
-3. **Persistence**: State is saved to file after each guess
+1. **Creation**: New session gets a unique ID and random word
+2. **Gameplay**: Guesses are validated against dictionary and stored with color feedback
+3. **Persistence**: State is saved to both memory and file after each guess
 4. **Cleanup**: Sessions older than 2 hours are automatically deleted
 
 ## Configuration
@@ -127,10 +135,15 @@ This approach is:
 ### Environment Variables
 
 - `PORT` - Server port (default: 8080)
-- `GIN_MODE` - Set to "release" for production
+- `GIN_MODE` - Set to "release" for production optimizations
 - `ENV` - Set to "production" for production static file serving
 
-### Production Deployment
+### Cache Control
+
+- **Development**: All caching disabled for live reloading
+- **Production**: Static assets cached for 24 hours, HTML/API not cached
+
+## Deployment
 
 ### Render.com Deployment
 
@@ -159,13 +172,23 @@ make render-build
 GIN_MODE=release PORT=8080 ENV=production ./app
 ```
 
+### Other Platforms
+
+The application can be deployed to any platform that supports Go:
+- Heroku
+- Railway
+- Fly.io
+- DigitalOcean App Platform
+- Traditional VPS with systemd
+
 ## API Endpoints
 
 - `GET /` - Main game page
-- `GET /new-game` - Start a new game
+- `GET /new-game` - Start a new game (redirects)
 - `POST /new-game` - Start a new game (form submission)
-- `POST /guess` - Submit a word guess
-- `GET /game-state` - Get current game state (HTMX)
+- `POST /guess` - Submit a word guess (returns HTMX partial)
+- `GET /game-state` - Get current game state (HTMX partial)
+- `GET /static/*` - Static assets (CSS, JS, images)
 
 ## Contributing
 
@@ -181,27 +204,30 @@ GIN_MODE=release PORT=8080 ENV=production ./app
 - Add tests for new functionality
 - Update documentation as needed
 - Test on both development and production modes
+- Ensure proper error handling and logging
 
 ## Technology Stack
 
-- **Backend**: Go 1.24 + Gin web framework
+- **Backend**: Go 1.21+ with Gin web framework
 - **Frontend**: HTML5, CSS3, vanilla JavaScript
 - **UI Framework**: [Bootstrap 5](https://getbootstrap.com/) (CDN)
 - **Reactive UI**: [Alpine.js](https://alpinejs.dev/) (CDN)
 - **AJAX/Partial Updates**: [HTMX](https://htmx.org/) (CDN)
 - **Storage**: JSON files (no database required)
 - **Templating**: Go's html/template
-- **Build**: Make + GitHub Actions
+- **Build Tools**: Make + Go modules
+- **Deployment**: Render.com with GitHub Actions
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is open source and available under the MIT License.
 
 ## Acknowledgments
 
 - Inspired by the original Wordle game by Josh Wardle
 - Built as a libre (free and open source) alternative
 - Word list curated for family-friendly gameplay
+- Community contributions welcome
 
 ---
 

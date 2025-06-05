@@ -18,14 +18,13 @@ prod: build
 # Build for Render deployment
 render-build:
 	@echo "🚀 Building for Render deployment..."
-	go build -tags netgo -ldflags '-s -w' -o app
+	go build -tags netgo -ldflags '-s -w' -o vortludo
 
 # Clean build artifacts and data
 clean:
 	@echo "🧹 Cleaning build artifacts..."
 	@if [ -f vortludo.exe ]; then rm vortludo.exe; fi; \
 	if [ -f vortludo ]; then rm vortludo; fi; \
-	if [ -f app ]; then rm app; fi; \
 	if [ -f data/daily-word.json ]; then rm data/daily-word.json; fi; \
 	if [ -d data/sessions ]; then rm -rf data/sessions; fi
 
