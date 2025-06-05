@@ -1,93 +1,99 @@
-/* Vortludo Styles - A Libre Wordle Clone */
+/* Vortludo Game-Specific Styles - Minimal Custom CSS */
 
-/* CSS Custom Properties for consistent theming across light/dark modes */
+/* CSS Custom Properties for game colors */
 :root {
-    --correct: #6aaa64;
-    --present: #c9b458;
-    --absent: #787c7e;
-    --border-color: #d3d6da;
-    --key-bg: #d3d6da;
-    --key-text: #393e4c;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --text-primary: #212529;
-    --text-secondary: #6c757d;
-    --tile-bg: #ffffff;
+    --wordle-correct: #6aaa64;
+    --wordle-present: #c9b458;
+    --wordle-absent: #787c7e;
+    
+    /* Sepia theme colors for light mode */
+    --sepia-bg: #f4f1e8;
+    --sepia-surface: #ebe5d6;
+    --sepia-border: #d4c5a9;
+    --sepia-text: #5d4e37;
+    --sepia-text-muted: #8b7355;
+    --sepia-tile-bg: #faf8f3;
+    --sepia-tile-border: #e0d0b7;
+    
+    /* Sepia-friendly Wordle colors for light mode */
+    --sepia-correct: #6b8e23;    /* Olive drab green - still earthy but clearly green */
+    --sepia-present: #b8860b;    /* Dark goldenrod for present */
+    --sepia-absent: #696969;     /* Dim gray for absent */
 }
 
-/* Dark theme color overrides */
-[data-theme="dark"] {
-    --bg-primary: #121213;
-    --bg-secondary: #1a1a1b;
-    --text-primary: #ffffff;
-    --text-secondary: #9ca3af;
-    --border-color: #3a3a3c;
-    --tile-bg: #121213;
-    --key-bg: #818384;
-    --key-text: #ffffff;
-    --absent: #3a3a3c;
+[data-bs-theme="dark"] {
+    --wordle-absent: #3a3a3c;
 }
 
-/* Base Styles */
-* {
-    box-sizing: border-box;
+/* Apply sepia theme to light mode */
+[data-bs-theme="light"] {
+    background-color: var(--sepia-bg) !important;
 }
 
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    min-height: 100vh;
-    margin: 0;
-    color: var(--text-primary);
-    transition: background 0.3s ease, color 0.3s ease;
+/* Sepia styling for navbar and surfaces */
+[data-bs-theme="light"] .navbar {
+    background-color: var(--sepia-surface) !important;
+    border-color: var(--sepia-border) !important;
 }
 
-[data-theme="dark"] body {
-    background: linear-gradient(135deg, #1a1a1b 0%, #2d2d30 100%);
+[data-bs-theme="light"] .bg-body-tertiary {
+    background-color: var(--sepia-surface) !important;
 }
 
-/* Navigation */
-.navbar {
-    background-color: var(--bg-secondary) !important;
-    border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.3s ease;
-    padding: 0.75rem 1rem !important;
-    flex-shrink: 0;
+[data-bs-theme="light"] .bg-body-secondary {
+    background-color: var(--sepia-surface) !important;
 }
 
-.navbar-brand {
-    color: var(--text-primary) !important;
-    cursor: default;
-    text-decoration: none;
-    font-size: 1.5rem;
-    margin: 0;
+/* Sepia text colors */
+[data-bs-theme="light"] .text-body {
+    color: var(--sepia-text) !important;
 }
 
-.navbar-brand:hover {
-    color: var(--text-primary) !important;
-    text-decoration: none;
+[data-bs-theme="light"] .text-muted {
+    color: var(--sepia-text-muted) !important;
 }
 
-.theme-toggle {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text-primary);
-    transition: transform 0.3s ease;
+[data-bs-theme="light"] body {
+    color: var(--sepia-text) !important;
+    background-color: var(--sepia-bg) !important;
 }
 
-.theme-toggle:hover {
-    transform: scale(1.1);
+/* Sepia tiles */
+[data-bs-theme="light"] .tile {
+    background-color: var(--sepia-tile-bg) !important;
+    border-color: var(--sepia-tile-border) !important;
+    color: var(--sepia-text) !important;
 }
 
+[data-bs-theme="light"] .tile-active {
+    border-color: var(--sepia-text-muted) !important;
+}
+
+/* Sepia keyboard buttons */
+[data-bs-theme="light"] .btn-secondary {
+    background-color: var(--sepia-surface) !important;
+    border-color: var(--sepia-border) !important;
+    color: var(--sepia-text) !important;
+}
+
+[data-bs-theme="light"] .btn-secondary:hover {
+    background-color: var(--sepia-border) !important;
+    border-color: var(--sepia-text-muted) !important;
+}
+
+/* Sepia alerts */
+[data-bs-theme="light"] .alert-danger {
+    background-color: #f8d7da !important;
+    border-color: #f5c2c7 !important;
+    color: #842029 !important;
+}
+
+/* Gradient text effect for brand */
 .text-gradient {
     background: linear-gradient(45deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: none;
-    font-weight: 700;
     background-size: 200% 200%;
     animation: gradientShift 3s ease-in-out infinite;
 }
@@ -98,332 +104,202 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* Game Layout - Simple and flexible */
-.game-container {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 0.4rem;
-    min-height: calc(100vh - 85px);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+/* Game tiles - consistent sizing */
+.tile {
+    width: 3.2rem;
+    height: 3.2rem;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
 }
 
-.game-content {
-    flex-shrink: 0;
-    margin-bottom: 0.5rem;
+/* Responsive tile sizes */
+@media (max-width: 576px) {
+    .tile {
+        width: 2.8rem;
+        height: 2.8rem;
+        font-size: 1.3rem;
+    }
 }
 
-.game-content > p {
-    margin: 0 0 0.4rem 0;
-    font-size: 0.85rem;
-    text-align: center;
+@media (max-width: 390px) {
+    .tile {
+        width: 2.4rem;
+        height: 2.4rem;
+        font-size: 1.1rem;
+    }
 }
 
-/* Hint text styling */
-.hint-text {
-    color: var(--text-secondary);
-    font-style: italic;
-    font-size: 0.8rem;
-    margin: 0 0 0.5rem 0;
-}
-
-.hint-text i {
-    color: #ffc107;
-    margin-right: 0.25rem;
-}
-
-#game-board-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.game-grid {
-    display: grid;
-    gap: 0.25rem;
-    margin: 0 auto 0.5rem auto;
-    width: fit-content;
+/* Game board spacing - reduce bottom margin */
+#game-board {
+    margin-bottom: 0 !important;
 }
 
 .guess-row {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.25rem;
+    margin-bottom: 0.375rem !important;
 }
 
-/* Game Tiles */
-.tile {
-    width: 2.8rem;
-    height: 2.8rem;
-    border: 2px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    transition: all 0.3s ease;
-    background: var(--tile-bg);
-    border-radius: 0.375rem;
-    color: var(--text-primary);
+.guess-row:last-child {
+    margin-bottom: 0 !important;
 }
 
-/* Tile States */
-.tile.active {
-    border-color: #878a8c;
+/* Reduce space between board container and keyboard */
+#game-board-container {
+    margin-bottom: 1rem !important;
+}
+
+@media (max-width: 576px) {
+    #game-board-container {
+        margin-bottom: 0.75rem !important;
+    }
+}
+
+@media (max-width: 390px) {
+    #game-board-container {
+        margin-bottom: 0.5rem !important;
+    }
+}
+
+/* Tile states */
+.tile-active {
+    border-color: #878a8c !important;
     animation: pulse 2s infinite;
 }
 
-[data-theme="dark"] .tile.active {
-    border-color: #565758;
+[data-bs-theme="dark"] .tile-active {
+    border-color: #565758 !important;
 }
 
 .tile.filled {
     animation: popIn 0.1s ease-out;
-    border-color: var(--text-secondary);
 }
 
-/* Wordle Color States */
-.tile.correct {
-    background-color: var(--correct);
-    color: white;
-    border-color: var(--correct);
+/* Wordle color states */
+.tile-correct {
+    background-color: var(--wordle-correct) !important;
+    color: white !important;
+    border-color: var(--wordle-correct) !important;
 }
 
-.tile.present {
-    background-color: var(--present);
-    color: white;
-    border-color: var(--present);
+.tile-present {
+    background-color: var(--wordle-present) !important;
+    color: white !important;
+    border-color: var(--wordle-present) !important;
 }
 
-.tile.absent {
-    background-color: var(--absent);
-    color: white;
-    border-color: var(--absent);
+.tile-absent {
+    background-color: var(--wordle-absent) !important;
+    color: white !important;
+    border-color: var(--wordle-absent) !important;
 }
 
-/* Invalid word styling - red tiles for dictionary validation */
-.tile.invalid {
-    background-color: #dc3545;
-    color: white;
-    border-color: #dc3545;
+/* Sepia-friendly Wordle colors for light mode */
+[data-bs-theme="light"] .tile-correct {
+    background-color: var(--sepia-correct) !important;
+    color: #faf8f3 !important;
+    border-color: var(--sepia-correct) !important;
 }
 
-/* Tile Animations */
-.tile.flip {
-    animation: flip 0.6s ease-in-out forwards;
-    animation-delay: calc(var(--tile-index) * 0.1s);
+[data-bs-theme="light"] .tile-present {
+    background-color: var(--sepia-present) !important;
+    color: #faf8f3 !important;
+    border-color: var(--sepia-present) !important;
 }
 
-@keyframes flip {
-    0% { transform: rotateX(0); }
-    50% { transform: rotateX(-90deg); }
-    100% { transform: rotateX(0); }
+[data-bs-theme="light"] .tile-absent {
+    background-color: var(--sepia-absent) !important;
+    color: #faf8f3 !important;
+    border-color: var(--sepia-absent) !important;
 }
 
-.tile.flip.correct,
-.tile.flip.present,
-.tile.flip.absent {
-    transform-style: preserve-3d;
+/* Apply sepia colors to keyboard keys as well */
+[data-bs-theme="light"] .key-correct {
+    background-color: var(--sepia-correct) !important;
+    border-color: var(--sepia-correct) !important;
+    color: #faf8f3 !important;
 }
 
-/* Virtual Keyboard */
-.keyboard {
-    user-select: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
-    flex-shrink: 0;
-    padding-bottom: 0.4rem;
+[data-bs-theme="light"] .key-present {
+    background-color: var(--sepia-present) !important;
+    border-color: var(--sepia-present) !important;
+    color: #faf8f3 !important;
 }
 
-.keyboard.hidden {
-    display: none !important;
+[data-bs-theme="light"] .key-absent {
+    background-color: var(--sepia-absent) !important;
+    border-color: var(--sepia-absent) !important;
+    color: #faf8f3 !important;
 }
 
-.keyboard-row {
-    display: flex;
-    justify-content: center;
-    gap: 0.2rem;
+/* Keyboard consistent sizing */
+.key-button {
+    min-width: 2.5rem;
+    height: 3rem;
+    padding: 0.5rem 0.25rem;
+    margin: 0.125rem !important;
     touch-action: manipulation;
-}
-
-.key {
-    min-width: 2.2rem;
-    height: 2.8rem;
-    border: none;
-    border-radius: 0.25rem;
-    background-color: var(--key-bg);
-    color: var(--key-text);
-    font-size: 0.65rem;
-    font-weight: 600;
-    cursor: pointer;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 0.25rem;
-    transition: all 0.1s ease;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    font-size: 0.875rem;
+    font-weight: 600;
 }
 
-.key:hover {
-    background-color: #bfc2c5;
-    transform: scale(1.05);
+@media (max-width: 576px) {
+    .key-button {
+        min-width: 2.2rem;
+        height: 2.8rem;
+        padding: 0.4rem 0.2rem;
+        font-size: 0.8rem;
+    }
 }
 
-[data-theme="dark"] .key:hover {
-    background-color: #5a5a5c;
+@media (max-width: 390px) {
+    .key-button {
+        min-width: 1.9rem;
+        height: 2.5rem;
+        padding: 0.3rem 0.15rem;
+        font-size: 0.75rem;
+    }
 }
 
-.key:active {
-    transform: scale(0.95);
+/* Keyboard layout */
+.keyboard {
+    margin: 0;
+    padding: 0;
 }
 
-.key.wide {
-    min-width: 3.3rem;
-    font-size: 0.55rem;
+.keyboard .d-flex {
+    margin-bottom: 0.25rem;
 }
 
-/* Keyboard Color States - match tiles */
-.key.correct {
-    background-color: var(--correct);
-    color: white;
+.keyboard .d-flex:last-child {
+    margin-bottom: 0;
 }
 
-.key.present {
-    background-color: var(--present);
-    color: white;
+/* Special key sizing */
+.keyboard .btn.px-3 {
+    min-width: 4rem;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
 }
 
-.key.absent {
-    background-color: var(--absent);
-    color: white;
+.keyboard .btn.px-2 {
+    min-width: 3rem;
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
 }
 
-/* Game End Screen */
-.game-over-container {
-    margin-top: 0.4rem;
-    padding: 0.4rem 0.4rem 0.8rem 0.4rem;
-    background: var(--bg-secondary);
-    border-radius: 0.4rem;
-    box-shadow: 0 0.25rem 0.375rem rgba(0, 0, 0, 0.1);
-    color: var(--text-primary);
-    max-width: 100%;
+@media (max-width: 576px) {
+    .keyboard .btn.px-3 {
+        min-width: 3.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .keyboard .btn.px-2 {
+        min-width: 2.8rem;
+        font-size: 0.8rem;
+    }
 }
 
-.game-over-container h3 {
-    font-size: 1rem;
-    margin: 0 0 0.25rem 0;
-}
-
-.game-over-container p {
-    font-size: 0.75rem;
-    margin: 0 0 0.4rem 0;
-}
-
-.game-over-container .btn {
-    font-size: 0.65rem;
-    padding: 0.25rem 0.5rem;
-    margin-bottom: 0.4rem;
-}
-
-/* Alert Messages */
-.alert {
-    position: fixed;
-    top: 0.75rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1060;
-    min-width: 280px;
-    max-width: 90vw;
-    animation: slideDown 0.3s ease;
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
-    border-radius: 0.5rem;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-}
-
-.alert-danger {
-    background-color: rgba(220, 53, 69, 0.95);
-    border-color: rgba(220, 53, 69, 0.5);
-    color: white;
-    backdrop-filter: blur(5px);
-}
-
-.alert-primary {
-    background-color: rgba(13, 110, 253, 0.95);
-    border-color: rgba(13, 110, 253, 0.5);
-    color: white;
-    backdrop-filter: blur(5px);
-}
-
-[data-theme="dark"] .alert-danger {
-    background-color: rgba(220, 53, 69, 0.9);
-    border-color: rgba(220, 53, 69, 0.4);
-}
-
-[data-theme="dark"] .alert-primary {
-    background-color: rgba(13, 110, 253, 0.9);
-    border-color: rgba(13, 110, 253, 0.4);
-}
-
-.copy-dialog .modal-content {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-}
-
-.copy-dialog .modal-header {
-    border-bottom: 1px solid var(--border-color);
-}
-
-.copy-dialog .modal-footer {
-    border-top: 1px solid var(--border-color);
-}
-
-.copy-dialog textarea {
-    background-color: var(--tile-bg);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 0.9rem;
-    resize: none;
-}
-
-.copy-dialog textarea:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-    background-color: var(--tile-bg);
-    color: var(--text-primary);
-}
-
-/* Copy notification */
-.copy-notification {
-    position: fixed;
-    top: 0.75rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1060;
-    min-width: 280px;
-    max-width: 90vw;
-    animation: slideDown 0.3s ease;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    border-radius: 0.5rem;
-    backdrop-filter: blur(10px);
-}
-
-/* Animation Keyframes */
+/* Animations */
 @keyframes popIn {
     0% {
         transform: scale(0.8);
@@ -444,24 +320,13 @@ body {
     100% { transform: scale(1); }
 }
 
-@keyframes slideDown {
-    from {
-        transform: translate(-50%, -100%);
-        opacity: 0;
-    }
-    to {
-        transform: translate(-50%, 0);
-        opacity: 1;
-    }
-}
-
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
     10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
     20%, 40%, 60%, 80% { transform: translateX(3px); }
 }
 
-.guess-row.shake {
+.shake {
     animation: shake 0.5s ease-in-out;
 }
 
@@ -471,259 +336,36 @@ body {
     60% { transform: translateY(-10px); }
 }
 
-.guess-row.winner .tile {
+.winner .tile {
     animation: bounce 0.5s ease-out;
     animation-delay: calc(var(--tile-index) * 0.1s);
 }
 
-/* Responsive Design - Mobile First Approach */
-@media (max-width: 480px) {
-    .game-container {
-        padding: 0.4rem;
-        min-height: calc(100vh - 75px);
-    }
-    
-    .tile {
-        width: 2.6rem;
-        height: 2.6rem;
-        font-size: 1.3rem;
-    }
-    
-    .guess-row {
-        gap: 0.25rem;
-    }
-    
-    .game-grid {
-        gap: 0.25rem;
-        margin-bottom: 0.4rem;
-    }
-    
-    .key {
-        min-width: 2rem;
-        height: 2.6rem;
-        font-size: 0.65rem;
-    }
-    
-    .key.wide {
-        min-width: 3rem;
-        font-size: 0.55rem;
-    }
-    
-    .keyboard-row {
-        gap: 0.2rem;
-    }
-    
-    .keyboard {
-        gap: 0.25rem;
-    }
-    
-    .navbar {
-        padding: 0.4rem 0.6rem !important;
-    }
-    
-    .navbar-brand {
-        font-size: 1.2rem;
-    }
-    
-    .alert {
-        top: 0.5rem;
-        min-width: 250px;
-        font-size: 0.75rem;
-    }
-    
-    .copy-notification {
-        top: 0.5rem;
-    }
-    
-    .game-content > p {
-        margin-bottom: 0.3rem;
-        font-size: 0.8rem;
-    }
-    
-    .game-content {
-        margin-bottom: 0.4rem;
-    }
-
-    .hint-text {
-        margin: 0 0 0.3rem 0;
-        font-size: 0.75rem;
-    }
+/* Tile flip animation */
+.tile.flip {
+    animation: flip 0.6s ease-in-out forwards;
+    animation-delay: calc(var(--tile-index) * 0.1s);
 }
 
-@media (max-width: 390px) {
-    .tile {
-        width: 2.4rem;
-        height: 2.4rem;
-        font-size: 1.2rem;
-    }
-    
-    .key {
-        min-width: 1.8rem;
-        height: 2.4rem;
-        font-size: 0.6rem;
-    }
-    
-    .key.wide {
-        min-width: 2.7rem;
-        font-size: 0.5rem;
-    }
-
-    .game-grid {
-        margin-bottom: 0.3rem;
-    }
-
-    .hint-text {
-        margin: 0 0 0.25rem 0;
-        font-size: 0.7rem;
-    }
+@keyframes flip {
+    0% { transform: rotateX(0); }
+    50% { transform: rotateX(-90deg); }
+    100% { transform: rotateX(0); }
 }
 
-@media (orientation: landscape) and (max-height: 600px) {
-    .game-container {
-        padding: 0.3rem;
-        min-height: calc(100vh - 55px);
-    }
-    
-    .tile {
-        width: 2rem;
-        height: 2rem;
-        font-size: 1rem;
-    }
-    
-    .key {
-        min-width: 1.6rem;
-        height: 2rem;
-        font-size: 0.5rem;
-    }
-    
-    .key.wide {
-        min-width: 2.4rem;
-        font-size: 0.45rem;
-    }
-    
-    .game-grid {
-        gap: 0.2rem;
-        margin-bottom: 0.3rem;
-    }
-    
-    .guess-row {
-        gap: 0.2rem;
-    }
-    
-    .keyboard {
-        gap: 0.2rem;
-    }
-    
-    .keyboard-row {
-        gap: 0.1rem;
-    }
-    
-    .game-content > p {
-        margin-bottom: 0.2rem;
-        font-size: 0.75rem;
-    }
-    
-    .game-content {
-        margin-bottom: 0.3rem;
-    }
-
-    .hint-text {
-        margin: 0 0 0.2rem 0;
-        font-size: 0.65rem;
-    }
-}
-
-/* Desktop optimizations - Very conservative sizing */
-@media (min-width: 768px) {
-    .game-container {
-        padding: 0.6rem;
-        min-height: calc(100vh - 90px);
-    }
-    
-    .tile {
-        width: 3rem;
-        height: 3rem;
-        font-size: 1.5rem;
-    }
-    
-    .key {
-        min-width: 2.3rem;
-        height: 3rem;
-        font-size: 0.7rem;
-    }
-    
-    .key.wide {
-        min-width: 3.5rem;
-        font-size: 0.6rem;
-    }
-    
-    .guess-row {
-        gap: 0.3rem;
-    }
-    
-    .game-grid {
-        gap: 0.3rem;
-        margin-bottom: 0.8rem;
-    }
-    
-    .keyboard {
-        gap: 0.3rem;
-    }
-    
-    .keyboard-row {
-        gap: 0.25rem;
-    }
-    
-    .game-content {
-        margin-bottom: 0.8rem;
-    }
-}
-
-@media (min-width: 1024px) {
-    .game-container {
-        min-height: calc(100vh - 95px);
-    }
-    
-    .tile {
-        width: 3.2rem;
-        height: 3.2rem;
-        font-size: 1.6rem;
-    }
-    
-    .key {
-        min-width: 2.4rem;
-        height: 3.2rem;
-        font-size: 0.75rem;
-    }
-    
-    .key.wide {
-        min-width: 3.6rem;
-        font-size: 0.65rem;
-    }
-    
-    .guess-row {
-        gap: 0.35rem;
-    }
-    
-    .game-grid {
-        gap: 0.35rem;
-        margin-bottom: 1rem;
-    }
-    
-    .keyboard {
-        gap: 0.35rem;
-    }
-    
-    .keyboard-row {
-        gap: 0.25rem;
-    }
-    
-    .game-content {
-        margin-bottom: 1rem;
-    }
-}
-
-/* Prevent iOS zoom on form inputs */
+/* Prevent iOS zoom on inputs */
 input[type="text"] {
     font-size: 16px !important;
+}
+
+/* Mobile touch optimizations */
+@media (hover: none) {
+    .btn:hover {
+        background-color: inherit;
+    }
+}
+
+/* Prevent unnecessary scrolling */
+body {
+    overflow-x: hidden;
 }

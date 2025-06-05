@@ -10,7 +10,7 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
         // Auto-dismiss error alerts after 3 seconds for better UX
         setTimeout(() => {
             if (errorAlert && errorAlert.parentNode) {
-                const bsAlert = new bootstrap.Alert(errorAlert);
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(errorAlert);
                 bsAlert.close();
             }
         }, 3000);
@@ -19,7 +19,7 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
         if (window.Alpine) {
             const alpineData = Alpine.$data(document.querySelector('[x-data]'));
             if (alpineData) {
-                const rows = document.querySelectorAll('.guess-row');
+                const rows = document.querySelectorAll('.d-flex.justify-content-center.mb-1');
                 // Target the previous row since server already incremented currentRow
                 const targetRow = Math.max(0, alpineData.currentRow - 1);
                 if (rows[targetRow]) {
@@ -98,23 +98,31 @@ window.gameApp = function() {
          * Sets up theme and syncs with server state
          */
         initGame() {
+            // Clear any cached game state
+            this.currentGuess = '';
+            this.currentRow = 0;
+            this.gameOver = false;
+            this.keyStatus = {};
+            
             // Load and apply saved theme preference from localStorage
             const savedTheme = localStorage.getItem('theme') || 'light';
             this.isDarkMode = savedTheme === 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
 
-            // Sync client state with server-rendered game board
-            this.updateGameState();
+            // Force a small delay before syncing to ensure DOM is ready
+            setTimeout(() => {
+                this.updateGameState();
+            }, 100);
         },
 
         /**
-         * Toggle between light and dark themes
+         * Toggle between light and dark themes using Bootstrap 5.3 color modes
          * Persists preference in localStorage
          */
         toggleTheme() {
             this.isDarkMode = !this.isDarkMode;
             const theme = this.isDarkMode ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.setAttribute('data-bs-theme', theme);
             localStorage.setItem('theme', theme);
         },
 
@@ -177,7 +185,7 @@ window.gameApp = function() {
          * Shows letters as user types before submission
          */
         updateDisplay() {
-            const rows = document.querySelectorAll('.guess-row');
+            const rows = document.querySelectorAll('#game-board > div');
             const row = rows[this.currentRow];
             if (!row) return;
             
@@ -202,35 +210,33 @@ window.gameApp = function() {
             const board = document.getElementById('game-board');
             if (!board) return;
 
-            // Reset current guess after any server interaction
+            // Always reset current guess after any server interaction
             this.currentGuess = '';
+            this.keyStatus = {};
 
-            // Check if game has ended (server sets game-over-container)
-            this.gameOver = board.querySelector('.game-over-container') !== null;
+            // Check if game has ended by looking for the game over container
+            const gameOverContainer = board.parentElement.querySelector('.mt-3.p-3.bg-light');
+            this.gameOver = gameOverContainer !== null;
 
-            // Determine current active row by examining board state
-            const rows = board.querySelectorAll('.guess-row');
-            let foundCurrentRow = false;
-
-            rows.forEach((row, index) => {
-                const tiles = row.querySelectorAll('.tile');
-                const hasContent = Array.from(tiles).some(tile => tile.textContent.trim() !== '');
-                const activeTiles = row.querySelectorAll('.tile.active');
-
-                // Find first empty row or row with active tiles (server-marked)
-                if (!hasContent && !foundCurrentRow && !this.gameOver) {
-                    this.currentRow = index;
-                    foundCurrentRow = true;
-                } else if (activeTiles.length > 0 && !foundCurrentRow) {
-                    this.currentRow = index;
-                    foundCurrentRow = true;
+            // Count rows that have filled tiles with status classes (completed guesses)
+            const rows = document.querySelectorAll('.guess-row');
+            let completedRows = 0;
+            
+            rows.forEach((row) => {
+                const tiles = row.querySelectorAll('.tile.filled');
+                // Check if this row has status tiles (correct/present/absent) - means it's completed
+                const hasStatusTiles = Array.from(tiles).some(tile => 
+                    tile.classList.contains('tile-correct') || 
+                    tile.classList.contains('tile-present') || 
+                    tile.classList.contains('tile-absent')
+                );
+                if (hasStatusTiles) {
+                    completedRows++;
                 }
             });
 
-            // Default to last row if no active row found and game not over
-            if (!foundCurrentRow && !this.gameOver) {
-                this.currentRow = Math.min(5, rows.length);
-            }
+            // Current row should be the next empty row after completed ones
+            this.currentRow = Math.min(completedRows, rows.length - 1);
 
             // Update UI components based on new state
             this.updateKeyboardColors();
@@ -265,13 +271,10 @@ window.gameApp = function() {
             this.keyStatus = {};
 
             tiles.forEach(tile => {
-                // Skip invalid tiles - they don't provide meaningful letter feedback
-                if (tile.classList.contains('invalid')) return;
-                
                 const letter = tile.textContent;
-                const status = tile.classList.contains('correct') ? 'correct' :
-                               tile.classList.contains('present') ? 'present' :
-                               tile.classList.contains('absent') ? 'absent' : '';
+                const status = tile.classList.contains('tile-correct') ? 'correct' :
+                               tile.classList.contains('tile-present') ? 'present' :
+                               tile.classList.contains('tile-absent') ? 'absent' : '';
 
                 if (letter && status) {
                     // Apply color priority logic: correct overrides all, present overrides absent
@@ -297,14 +300,12 @@ window.gameApp = function() {
          * Skips animation for invalid words to provide clear feedback distinction
          */
         animateNewGuess() {
-            const rows = document.querySelectorAll('.guess-row');
+            const rows = document.querySelectorAll('#game-board > div');
             const lastFilledRow = Array.from(rows).find((row, index) => {
                 const filledTiles = row.querySelectorAll('.tile.filled');
-                const invalidTiles = row.querySelectorAll('.tile.invalid');
                 
-                // Only animate valid dictionary words (no invalid tiles)
+                // Only animate valid dictionary words
                 return filledTiles.length === 5 &&
-                       invalidTiles.length === 0 &&
                        !row.classList.contains('animated') &&
                        (row.classList.contains('submitting') || index < this.currentRow);
             });
@@ -333,9 +334,9 @@ window.gameApp = function() {
          * Emits custom event when player wins for other components to react
          */
         checkForWin() {
-            const rows = document.querySelectorAll('.guess-row');
+            const rows = document.querySelectorAll('#game-board > div');
             rows.forEach(row => {
-                const tiles = row.querySelectorAll('.tile.correct');
+                const tiles = row.querySelectorAll('.tile-correct');
                 if (tiles.length === 5 && !row.classList.contains('winner')) {
                     row.classList.add('winner');
                     tiles.forEach((tile, index) => {
@@ -353,16 +354,16 @@ window.gameApp = function() {
          * Creates Wordle-style emoji pattern for social sharing
          */
         shareResults() {
-            const rows = document.querySelectorAll('.guess-row');
-            let emojiGrid = '';
+            const rows = document.querySelectorAll('#game-board > div');
+            let emojiGrid = 'Vortludo\n\n';
 
             rows.forEach(row => {
                 const tiles = row.querySelectorAll('.tile.filled');
                 if (tiles.length === 5) {
                     tiles.forEach(tile => {
-                        if (tile.classList.contains('correct')) {
+                        if (tile.classList.contains('tile-correct')) {
                             emojiGrid += '🟩';
-                        } else if (tile.classList.contains('present')) {
+                        } else if (tile.classList.contains('tile-present')) {
                             emojiGrid += '🟨';
                         } else {
                             emojiGrid += '⬛';
@@ -403,8 +404,9 @@ window.gameApp = function() {
          */
         showCopyDialog(text) {
             // Remove any existing dialogs to prevent duplicates
-            const existingDialog = document.querySelector('.copy-dialog');
+            const existingDialog = document.querySelector('.modal.copy-dialog');
             if (existingDialog) {
+                bootstrap.Modal.getInstance(existingDialog)?.dispose();
                 existingDialog.remove();
             }
 
@@ -419,11 +421,11 @@ window.gameApp = function() {
                             </div>
                             <div class="modal-body">
                                 <p>Please copy the text below:</p>
-                                <textarea class="form-control" rows="8" readonly>${text}</textarea>
+                                <textarea class="form-control font-monospace" rows="8" readonly>${text}</textarea>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-primary" onclick="this.parentElement.parentElement.querySelector('textarea').select(); this.parentElement.parentElement.querySelector('textarea').focus();">Select All</button>
+                                <button type="button" class="btn btn-primary" onclick="this.closest('.modal-body').querySelector('textarea').select(); this.closest('.modal-body').querySelector('textarea').focus();">Select All</button>
                             </div>
                         </div>
                     </div>
@@ -432,53 +434,58 @@ window.gameApp = function() {
 
             // Add modal to DOM and display
             document.body.insertAdjacentHTML('beforeend', dialogHTML);
-            const modal = new bootstrap.Modal(document.querySelector('.copy-dialog'));
+            const modalElement = document.querySelector('.copy-dialog');
+            const modal = new bootstrap.Modal(modalElement);
             modal.show();
 
             // Auto-select text when modal opens for easy copying
-            document.querySelector('.copy-dialog').addEventListener('shown.bs.modal', function() {
+            modalElement.addEventListener('shown.bs.modal', function() {
                 const textarea = this.querySelector('textarea');
                 textarea.select();
                 textarea.focus();
             });
 
             // Clean up modal element when closed
-            document.querySelector('.copy-dialog').addEventListener('hidden.bs.modal', function() {
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                bootstrap.Modal.getInstance(this)?.dispose();
                 this.remove();
             });
         },
 
         /**
          * Display temporary floating notification for copy operations
-         * Shows success/error feedback with auto-dismiss in navbar area
+         * Shows success/error feedback with auto-dismiss
          */
         showCopyNotification(message, isError = false) {
-            // Remove any existing notifications to prevent stacking
-            const existingAlert = document.querySelector('.copy-notification');
-            if (existingAlert) {
-                existingAlert.remove();
-            }
-
-            // Create styled notification element positioned in navbar area
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert ${isError ? 'alert-danger' : 'alert-primary'} alert-dismissible fade show copy-notification`;
-            alertDiv.setAttribute('role', 'alert');
-            
-            alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            // Create Bootstrap toast instead of custom alert
+            const toastHTML = `
+                <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                    <div class="toast align-items-center text-bg-${isError ? 'danger' : 'primary'}" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
             `;
 
-            // Add to DOM - positioned by CSS in navbar area
-            document.body.appendChild(alertDiv);
+            // Remove any existing toasts
+            document.querySelectorAll('.toast-container').forEach(el => el.remove());
 
-            // Auto-dismiss after 3 seconds for non-intrusive UX
-            setTimeout(() => {
-                if (alertDiv && alertDiv.parentNode) {
-                    const bsAlert = new bootstrap.Alert(alertDiv);
-                    bsAlert.close();
-                }
-            }, 3000);
+            // Add to DOM
+            document.body.insertAdjacentHTML('beforeend', toastHTML);
+            
+            // Show toast
+            const toastElement = document.querySelector('.toast');
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+
+            // Clean up after hide
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                this.closest('.toast-container').remove();
+            });
         }
     };
 }
@@ -487,7 +494,7 @@ window.gameApp = function() {
 window.addEventListener('gameWon', function() {
     const keyboard = document.querySelector('.keyboard');
     if (keyboard) {
-        keyboard.style.display = 'none';
+        keyboard.classList.add('d-none');
     }
 });
 

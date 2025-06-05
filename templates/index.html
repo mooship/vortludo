@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -21,76 +21,81 @@
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
 </head>
 <body x-data="gameApp()" x-init="initGame()">
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom py-1">
         <div class="container-fluid">
-            <span class="navbar-brand text-gradient">VORTLUDO</span>
+            <span class="navbar-brand fw-bold text-gradient">VORTLUDO</span>
             <div class="d-flex align-items-center">
-                <button class="theme-toggle me-3" @click="toggleTheme()" aria-label="Toggle theme">
-                    <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
+                <button class="btn btn-link text-decoration-none me-2 p-1 text-body" @click="toggleTheme()" aria-label="Toggle theme">
+                    <i class="bi fs-4" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
                 </button>
-                <button class="btn btn-outline-secondary btn-sm" onclick="location.href='/new-game'">
+                <button class="btn btn-primary btn-sm" onclick="location.href='/new-game'">
                     <i class="bi bi-arrow-clockwise"></i> New Game
                 </button>
             </div>
         </div>
     </nav>
 
-    <div class="container game-container" @keydown.window="handleKeyPress($event)">
-        <div class="game-content">
-            <p class="text-center mb-2">{{.message}}</p>
-            {{if .hint}}
-                <p class="text-center mb-3 hint-text">
-                    <i class="bi bi-lightbulb"></i> Hint: {{.hint}}
-                </p>
-            {{end}}
-            
-            <div id="game-board-container" 
-                 hx-get="/game-state" 
-                 hx-trigger="load once"
-                 x-on:htmx:after-swap="updateGameState()">
-                {{template "game-board" .}}
-            </div>
-        </div>
+    <div class="container-fluid d-flex flex-column vh-100" @keydown.window="handleKeyPress($event)">
+        <div class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2">
+            <div class="d-flex flex-column align-items-center w-100" style="max-width: 500px;">
+                <div class="text-center">
+                    <p class="mb-1 small">{{.message}}</p>
+                    {{if .hint}}
+                        <p class="mb-1 text-muted fst-italic small">
+                            <i class="bi bi-lightbulb text-warning"></i> Hint: {{.hint}}
+                        </p>
+                    {{end}}
+                </div>
+                
+                <div id="game-board-container" 
+                     hx-get="/game-state" 
+                     hx-trigger="load once"
+                     x-on:htmx:after-swap="updateGameState()"
+                     class="mb-1">
+                    {{template "game-board" .}}
+                </div>
 
-        <form id="guess-form" 
-              hx-post="/guess" 
-              hx-target="#game-board-container" 
-              hx-swap="innerHTML" 
-              class="d-none">
-            <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control">
-        </form>
+                <form id="guess-form" 
+                      hx-post="/guess" 
+                      hx-target="#game-board-container" 
+                      hx-swap="innerHTML" 
+                      class="d-none">
+                    <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control">
+                </form>
 
-        <div class="keyboard">
-            <div class="keyboard-row">
-                <template x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']">
-                    <button class="key" 
-                            :data-key="key"
-                            :class="getKeyClass(key)"
-                            @click="handleVirtualKey(key)"
-                            x-text="key"></button>
-                </template>
-            </div>
-            <div class="keyboard-row">
-                <template x-for="key in ['A','S','D','F','G','H','J','K','L']">
-                    <button class="key" 
-                            :data-key="key"
-                            :class="getKeyClass(key)"
-                            @click="handleVirtualKey(key)"
-                            x-text="key"></button>
-                </template>
-            </div>
-            <div class="keyboard-row">
-                <button class="key wide" data-key="ENTER" @click="handleVirtualKey('ENTER')">ENTER</button>
-                <template x-for="key in ['Z','X','C','V','B','N','M']">
-                    <button class="key" 
-                            :data-key="key"
-                            :class="getKeyClass(key)"
-                            @click="handleVirtualKey(key)"
-                            x-text="key"></button>
-                </template>
-                <button class="key wide" data-key="BACKSPACE" @click="handleVirtualKey('BACKSPACE')">
-                    <i class="bi bi-backspace"></i>
-                </button>
+                <div class="keyboard mx-auto w-100" style="max-width: 500px;">
+                    <div class="d-flex justify-content-center mb-1">
+                        <template x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']">
+                            <button class="btn btn-secondary btn-sm m-1 key-button" 
+                                    :data-key="key"
+                                    :class="'key-' + getKeyClass(key)"
+                                    @click="handleVirtualKey(key)"
+                                    x-text="key"></button>
+                        </template>
+                    </div>
+                    <div class="d-flex justify-content-center mb-1">
+                        <template x-for="key in ['A','S','D','F','G','H','J','K','L']">
+                            <button class="btn btn-secondary btn-sm m-1 key-button" 
+                                    :data-key="key"
+                                    :class="'key-' + getKeyClass(key)"
+                                    @click="handleVirtualKey(key)"
+                                    x-text="key"></button>
+                        </template>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <button class="btn btn-secondary btn-sm m-1 px-3" @click="handleVirtualKey('ENTER')">ENTER</button>
+                        <template x-for="key in ['Z','X','C','V','B','N','M']">
+                            <button class="btn btn-secondary btn-sm m-1 key-button" 
+                                    :data-key="key"
+                                    :class="'key-' + getKeyClass(key)"
+                                    @click="handleVirtualKey(key)"
+                                    x-text="key"></button>
+                        </template>
+                        <button class="btn btn-secondary btn-sm m-1 px-2" @click="handleVirtualKey('BACKSPACE')">
+                            <i class="bi bi-backspace"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
