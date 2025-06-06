@@ -22,19 +22,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Constants for game configuration
+// Game configuration constants
 const (
 	MaxGuesses     = 6
 	WordLength     = 5
 	SessionTimeout = 2 * time.Hour
 	CookieMaxAge   = 2 * time.Hour
-	StaticCacheAge = 5 * time.Minute // Decreased cache time for static assets
+	StaticCacheAge = 5 * time.Minute
 	sessionCookie  = "session_id"
 )
 
 // Global application state
 var (
-	wordList     []WordEntry                   // Valid 5-letter words with hints for the game
+	wordList     []WordEntry                   // Valid words with hints for the game
 	wordSet      map[string]struct{}           // For O(1) word validation
 	gameSessions = make(map[string]*GameState) // Session-based game storage
 	sessionMutex sync.RWMutex                  // Protects gameSessions map
@@ -42,11 +42,10 @@ var (
 )
 
 func main() {
-	// Determine environment for proper asset serving
+	// Determine environment
 	isProduction = os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
 	log.Printf("Starting Vortludo in %s mode", map[bool]string{true: "production", false: "development"}[isProduction])
 
-	// Initialize random seed
 	rand.Seed(time.Now().UnixNano())
 
 	// Load game data
@@ -61,14 +60,14 @@ func main() {
 		log.Printf("Warning: Failed to cleanup old sessions on startup: %v", err)
 	}
 
-	// Start session cleanup scheduler (every hour, removes sessions older than 2 hours)
+	// Start session cleanup scheduler
 	go sessionCleanupScheduler()
 
 	// Setup web server
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"127.0.0.1"})
 
-	// Apply cache control middleware BEFORE loading templates and static files
+	// Apply cache control middleware
 	if isProduction {
 		router.Use(func(c *gin.Context) {
 			applyCacheHeaders(c, true)
@@ -79,7 +78,7 @@ func main() {
 		})
 	}
 
-	// Serve static files from appropriate directory with minified assets in production
+	// Serve static files with appropriate assets for environment
 	if isProduction && dirExists("dist") {
 		log.Printf("Serving minified assets from dist/ directory")
 		router.LoadHTMLGlob("dist/templates/*.html")
@@ -90,7 +89,7 @@ func main() {
 		router.Static("/static", "./static")
 	}
 
-	// Register custom template functions
+	// Register template functions
 	funcMap := template.FuncMap{
 		"hasPrefix": strings.HasPrefix,
 	}
@@ -102,7 +101,7 @@ func main() {
 	router.POST("/new-game", newGameHandler)
 	router.POST("/guess", guessHandler)
 	router.GET("/game-state", gameStateHandler)
-	router.POST("/retry-word", retryWordHandler) // <-- Add this line
+	router.POST("/retry-word", retryWordHandler)
 
 	// Start server with graceful shutdown
 	port := os.Getenv("PORT")
@@ -114,7 +113,7 @@ func main() {
 		Handler: router,
 	}
 
-	// Graceful shutdown
+	// Graceful shutdown handler
 	idleConnsClosed := make(chan struct{})
 	go func() {
 		sigint := make(chan os.Signal, 1)
@@ -137,7 +136,7 @@ func main() {
 	log.Println("Server shutdown complete")
 }
 
-// Helper to apply cache headers
+// applyCacheHeaders sets appropriate cache headers based on environment
 func applyCacheHeaders(c *gin.Context, production bool) {
 	if production {
 		if strings.HasPrefix(c.Request.URL.Path, "/static/") {
@@ -224,7 +223,7 @@ func sessionCleanupScheduler() {
 	}
 }
 
-// getHintForWord retrieves the hint for a given word.
+// getHintForWord retrieves the hint for a given word
 func getHintForWord(wordValue string) string {
 	if wordValue == "" {
 		return ""
@@ -234,7 +233,6 @@ func getHintForWord(wordValue string) string {
 			return entry.Hint
 		}
 	}
-	// This case should ideally not be reached if wordValue is always a valid word from a game.
 	log.Printf("Warning: Hint not found for word: %s", wordValue)
 	return ""
 }
@@ -258,27 +256,24 @@ func newGameHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	log.Printf("Creating new game for session: %s", sessionID)
 
-	// Remove old session data completely
+	// Remove old session data
 	sessionMutex.Lock()
 	delete(gameSessions, sessionID)
 	sessionMutex.Unlock()
 	log.Printf("Cleared old session data for: %s", sessionID)
 
-	// Also remove session file
+	// Remove session file
 	sessionFile := filepath.Join("data/sessions", sessionID+".json")
 	os.Remove(sessionFile)
 
-	// Only create a new session ID if explicitly requested (e.g., via query param "reset=1")
+	// Create completely new session if requested
 	if c.Query("reset") == "1" {
-		// Force a completely new session by clearing the cookie
 		c.SetCookie("session_id", "", -1, "/", "", false, true)
-		// Create completely new session with UUID
 		newSessionID := uuid.NewString()
 		c.SetCookie("session_id", newSessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session ID: %s", newSessionID)
 		createNewGame(newSessionID)
 	} else {
-		// Just create a new game for the current session
 		createNewGame(sessionID)
 	}
 	c.Redirect(http.StatusSeeOther, "/")
@@ -289,12 +284,10 @@ func guessHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
-	// Validate game state
 	if err := validateGameState(c, game); err != nil {
 		return
 	}
 
-	// Process guess
 	guess := normalizeGuess(c.PostForm("guess"))
 	if err := processGuess(c, sessionID, game, guess); err != nil {
 		return
@@ -334,17 +327,10 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 		return fmt.Errorf("guess overflow")
 	}
 
-	// Get target word
 	targetWord := getTargetWord(game)
-
-	// Only call isValidWord once
 	isInvalid := !isValidWord(guess)
-
-	// Process the guess
 	result := checkGuess(guess, targetWord)
 	updateGameState(game, guess, targetWord, result, isInvalid)
-
-	// Save and render
 	saveGameState(sessionID, game)
 
 	if isInvalid {
@@ -373,7 +359,7 @@ func updateGameState(game *GameState, guess, targetWord string, result []GuessRe
 	}
 	game.Guesses[game.CurrentRow] = result
 	game.GuessHistory = append(game.GuessHistory, guess)
-	game.LastAccessTime = time.Now() // Update last access time on guess
+	game.LastAccessTime = time.Now()
 
 	// Check for win
 	if !isInvalid && guess == targetWord {
@@ -394,7 +380,7 @@ func updateGameState(game *GameState, guess, targetWord string, result []GuessRe
 	}
 }
 
-// gameStateHandler returns current game state (for HTMX)
+// gameStateHandler returns current game state for HTMX
 func gameStateHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
@@ -411,7 +397,7 @@ func checkGuess(guess, target string) []GuessResult {
 	result := make([]GuessResult, WordLength)
 	targetCopy := []rune(target)
 
-	// First pass: mark exact matches (green)
+	// First pass: mark exact matches
 	for i := 0; i < WordLength; i++ {
 		if guess[i] == target[i] {
 			result[i] = GuessResult{Letter: string(guess[i]), Status: "correct"}
@@ -419,7 +405,7 @@ func checkGuess(guess, target string) []GuessResult {
 		}
 	}
 
-	// Second pass: mark present letters in wrong position (yellow)
+	// Second pass: mark present letters in wrong position
 	for i := 0; i < WordLength; i++ {
 		if result[i].Status == "" {
 			letter := string(guess[i])
@@ -450,14 +436,11 @@ func isValidWord(word string) bool {
 	return ok
 }
 
-// Session management functions
-
 // getOrCreateSession retrieves or creates a session ID cookie
 func getOrCreateSession(c *gin.Context) string {
 	sessionID, err := c.Cookie(sessionCookie)
 	if err != nil || len(sessionID) < 10 {
 		sessionID = uuid.NewString()
-		// Set cookie for 2 hours to match session cleanup
 		c.SetCookie(sessionCookie, sessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session: %s", sessionID)
 	}
@@ -466,7 +449,7 @@ func getOrCreateSession(c *gin.Context) string {
 
 // getGameState retrieves or creates a game state for a session
 func getGameState(sessionID string) *GameState {
-	sessionMutex.Lock() // Use full lock for read-then-potential-write of LastAccessTime
+	sessionMutex.Lock()
 	game, exists := gameSessions[sessionID]
 	if exists {
 		game.LastAccessTime = time.Now()
@@ -478,41 +461,36 @@ func getGameState(sessionID string) *GameState {
 		return game
 	}
 
-	// For debugging: don't load from file initially, always create fresh
-	// This will prevent loading stale sessions during development
+	// Development mode: create fresh game
 	if !isProduction {
 		log.Printf("Development mode: creating fresh game for session: %s", sessionID)
 		return createNewGame(sessionID)
 	}
 
-	// In production, try to load from file only if we have a valid sessionID
+	// Production: try to load from file
 	if sessionID != "" && len(sessionID) > 10 {
 		log.Printf("Attempting to load game state from file for session: %s", sessionID)
 		if game, err := loadGameSessionFromFile(sessionID); err == nil {
-			// Validate the loaded game state
 			if game.SessionWord != "" && len(game.Guesses) == MaxGuesses {
-				// game.LastAccessTime is set by loadGameSessionFromFile
 				sessionMutex.Lock()
-				gameSessions[sessionID] = game // Cache in memory
+				gameSessions[sessionID] = game
 				sessionMutex.Unlock()
-				log.Printf("Successfully loaded and cached game state for session: %s (last access time updated by load)", sessionID)
+				log.Printf("Successfully loaded and cached game state for session: %s", sessionID)
 				return game
 			} else {
-				log.Printf("Loaded game state for session %s was invalid (word: '%s', guesses len: %d), creating new game", sessionID, game.SessionWord, len(game.Guesses))
+				log.Printf("Loaded game state for session %s was invalid, creating new game", sessionID)
 			}
 		} else {
 			log.Printf("Failed to load game state for session %s: %v", sessionID, err)
 		}
 	}
 
-	// Create new game if not found anywhere or invalid
 	log.Printf("Creating new game for session: %s", sessionID)
 	return createNewGame(sessionID)
 }
 
 // createNewGame creates a new game state with a random word
 func createNewGame(sessionID string) *GameState {
-	// Pick a random word for this game session
 	selectedEntry := getRandomWordEntry()
 
 	log.Printf("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
@@ -523,9 +501,9 @@ func createNewGame(sessionID string) *GameState {
 		GameOver:       false,
 		Won:            false,
 		TargetWord:     "",
-		SessionWord:    selectedEntry.Word, // The actual target word for this session
+		SessionWord:    selectedEntry.Word,
 		GuessHistory:   []string{},
-		LastAccessTime: time.Now(), // Set last access time on creation
+		LastAccessTime: time.Now(),
 	}
 
 	// Initialize empty guess rows
@@ -544,12 +522,11 @@ func createNewGame(sessionID string) *GameState {
 func saveGameState(sessionID string, game *GameState) {
 	sessionMutex.Lock()
 	gameSessions[sessionID] = game
-	game.LastAccessTime = time.Now() // Ensure LastAccessTime is current when saving
+	game.LastAccessTime = time.Now()
 	sessionMutex.Unlock()
 	log.Printf("Updated in-memory game state for session: %s", sessionID)
 
-	// Also save to file for persistence across server restarts
-	// Validate sessionID before using in path expression for defense-in-depth
+	// Save to file for persistence
 	if isValidSessionID(sessionID) {
 		if err := saveGameSessionToFile(sessionID, game); err != nil {
 			log.Printf("Failed to save session %s to file: %v", sessionID, err)
@@ -570,8 +547,8 @@ func dirExists(path string) bool {
 	return info.IsDir()
 }
 
+// isValidSessionID validates session ID format (UUID)
 func isValidSessionID(sessionID string) bool {
-	// Accept only UUIDs (36 chars, hex + dashes)
 	if len(sessionID) != 36 {
 		return false
 	}
@@ -582,7 +559,7 @@ func isValidSessionID(sessionID string) bool {
 				return false
 			}
 		case (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'):
-			// valid
+			// Valid hex character
 		default:
 			return false
 		}
@@ -590,23 +567,21 @@ func isValidSessionID(sessionID string) bool {
 	return true
 }
 
-// retryWordHandler resets guesses for the current session but keeps the same word
+// retryWordHandler resets guesses but keeps the same word
 func retryWordHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	sessionMutex.Lock()
 	game, exists := gameSessions[sessionID]
 	if !exists {
-		// If no game, just create a new one (fallback)
 		sessionMutex.Unlock()
 		createNewGame(sessionID)
 		c.Redirect(http.StatusSeeOther, "/")
 		return
 	}
-	// Keep the same SessionWord, reset guesses and state
+	// Keep the same word, reset everything else
 	sessionWord := game.SessionWord
 	sessionMutex.Unlock()
 
-	// Create a new game struct but keep the same word
 	newGame := &GameState{
 		Guesses:        make([][]GuessResult, MaxGuesses),
 		CurrentRow:     0,
@@ -625,7 +600,7 @@ func retryWordHandler(c *gin.Context) {
 	gameSessions[sessionID] = newGame
 	sessionMutex.Unlock()
 
-	// Remove session file if it exists (optional, to avoid stale state)
+	// Remove stale session file
 	sessionFile := filepath.Join("data/sessions", sessionID+".json")
 	os.Remove(sessionFile)
 
