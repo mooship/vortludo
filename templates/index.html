@@ -20,84 +20,102 @@
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
 </head>
 <body x-data="gameApp()" x-init="initGame()">
-    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom py-1">
-        <div class="container-fluid">
-            <span class="navbar-brand fw-bold text-gradient">VORTLUDO</span>
-            <div class="d-flex align-items-center">
-                <button class="btn btn-link text-decoration-none me-2 p-1 text-body" @click="toggleTheme()" aria-label="Toggle theme">
-                    <i class="bi fs-4" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="location.href='/new-game'">
-                    <i class="bi bi-arrow-clockwise"></i> New Game
-                </button>
+    <header>
+        <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom py-1" aria-label="Main navigation">
+            <div class="container-fluid">
+                <span class="navbar-brand fw-bold text-gradient" aria-label="Vortludo Home">VORTLUDO</span>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-link text-decoration-none me-2 p-1 text-body" @click="toggleTheme()" aria-label="Toggle theme">
+                        <i class="bi fs-4" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="location.href='/new-game'" aria-label="Start a new game">
+                        <i class="bi bi-arrow-clockwise"></i> New Game
+                    </button>
+                </div>
             </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid d-flex flex-column vh-100" @keydown.window="handleKeyPress($event)">
-        <div class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2">
+        </nav>
+    </header>
+    <main class="container-fluid d-flex flex-column vh-100" @keydown.window="handleKeyPress($event)">
+        <section class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2" aria-label="Game area">
             <div class="d-flex flex-column align-items-center w-100" style="max-width: 500px;">
-                <div class="text-center">
+                <header class="text-center" aria-label="Game instructions">
                     <p class="mb-2 small">{{.message}}</p>
                     {{if .hint}}
                         <p class="mb-2 text-muted fst-italic small">
-                            <i class="bi bi-lightbulb text-warning"></i> Hint: {{.hint}}
+                            <i class="bi bi-lightbulb text-warning" aria-hidden="true"></i> 
+                            <span>Hint: {{.hint}}</span>
                         </p>
                     {{end}}
-                </div>
-                
-                <div id="game-board-container" 
-                     hx-get="/game-state" 
-                     hx-trigger="load once"
-                     x-on:htmx:after-swap="updateGameState()"
-                     class="mb-3">
+                </header>
+                <section id="game-board-container" 
+                         hx-get="/game-state" 
+                         hx-trigger="load once"
+                         x-on:htmx:after-swap="updateGameState()"
+                         class="mb-3"
+                         aria-label="Game board">
                     {{template "game-board" .}}
-                </div>
-
+                </section>
                 <form id="guess-form" 
                       hx-post="/guess" 
                       hx-target="#game-board-container" 
                       hx-swap="innerHTML" 
-                      class="d-none">
-                    <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control">
+                      class="d-none"
+                      autocomplete="off"
+                      aria-label="Guess submission form">
+                    <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control" autocomplete="off" aria-label="Guess input">
                 </form>
-
-                <div class="keyboard mx-auto w-100" style="max-width: 500px;" x-show="!shouldHideKeyboard()" x-transition>
-                    <div class="d-flex justify-content-center mb-1">
+                <nav class="keyboard mx-auto w-100" style="max-width: 500px;" x-show="!shouldHideKeyboard()" x-transition aria-label="On-screen keyboard">
+                    <ul class="d-flex justify-content-center mb-1 list-unstyled" role="list">
                         <template x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']">
-                            <button class="btn btn-secondary btn-sm m-1 key-button" 
-                                    :data-key="key"
-                                    :class="'key-' + getKeyClass(key)"
-                                    @click="handleVirtualKey(key)"
-                                    x-text="key"></button>
+                            <li>
+                                <button class="btn btn-secondary btn-sm m-1 key-button" 
+                                        :data-key="key"
+                                        :class="'key-' + getKeyClass(key)"
+                                        @click="handleVirtualKey(key)"
+                                        x-text="key"
+                                        type="button"
+                                        aria-label="Letter key"></button>
+                            </li>
                         </template>
-                    </div>
-                    <div class="d-flex justify-content-center mb-1">
+                    </ul>
+                    <ul class="d-flex justify-content-center mb-1 list-unstyled" role="list">
                         <template x-for="key in ['A','S','D','F','G','H','J','K','L']">
-                            <button class="btn btn-secondary btn-sm m-1 key-button" 
-                                    :data-key="key"
-                                    :class="'key-' + getKeyClass(key)"
-                                    @click="handleVirtualKey(key)"
-                                    x-text="key"></button>
+                            <li>
+                                <button class="btn btn-secondary btn-sm m-1 key-button" 
+                                        :data-key="key"
+                                        :class="'key-' + getKeyClass(key)"
+                                        @click="handleVirtualKey(key)"
+                                        x-text="key"
+                                        type="button"
+                                        aria-label="Letter key"></button>
+                            </li>
                         </template>
-                    </div>
-                    <div class="d-flex justify-content-center">
-                        <button class="btn btn-secondary btn-sm m-1 px-3 key-button" @click="handleVirtualKey('ENTER')">ENTER</button>
+                    </ul>
+                    <ul class="d-flex justify-content-center list-unstyled" role="list">
+                        <li>
+                            <button class="btn btn-secondary btn-sm m-1 px-3 key-button" @click="handleVirtualKey('ENTER')" type="button" aria-label="Enter key">ENTER</button>
+                        </li>
                         <template x-for="key in ['Z','X','C','V','B','N','M']">
-                            <button class="btn btn-secondary btn-sm m-1 key-button" 
-                                    :data-key="key"
-                                    :class="'key-' + getKeyClass(key)"
-                                    @click="handleVirtualKey(key)"
-                                    x-text="key"></button>
+                            <li>
+                                <button class="btn btn-secondary btn-sm m-1 key-button" 
+                                        :data-key="key"
+                                        :class="'key-' + getKeyClass(key)"
+                                        @click="handleVirtualKey(key)"
+                                        x-text="key"
+                                        type="button"
+                                        aria-label="Letter key"></button>
+                            </li>
                         </template>
-                        <button class="btn btn-secondary btn-sm m-1 px-2 key-button" @click="handleVirtualKey('BACKSPACE')">
-                            <i class="bi bi-backspace"></i>
-                        </button>
-                    </div>
-                </div>
+                        <li>
+                            <button class="btn btn-secondary btn-sm m-1 px-2 key-button" @click="handleVirtualKey('BACKSPACE')" type="button" aria-label="Backspace key">
+                                <i class="bi bi-backspace"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 </body>
 <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </html>
