@@ -10,9 +10,10 @@ import (
 
 // saveGameSessionToFile persists a game session to disk
 var saveGameSessionToFile = func(sessionID string, game *GameState) error {
-	if sessionID == "" || len(sessionID) < 10 {
-		log.Printf("Skipping save for invalid session ID: %s", sessionID)
-		return nil
+	sessionFile, err := getSecureSessionPath(sessionID)
+	if err != nil {
+		log.Printf("Invalid session ID for saving: %s, error: %v", sessionID, err)
+		return err
 	}
 
 	// Create sessions directory
@@ -22,7 +23,6 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 		return err
 	}
 
-	sessionFile := filepath.Join(sessionDir, sessionID+".json")
 	log.Printf("Saving game session to file: %s", sessionFile)
 
 	game.LastAccessTime = time.Now()
@@ -44,12 +44,12 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 
 // loadGameSessionFromFile loads a game session from disk
 var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
-	if sessionID == "" || len(sessionID) < 10 {
-		log.Printf("Invalid session ID for loading: %s", sessionID)
+	sessionFile, err := getSecureSessionPath(sessionID)
+	if err != nil {
+		log.Printf("Invalid session ID for loading: %s, error: %v", sessionID, err)
 		return nil, os.ErrNotExist
 	}
 
-	sessionFile := filepath.Join("data/sessions", sessionID+".json")
 	log.Printf("Attempting to load session from file: %s", sessionFile)
 
 	// Check if file exists and age

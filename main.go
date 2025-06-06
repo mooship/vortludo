@@ -263,8 +263,9 @@ func newGameHandler(c *gin.Context) {
 	log.Printf("Cleared old session data for: %s", sessionID)
 
 	// Remove session file
-	sessionFile := filepath.Join("data/sessions", sessionID+".json")
-	os.Remove(sessionFile)
+	if sessionFile, err := getSecureSessionPath(sessionID); err == nil {
+		os.Remove(sessionFile)
+	}
 
 	// Create completely new session if requested
 	if c.Query("reset") == "1" {
@@ -558,13 +559,47 @@ func isValidSessionID(sessionID string) bool {
 			if c != '-' {
 				return false
 			}
-		case (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'):
+		case (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'):
 			// Valid hex character
 		default:
 			return false
 		}
 	}
 	return true
+}
+
+// getSecureSessionPath returns a validated file path for a session, preventing path traversal
+func getSecureSessionPath(sessionID string) (string, error) {
+	if !isValidSessionID(sessionID) {
+		return "", fmt.Errorf("invalid session ID format")
+	}
+
+	// Clean the sessionID to ensure it doesn't contain path traversal attempts
+	cleanSessionID := filepath.Base(sessionID)
+	if cleanSessionID != sessionID {
+		return "", fmt.Errorf("session ID contains invalid path characters")
+	}
+
+	// Construct the secure path
+	sessionDir := "data/sessions"
+	sessionFile := filepath.Join(sessionDir, cleanSessionID+".json")
+
+	// Verify the resulting path is within our expected directory
+	absSessionDir, err := filepath.Abs(sessionDir)
+	if err != nil {
+		return "", err
+	}
+
+	absSessionFile, err := filepath.Abs(sessionFile)
+	if err != nil {
+		return "", err
+	}
+
+	if !strings.HasPrefix(absSessionFile, absSessionDir) {
+		return "", fmt.Errorf("session path would escape sessions directory")
+	}
+
+	return sessionFile, nil
 }
 
 // retryWordHandler resets guesses but keeps the same word
@@ -601,8 +636,9 @@ func retryWordHandler(c *gin.Context) {
 	sessionMutex.Unlock()
 
 	// Remove stale session file
-	sessionFile := filepath.Join("data/sessions", sessionID+".json")
-	os.Remove(sessionFile)
+	if sessionFile, err := getSecureSessionPath(sessionID); err == nil {
+		os.Remove(sessionFile)
+	}
 
 	c.Redirect(http.StatusSeeOther, "/")
 }
