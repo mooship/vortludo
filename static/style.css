@@ -1,3 +1,6 @@
+/* Vortludo Game Styles: Sepia Light & Sepia Dark Themes */
+
+/* === Custom Properties === */
 :root {
     --wordle-correct: #6aaa64;
     --wordle-present: #c9b458;
@@ -35,6 +38,7 @@
     --wordle-absent: #5c534a;
 }
 
+/* === Layout & Theme Backgrounds === */
 [data-bs-theme="light"] {
     background-color: var(--sepia-bg);
 }
@@ -85,6 +89,7 @@
     color: var(--sepia-dark-text-muted);
 }
 
+/* === Game Tiles === */
 .tile {
     width: 3.2rem;
     height: 3.2rem;
@@ -159,6 +164,7 @@
     border-color: var(--sepia-dark-absent);
 }
 
+/* === Keyboard Styling === */
 .key-button {
     min-width: 2.5rem;
     height: 3rem;
@@ -260,6 +266,7 @@
     padding-right: 0.4rem !important;
 }
 
+/* === Buttons === */
 [data-bs-theme="light"] .btn-primary {
     background-color: #b8860b;
     border-color: #a07a0a;
@@ -303,6 +310,7 @@
     color: var(--sepia-dark-text) !important;
 }
 
+/* === Animations === */
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
@@ -335,6 +343,7 @@
     animation-delay: calc(var(--tile-index) * 0.1s);
 }
 
+/* === Mobile & Responsive === */
 input[type="text"] {
     font-size: 16px !important;
 }
@@ -385,6 +394,7 @@ body {
     }
 }
 
+/* === Logo Gradient (always green) === */
 .text-gradient {
     background: linear-gradient(90deg, var(--vortludo-green1), var(--vortludo-green2));
     -webkit-background-clip: text;
