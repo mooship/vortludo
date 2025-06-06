@@ -210,7 +210,8 @@ func TestGetSecureSessionPath(t *testing.T) {
 				// Ensure path is within sessions directory
 				absSessionDir, _ := filepath.Abs("data/sessions")
 				absResult, _ := filepath.Abs(got)
-				if !strings.HasPrefix(absResult, absSessionDir) {
+				absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
+				if !strings.HasPrefix(absResult+string(filepath.Separator), absSessionDir) {
 					t.Errorf("getSecureSessionPath() returned path outside sessions directory: %s", got)
 				}
 			}
