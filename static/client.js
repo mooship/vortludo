@@ -305,13 +305,26 @@ window.gameApp = function() {
             this.toastMessage = message;
             this.toastType = isError ? 'danger' : 'success';
             
-            const toastElement = document.getElementById('notification-toast');
-            if (toastElement) {
-                const toast = new bootstrap.Toast(toastElement, {
-                    delay: 3000
-                });
-                toast.show();
-            }
+            this.$nextTick(() => {
+                const toastElement = document.getElementById('notification-toast');
+                if (toastElement) {
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+                        const toast = new bootstrap.Toast(toastElement, {
+                            delay: 3000
+                        });
+                        toast.show();
+                    } else {
+                        setTimeout(() => {
+                            if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+                                const toast = new bootstrap.Toast(toastElement, {
+                                    delay: 3000
+                                });
+                                toast.show();
+                            }
+                        }, 100);
+                    }
+                }
+            });
         },
         shouldHideKeyboard() {
             return this.gameOver;
