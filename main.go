@@ -541,10 +541,15 @@ func saveGameState(sessionID string, game *GameState) {
 	log.Printf("Updated in-memory game state for session: %s", sessionID)
 
 	// Also save to file for persistence across server restarts
-	if err := saveGameSessionToFile(sessionID, game); err != nil {
-		log.Printf("Failed to save session %s to file: %v", sessionID, err)
+	// Validate sessionID before using in path expression for defense-in-depth
+	if isValidSessionID(sessionID) {
+		if err := saveGameSessionToFile(sessionID, game); err != nil {
+			log.Printf("Failed to save session %s to file: %v", sessionID, err)
+		} else {
+			log.Printf("Successfully saved game state to file for session: %s", sessionID)
+		}
 	} else {
-		log.Printf("Successfully saved game state to file for session: %s", sessionID)
+		log.Printf("Refused to save session to file: invalid sessionID format: %s", sessionID)
 	}
 }
 
@@ -555,4 +560,24 @@ func dirExists(path string) bool {
 		return false
 	}
 	return info.IsDir()
+}
+
+func isValidSessionID(sessionID string) bool {
+	// Accept only UUIDs (36 chars, hex + dashes)
+	if len(sessionID) != 36 {
+		return false
+	}
+	for i, c := range sessionID {
+		switch {
+		case (i == 8 || i == 13 || i == 18 || i == 23):
+			if c != '-' {
+				return false
+			}
+		case (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'):
+			// valid
+		default:
+			return false
+		}
+	}
+	return true
 }
