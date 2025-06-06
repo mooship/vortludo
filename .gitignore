@@ -30,7 +30,6 @@ go.work.sum
 .env
 
 # Generated game data
-data/daily-word.json
 data/sessions/
 
 # Logs

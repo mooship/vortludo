@@ -81,7 +81,6 @@ vortludo/
 ├── core_test.go         # Unit tests for core game logic
 ├── data/
 │   ├── words.json       # Dictionary of valid words with hints
-│   ├── daily-word.json  # Current daily word (auto-generated)
 │   └── sessions/        # Game session files (auto-generated)
 ├── templates/           # HTML templates
 ├── static/              # CSS, JS, and favicon assets
@@ -104,7 +103,6 @@ Instead of a database, Vortludo uses simple JSON files:
 
 - **Game sessions**: `data/sessions/{sessionId}.json`
 - **Word dictionary**: `data/words.json` (static)
-- **Daily word**: `data/daily-word.json` (rotates daily at midnight)
 
 This approach is:
 - ✅ Simple and lightweight
