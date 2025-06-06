@@ -366,7 +366,7 @@ func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	}
 }
 
-func TestIsValidSessionID(t *testing.t) {
+func TestIsValidSessionID(t *testing.T) {
 	valid := uuid.NewString()
 	if !isValidSessionID(valid) {
 		t.Errorf("isValidSessionID(%q) = false, want true", valid)
