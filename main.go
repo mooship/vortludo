@@ -134,9 +134,8 @@ func applyCacheHeaders(c *gin.Context, production bool) {
 	if production {
 		if strings.HasPrefix(c.Request.URL.Path, "/static/") {
 			cachecontrol.New(cachecontrol.Config{
-				NoCache:        true,
-				MustRevalidate: true,
-				Public:         true,
+				Public: true,
+				MaxAge: cachecontrol.Duration(StaticCacheAge),
 			})(c)
 			c.Header("Vary", "Accept-Encoding")
 		} else {
@@ -184,7 +183,7 @@ func getRandomWordEntry() WordEntry {
 	return wordList[rand.Intn(len(wordList))]
 }
 
-// sessionCleanupScheduler removes old session files every hour
+// sessionCleanupScheduler removes old session files and in-memory sessions every hour
 func sessionCleanupScheduler() {
 	log.Printf("Session cleanup scheduler started")
 	ticker := time.NewTicker(time.Hour)
@@ -192,31 +191,51 @@ func sessionCleanupScheduler() {
 
 	for range ticker.C {
 		log.Printf("Running session cleanup")
+		// File cleanup
 		if err := cleanupOldSessions(SessionTimeout); err != nil {
-			log.Printf("Failed to cleanup old sessions: %v", err)
+			log.Printf("Failed to cleanup old session files: %v", err)
 		} else {
-			log.Printf("Session cleanup completed successfully")
+			log.Printf("Session file cleanup completed successfully")
+		}
+
+		// In-memory cleanup
+		sessionMutex.Lock()
+		cleanedInMemoryCount := 0
+		now := time.Now()
+		for sessionID, game := range gameSessions {
+			if now.Sub(game.LastAccessTime) > SessionTimeout {
+				delete(gameSessions, sessionID)
+				cleanedInMemoryCount++
+				log.Printf("Removed expired in-memory session: %s (last access: %v ago)", sessionID, now.Sub(game.LastAccessTime))
+			}
+		}
+		sessionMutex.Unlock()
+		if cleanedInMemoryCount > 0 {
+			log.Printf("In-memory session cleanup removed %d sessions.", cleanedInMemoryCount)
 		}
 	}
 }
 
-// homeHandler serves the main game page
-func homeHandler(c *gin.Context) {
-	applyNoCacheHeaders(c)
-
-	sessionID := getOrCreateSession(c)
-	game := getGameState(sessionID)
-
-	// Get the hint for this game's word
-	hint := ""
-	if game.SessionWord != "" {
-		for _, entry := range wordList {
-			if entry.Word == game.SessionWord {
-				hint = entry.Hint
-				break
-			}
+// getHintForWord retrieves the hint for a given word.
+func getHintForWord(wordValue string) string {
+	if wordValue == "" {
+		return ""
+	}
+	for _, entry := range wordList {
+		if entry.Word == wordValue {
+			return entry.Hint
 		}
 	}
+	// This case should ideally not be reached if wordValue is always a valid word from a game.
+	log.Printf("Warning: Hint not found for word: %s", wordValue)
+	return ""
+}
+
+// homeHandler serves the main game page
+func homeHandler(c *gin.Context) {
+	sessionID := getOrCreateSession(c)
+	game := getGameState(sessionID)
+	hint := getHintForWord(game.SessionWord)
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"title":   "Vortludo - A Libre Wordle Clone",
@@ -228,8 +247,6 @@ func homeHandler(c *gin.Context) {
 
 // newGameHandler resets the current session's game with a new word
 func newGameHandler(c *gin.Context) {
-	applyNoCacheHeaders(c)
-
 	sessionID := getOrCreateSession(c)
 	log.Printf("Creating new game for session: %s", sessionID)
 
@@ -261,8 +278,6 @@ func newGameHandler(c *gin.Context) {
 
 // guessHandler processes a player's word guess
 func guessHandler(c *gin.Context) {
-	applyNoCacheHeaders(c)
-
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 
@@ -350,6 +365,7 @@ func updateGameState(game *GameState, guess, targetWord string, result []GuessRe
 	}
 	game.Guesses[game.CurrentRow] = result
 	game.GuessHistory = append(game.GuessHistory, guess)
+	game.LastAccessTime = time.Now() // Update last access time on guess
 
 	// Check for win
 	if !isInvalid && guess == targetWord {
@@ -372,21 +388,9 @@ func updateGameState(game *GameState, guess, targetWord string, result []GuessRe
 
 // gameStateHandler returns current game state (for HTMX)
 func gameStateHandler(c *gin.Context) {
-	applyNoCacheHeaders(c)
-
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
-
-	// Get the hint for this game's word
-	hint := ""
-	if game.SessionWord != "" {
-		for _, entry := range wordList {
-			if entry.Word == game.SessionWord {
-				hint = entry.Hint
-				break
-			}
-		}
-	}
+	hint := getHintForWord(game.SessionWord)
 
 	c.HTML(http.StatusOK, "game-board", gin.H{
 		"game": game,
@@ -454,12 +458,15 @@ func getOrCreateSession(c *gin.Context) string {
 
 // getGameState retrieves or creates a game state for a session
 func getGameState(sessionID string) *GameState {
-	sessionMutex.RLock()
+	sessionMutex.Lock() // Use full lock for read-then-potential-write of LastAccessTime
 	game, exists := gameSessions[sessionID]
-	sessionMutex.RUnlock()
+	if exists {
+		game.LastAccessTime = time.Now()
+		log.Printf("Retrieved cached game state for session: %s, updated last access time.", sessionID)
+	}
+	sessionMutex.Unlock()
 
 	if exists {
-		log.Printf("Retrieved cached game state for session: %s", sessionID)
 		return game
 	}
 
@@ -476,14 +483,14 @@ func getGameState(sessionID string) *GameState {
 		if game, err := loadGameSessionFromFile(sessionID); err == nil {
 			// Validate the loaded game state
 			if game.SessionWord != "" && len(game.Guesses) == MaxGuesses {
-				// Cache in memory for faster access
+				// game.LastAccessTime is set by loadGameSessionFromFile
 				sessionMutex.Lock()
-				gameSessions[sessionID] = game
+				gameSessions[sessionID] = game // Cache in memory
 				sessionMutex.Unlock()
-				log.Printf("Successfully loaded and cached game state for session: %s", sessionID)
+				log.Printf("Successfully loaded and cached game state for session: %s (last access time updated by load)", sessionID)
 				return game
 			} else {
-				log.Printf("Loaded game state for session %s was invalid, creating new game", sessionID)
+				log.Printf("Loaded game state for session %s was invalid (word: '%s', guesses len: %d), creating new game", sessionID, game.SessionWord, len(game.Guesses))
 			}
 		} else {
 			log.Printf("Failed to load game state for session %s: %v", sessionID, err)
@@ -503,13 +510,14 @@ func createNewGame(sessionID string) *GameState {
 	log.Printf("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
 
 	game := &GameState{
-		Guesses:      make([][]GuessResult, MaxGuesses),
-		CurrentRow:   0,
-		GameOver:     false,
-		Won:          false,
-		TargetWord:   "",
-		SessionWord:  selectedEntry.Word, // The actual target word for this session
-		GuessHistory: []string{},
+		Guesses:        make([][]GuessResult, MaxGuesses),
+		CurrentRow:     0,
+		GameOver:       false,
+		Won:            false,
+		TargetWord:     "",
+		SessionWord:    selectedEntry.Word, // The actual target word for this session
+		GuessHistory:   []string{},
+		LastAccessTime: time.Now(), // Set last access time on creation
 	}
 
 	// Initialize empty guess rows
@@ -528,6 +536,7 @@ func createNewGame(sessionID string) *GameState {
 func saveGameState(sessionID string, game *GameState) {
 	sessionMutex.Lock()
 	gameSessions[sessionID] = game
+	game.LastAccessTime = time.Now() // Ensure LastAccessTime is current when saving
 	sessionMutex.Unlock()
 	log.Printf("Updated in-memory game state for session: %s", sessionID)
 
@@ -537,13 +546,6 @@ func saveGameState(sessionID string, game *GameState) {
 	} else {
 		log.Printf("Successfully saved game state to file for session: %s", sessionID)
 	}
-}
-
-// Helper to apply no-cache headers (for handlers)
-func applyNoCacheHeaders(c *gin.Context) {
-	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
-	c.Header("Pragma", "no-cache")
-	c.Header("Expires", "0")
 }
 
 // dirExists checks if a directory path exists
