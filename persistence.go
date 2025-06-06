@@ -9,7 +9,7 @@ import (
 )
 
 // saveGameSessionToFile persists a game session to disk
-func saveGameSessionToFile(sessionID string, game *GameState) error {
+var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	// Validate session ID to prevent path traversal
 	if sessionID == "" || len(sessionID) < 10 {
 		log.Printf("Skipping save for invalid session ID: %s", sessionID)
@@ -27,6 +27,7 @@ func saveGameSessionToFile(sessionID string, game *GameState) error {
 	sessionFile := filepath.Join(sessionDir, sessionID+".json")
 	log.Printf("Saving game session to file: %s", sessionFile)
 
+	game.LastAccessTime = time.Now() // Update last access time before saving
 	data, err := json.MarshalIndent(game, "", "  ")
 	if err != nil {
 		log.Printf("Failed to marshal game state for session %s: %v", sessionID, err)
@@ -44,7 +45,7 @@ func saveGameSessionToFile(sessionID string, game *GameState) error {
 }
 
 // loadGameSessionFromFile loads a game session from disk
-func loadGameSessionFromFile(sessionID string) (*GameState, error) {
+var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	// Validate session ID to prevent path traversal
 	if sessionID == "" || len(sessionID) < 10 {
 		log.Printf("Invalid session ID for loading: %s", sessionID)
@@ -54,7 +55,7 @@ func loadGameSessionFromFile(sessionID string) (*GameState, error) {
 	sessionFile := filepath.Join("data/sessions", sessionID+".json")
 	log.Printf("Attempting to load session from file: %s", sessionFile)
 
-	// Check if file exists and is not too old (more than 24 hours)
+	// Check if file exists and is not too old
 	info, err := os.Stat(sessionFile)
 	if err != nil {
 		log.Printf("Session file not found: %s", sessionFile)
@@ -62,9 +63,9 @@ func loadGameSessionFromFile(sessionID string) (*GameState, error) {
 	}
 
 	fileAge := time.Since(info.ModTime())
-	if fileAge > 24*time.Hour {
+	if fileAge > SessionTimeout { // Use SessionTimeout for consistency
 		// Remove old session file
-		log.Printf("Session file is too old (%v), removing: %s", fileAge, sessionFile)
+		log.Printf("Session file is too old (%v, max: %v), removing: %s", fileAge, SessionTimeout, sessionFile)
 		os.Remove(sessionFile)
 		return nil, os.ErrNotExist
 	}
@@ -80,13 +81,15 @@ func loadGameSessionFromFile(sessionID string) (*GameState, error) {
 		// Remove corrupted session file
 		log.Printf("Failed to unmarshal session file %s (corrupted), removing: %v", sessionFile, err)
 		os.Remove(sessionFile)
-		return nil, err
+		return nil, os.ErrNotExist // Return os.ErrNotExist after removing corrupt file
 	}
 
+	game.LastAccessTime = time.Now() // Update last access time on successful load
+
 	// Validate game state structure
-	if len(game.Guesses) != 6 || game.SessionWord == "" {
+	if len(game.Guesses) != MaxGuesses || game.SessionWord == "" { // Use MaxGuesses constant
 		// Remove invalid session file
-		log.Printf("Session file %s has invalid structure, removing", sessionFile)
+		log.Printf("Session file %s has invalid structure (guesses: %d, word: '%s'), removing", sessionFile, len(game.Guesses), game.SessionWord)
 		os.Remove(sessionFile)
 		return nil, os.ErrNotExist
 	}
@@ -96,7 +99,7 @@ func loadGameSessionFromFile(sessionID string) (*GameState, error) {
 }
 
 // cleanupOldSessions removes session files older than specified duration
-func cleanupOldSessions(maxAge time.Duration) error {
+var cleanupOldSessions = func(maxAge time.Duration) error {
 	sessionDir := "data/sessions"
 	log.Printf("Starting cleanup of sessions older than %v in directory: %s", maxAge, sessionDir)
 
