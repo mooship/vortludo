@@ -450,7 +450,7 @@ func TestUpdateGameState(t *testing.T) {
 
 	// 2) wrong guesses until loss
 	loseGame := *base
-	for i := 0; i < MaxGuesses; i++ {
+	for range MaxGuesses {
 		updateGameState(&loseGame,
 			"WORLD", "HELLO",
 			checkGuess("WORLD", "HELLO"), false)
