@@ -38,9 +38,9 @@
         <div class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2">
             <div class="d-flex flex-column align-items-center w-100" style="max-width: 500px;">
                 <div class="text-center">
-                    <p class="mb-1 small">{{.message}}</p>
+                    <p class="mb-2 small">{{.message}}</p>
                     {{if .hint}}
-                        <p class="mb-1 text-muted fst-italic small">
+                        <p class="mb-2 text-muted fst-italic small">
                             <i class="bi bi-lightbulb text-warning"></i> Hint: {{.hint}}
                         </p>
                     {{end}}
@@ -50,7 +50,7 @@
                      hx-get="/game-state" 
                      hx-trigger="load once"
                      x-on:htmx:after-swap="updateGameState()"
-                     class="mb-1">
+                     class="mb-3">
                     {{template "game-board" .}}
                 </div>
 
