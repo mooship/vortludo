@@ -574,29 +574,35 @@ func getSecureSessionPath(sessionID string) (string, error) {
 		return "", fmt.Errorf("invalid session ID format")
 	}
 
-	// Clean the sessionID to ensure it doesn't contain path traversal attempts
-	cleanSessionID := filepath.Base(sessionID)
-	if cleanSessionID != sessionID {
-		return "", fmt.Errorf("session ID contains invalid path characters")
-	}
-
-	// Construct the secure path
+	// Build path using only the validated session ID
 	sessionDir := "data/sessions"
-	sessionFile := filepath.Join(sessionDir, cleanSessionID+".json")
+	sessionFile := filepath.Join(sessionDir, sessionID+".json")
 
-	// Verify the resulting path is within our expected directory
+	// Normalize path to resolve any traversal attempts
+	sessionFile = filepath.Clean(sessionFile)
+
+	// Resolve to absolute paths for secure comparison
 	absSessionDir, err := filepath.Abs(sessionDir)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to resolve sessions directory: %w", err)
 	}
 
 	absSessionFile, err := filepath.Abs(sessionFile)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to resolve session file path: %w", err)
 	}
 
-	if !strings.HasPrefix(absSessionFile, absSessionDir) {
+	// Ensure file path remains within sessions directory
+	absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
+	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir) {
 		return "", fmt.Errorf("session path would escape sessions directory")
+	}
+
+	// Verify filename matches expected pattern
+	expectedFilename := sessionID + ".json"
+	actualFilename := filepath.Base(absSessionFile)
+	if actualFilename != expectedFilename {
+		return "", fmt.Errorf("session filename mismatch: expected %s, got %s", expectedFilename, actualFilename)
 	}
 
 	return sessionFile, nil
