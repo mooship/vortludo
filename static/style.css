@@ -363,16 +363,13 @@
     color: var(--sepia-dark-text) !important;
 }
 
-[data-bs-theme="light"] .alert-warning {
-    background-color: #fffbe6;
-    color: #8b7355;
-    border-color: #b8860b;
+.toast {
+    min-width: 280px;
+    border-radius: 0.5rem;
 }
 
-[data-bs-theme="dark"] .alert-warning {
-    background-color: #3a2a1a;
-    color: #d1b05a;
-    border-color: #b08a2e;
+.toast .toast-body {
+    padding: 0.75rem 1rem;
 }
 
 @keyframes pulse {

@@ -46,7 +46,7 @@ window.gameApp = function() {
         setupHTMXHandlers() {
             document.body.addEventListener('htmx:afterSwap', (evt) => {
                 this.submittingGuess = false;
-                this.handleErrorAlerts();
+                this.handleServerErrors();
                 this.restoreUserInput();
                 this.updateGameState();
             });
@@ -69,34 +69,28 @@ window.gameApp = function() {
                 this.tempCurrentRow = null;
             }
         },
-        handleErrorAlerts() {
-            const errorAlert = document.querySelector('.alert-danger');
-            const warningAlert = document.querySelector('.alert-warning');
-            let alertElem = null;
-            let shouldShake = false;
-            let shouldRestoreGuess = false;
-            if (warningAlert && warningAlert.textContent.includes('Word must be 5 letters')) {
-                alertElem = warningAlert;
-                shouldShake = true;
-                shouldRestoreGuess = true;
-            } else if (errorAlert && (
-                errorAlert.textContent.includes('Not in word list')
-            )) {
-                alertElem = errorAlert;
-                shouldShake = true;
-                shouldRestoreGuess = false;
-            }
-            if (alertElem && shouldShake) {
-                setTimeout(() => {
-                    if (alertElem?.parentNode) {
-                        bootstrap.Alert.getOrCreateInstance(alertElem).close();
+        handleServerErrors() {
+            const errorData = document.getElementById('error-data');
+            if (errorData) {
+                const error = errorData.getAttribute('data-error');
+                if (error) {
+                    const isValidationError = error.includes('Word must be 5 letters') || 
+                                            error.includes('Not in word list') ||
+                                            error.includes('No more guesses allowed') ||
+                                            error.includes('Game is over');
+                    
+                    if (isValidationError) {
+                        const isWarning = error.includes('Word must be 5 letters');
+                        this.showToastNotification(error, !isWarning);
+                        
+                        if (isWarning && this.tempCurrentGuess) {
+                            this.currentGuess = this.tempCurrentGuess;
+                            this.updateDisplay();
+                        }
+                        this.shakeCurrentRow();
                     }
-                }, this.TOAST_DURATION);
-                this.shakeCurrentRow();
-            }
-            if (shouldRestoreGuess && this.tempCurrentGuess) {
-                this.currentGuess = this.tempCurrentGuess;
-                this.updateDisplay();
+                }
+                errorData.remove();
             }
         },
         updateDisplay() {
@@ -114,8 +108,8 @@ window.gameApp = function() {
             });
         },
         shakeCurrentRow() {
-            const rows = document.querySelectorAll('.d-flex.justify-content-center.mb-1');
-            const targetRow = Math.max(0, this.currentRow - 1);
+            const rows = document.querySelectorAll('.guess-row');
+            const targetRow = Math.max(0, this.currentRow);
             if (rows[targetRow]) {
                 rows[targetRow].classList.add('shake');
                 setTimeout(() => rows[targetRow].classList.remove('shake'), 500);
@@ -309,9 +303,15 @@ window.gameApp = function() {
         },
         showToastNotification(message, isError = false) {
             this.toastMessage = message;
-            this.toastType = isError ? 'danger' : 'primary';
-            this.showToast = true;
-            setTimeout(() => this.showToast = false, 3000);
+            this.toastType = isError ? 'danger' : 'success';
+            
+            const toastElement = document.getElementById('notification-toast');
+            if (toastElement) {
+                const toast = new bootstrap.Toast(toastElement, {
+                    delay: 3000
+                });
+                toast.show();
+            }
         },
         shouldHideKeyboard() {
             return this.gameOver;
