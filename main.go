@@ -282,8 +282,10 @@ func newGameHandler(c *gin.Context) {
 
 	// Create completely new session if requested
 	if c.Query("reset") == "1" {
+		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie("session_id", "", -1, "/", "", false, true)
 		newSessionID := uuid.NewString()
+		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie("session_id", newSessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session ID: %s", newSessionID)
 		createNewGame(newSessionID)
@@ -455,6 +457,7 @@ func getOrCreateSession(c *gin.Context) string {
 	sessionID, err := c.Cookie(sessionCookie)
 	if err != nil || len(sessionID) < 10 {
 		sessionID = uuid.NewString()
+		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie(sessionCookie, sessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session: %s", sessionID)
 	}
