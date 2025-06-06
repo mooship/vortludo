@@ -10,6 +10,10 @@ document.addEventListener('touchend', function (event) {
 
 window.gameApp = function() {
     return {
+        WORD_LENGTH: 5,
+        MAX_GUESSES: 6,
+        ANIMATION_DELAY: 100,
+        TOAST_DURATION: 3000,
         currentGuess: '',
         currentRow: 0,
         gameOver: false,
@@ -20,10 +24,6 @@ window.gameApp = function() {
         showToast: false,
         toastMessage: '',
         toastType: 'primary',
-        WORD_LENGTH: 5,
-        MAX_GUESSES: 6,
-        ANIMATION_DELAY: 100,
-        TOAST_DURATION: 3000,
         submittingGuess: false,
         initGame() {
             this.resetGameState();
@@ -57,29 +57,61 @@ window.gameApp = function() {
                 }
             });
         },
-        handleErrorAlerts() {
-            const errorAlert = document.querySelector('.alert-danger');
-            if (!errorAlert) return;
-            const isInvalidWordError = 
-                errorAlert.textContent.includes('Not in word list') || 
-                errorAlert.textContent.includes('Word must be 5 letters');
-            if (isInvalidWordError) {
-                setTimeout(() => {
-                    if (errorAlert?.parentNode) {
-                        bootstrap.Alert.getOrCreateInstance(errorAlert).close();
-                    }
-                }, this.TOAST_DURATION);
-                this.shakeCurrentRow();
-            }
-        },
         restoreUserInput() {
-            if (this.tempCurrentGuess) {
+            if (this.tempCurrentGuess && !this.currentGuess) {
                 this.currentGuess = this.tempCurrentGuess;
                 this.currentRow = this.tempCurrentRow;
                 this.updateDisplay();
                 this.tempCurrentGuess = null;
                 this.tempCurrentRow = null;
+            } else {
+                this.tempCurrentGuess = null;
+                this.tempCurrentRow = null;
             }
+        },
+        handleErrorAlerts() {
+            const errorAlert = document.querySelector('.alert-danger');
+            const warningAlert = document.querySelector('.alert-warning');
+            let alertElem = null;
+            let shouldShake = false;
+            let shouldRestoreGuess = false;
+            if (warningAlert && warningAlert.textContent.includes('Word must be 5 letters')) {
+                alertElem = warningAlert;
+                shouldShake = true;
+                shouldRestoreGuess = true;
+            } else if (errorAlert && (
+                errorAlert.textContent.includes('Not in word list')
+            )) {
+                alertElem = errorAlert;
+                shouldShake = true;
+                shouldRestoreGuess = false;
+            }
+            if (alertElem && shouldShake) {
+                setTimeout(() => {
+                    if (alertElem?.parentNode) {
+                        bootstrap.Alert.getOrCreateInstance(alertElem).close();
+                    }
+                }, this.TOAST_DURATION);
+                this.shakeCurrentRow();
+            }
+            if (shouldRestoreGuess && this.tempCurrentGuess) {
+                this.currentGuess = this.tempCurrentGuess;
+                this.updateDisplay();
+            }
+        },
+        updateDisplay() {
+            const row = document.querySelectorAll('#game-board > div')[this.currentRow];
+            if (!row) return;
+            row.querySelectorAll('.tile').forEach((tile, i) => {
+                tile.classList.remove('tile-correct', 'tile-present', 'tile-absent');
+                const letter = this.currentGuess[i] || '';
+                tile.textContent = letter;
+                if (letter) {
+                    tile.classList.add('filled');
+                } else {
+                    tile.classList.remove('filled');
+                }
+            });
         },
         shakeCurrentRow() {
             const rows = document.querySelectorAll('.d-flex.justify-content-center.mb-1');
@@ -88,12 +120,6 @@ window.gameApp = function() {
                 rows[targetRow].classList.add('shake');
                 setTimeout(() => rows[targetRow].classList.remove('shake'), 500);
             }
-        },
-        toggleTheme() {
-            this.isDarkMode = !this.isDarkMode;
-            const theme = this.isDarkMode ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-bs-theme', theme);
-            localStorage.setItem('theme', theme);
         },
         handleKeyPress(e) {
             if (this.gameOver) return;
@@ -124,14 +150,11 @@ window.gameApp = function() {
                 this.updateDisplay();
             }
         },
-        updateDisplay() {
-            const row = document.querySelectorAll('#game-board > div')[this.currentRow];
-            if (!row) return;
-            row.querySelectorAll('.tile').forEach((tile, i) => {
-                const letter = this.currentGuess[i] || '';
-                tile.textContent = letter;
-                tile.classList.toggle('filled', Boolean(letter));
-            });
+        toggleTheme() {
+            this.isDarkMode = !this.isDarkMode;
+            const theme = this.isDarkMode ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            localStorage.setItem('theme', theme);
         },
         updateGameState() {
             const board = document.getElementById('game-board');

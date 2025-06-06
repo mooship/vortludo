@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"math/rand"
 	"net/http"
@@ -88,6 +89,12 @@ func main() {
 		router.LoadHTMLGlob("templates/*.html")
 		router.Static("/static", "./static")
 	}
+
+	// Register custom template functions
+	funcMap := template.FuncMap{
+		"hasPrefix": strings.HasPrefix,
+	}
+	router.SetFuncMap(funcMap)
 
 	// Define routes
 	router.GET("/", homeHandler)
