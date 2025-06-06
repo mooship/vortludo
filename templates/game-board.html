@@ -24,15 +24,31 @@
         {{if .game.Won}}
             <h3 class="text-success text-center h5 mb-2">🎉 Congratulations! 🎉</h3>
             <p class="text-center mb-3 small">You guessed the word in {{len .game.GuessHistory}} {{if eq (len .game.GuessHistory) 1}}try{{else}}tries{{end}}!</p>
+            <div class="d-flex justify-content-center gap-2 mb-2">
+                <button class="btn btn-primary btn-sm" onclick="shareResults()">
+                    <i class="bi bi-share"></i> Share Results
+                </button>
+            </div>
         {{else}}
             <h3 class="text-danger text-center h5 mb-2">Game Over!</h3>
-            <p class="text-center mb-3 small">The word was: <strong>{{.game.TargetWord}}</strong></p>
+            <p class="text-center mb-2 small">The word was: <strong>{{.game.TargetWord}}</strong></p>
+            <p class="text-center text-muted small mb-3">Don't give up! Try again or start a new game.</p>
+            <div class="d-flex justify-content-center gap-2 mb-2">
+                <form method="POST" action="/retry-word" style="display:inline;">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-repeat"></i> Retry Word
+                    </button>
+                </form>
+                <button class="btn btn-primary btn-sm" onclick="location.href='/new-game'">
+                    <i class="bi bi-arrow-clockwise"></i> New Game
+                </button>
+            </div>
+            <div class="d-flex justify-content-center gap-2">
+                <button class="btn btn-primary btn-sm" onclick="shareResults()">
+                    <i class="bi bi-share"></i> Share Results
+                </button>
+            </div>
         {{end}}
-        <div class="text-center">
-            <button class="btn btn-primary btn-sm" onclick="shareResults()">
-                <i class="bi bi-share"></i> Share Results
-            </button>
-        </div>
     </div>
 {{end}}
 {{end}}

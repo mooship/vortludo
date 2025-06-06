@@ -239,6 +239,36 @@
     color: var(--sepia-dark-text);
 }
 
+/* Ensure all buttons have the same border-radius for consistency */
+.btn-primary, .btn-outline-primary, .btn-primary:focus, .btn-primary:active, .btn-outline-primary:focus, .btn-outline-primary:active {
+    border-radius: 0.5rem;
+    box-shadow: none;
+}
+
+/* Theme-aware outline-primary button */
+[data-bs-theme="light"] .btn-outline-primary {
+    color: #b8860b;
+    border-color: #b8860b;
+    background-color: transparent;
+}
+[data-bs-theme="light"] .btn-outline-primary:hover,
+[data-bs-theme="light"] .btn-outline-primary:focus {
+    color: #faf8f3;
+    background-color: #b8860b;
+    border-color: #b8860b;
+}
+[data-bs-theme="dark"] .btn-outline-primary {
+    color: #d1b05a;
+    border-color: #d1b05a;
+    background-color: transparent;
+}
+[data-bs-theme="dark"] .btn-outline-primary:hover,
+[data-bs-theme="dark"] .btn-outline-primary:focus {
+    color: #2c2114;
+    background-color: #d1b05a;
+    border-color: #d1b05a;
+}
+
 .keyboard .d-flex {
     margin-bottom: 0.25rem;
 }

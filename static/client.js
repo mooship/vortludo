@@ -24,6 +24,7 @@ window.gameApp = function() {
         MAX_GUESSES: 6,
         ANIMATION_DELAY: 100,
         TOAST_DURATION: 3000,
+        submittingGuess: false,
         initGame() {
             this.resetGameState();
             this.initTheme();
@@ -35,6 +36,7 @@ window.gameApp = function() {
             this.currentRow = 0;
             this.gameOver = false;
             this.keyStatus = {};
+            this.submittingGuess = false;
         },
         initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -43,6 +45,7 @@ window.gameApp = function() {
         },
         setupHTMXHandlers() {
             document.body.addEventListener('htmx:afterSwap', (evt) => {
+                this.submittingGuess = false;
                 this.handleErrorAlerts();
                 this.restoreUserInput();
                 this.updateGameState();
@@ -154,7 +157,8 @@ window.gameApp = function() {
             this.checkForWin();
         },
         submitGuess() {
-            if (this.currentGuess.length === 5) {
+            if (this.currentGuess.length === 5 && !this.submittingGuess) {
+                this.submittingGuess = true;
                 const rows = document.querySelectorAll('.guess-row');
                 if (rows[this.currentRow]) {
                     rows[this.currentRow].classList.add('submitting');

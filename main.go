@@ -95,6 +95,7 @@ func main() {
 	router.POST("/new-game", newGameHandler)
 	router.POST("/guess", guessHandler)
 	router.GET("/game-state", gameStateHandler)
+	router.POST("/retry-word", retryWordHandler) // <-- Add this line
 
 	// Start server with graceful shutdown
 	port := os.Getenv("PORT")
@@ -580,4 +581,46 @@ func isValidSessionID(sessionID string) bool {
 		}
 	}
 	return true
+}
+
+// retryWordHandler resets guesses for the current session but keeps the same word
+func retryWordHandler(c *gin.Context) {
+	sessionID := getOrCreateSession(c)
+	sessionMutex.Lock()
+	game, exists := gameSessions[sessionID]
+	if !exists {
+		// If no game, just create a new one (fallback)
+		sessionMutex.Unlock()
+		createNewGame(sessionID)
+		c.Redirect(http.StatusSeeOther, "/")
+		return
+	}
+	// Keep the same SessionWord, reset guesses and state
+	sessionWord := game.SessionWord
+	sessionMutex.Unlock()
+
+	// Create a new game struct but keep the same word
+	newGame := &GameState{
+		Guesses:        make([][]GuessResult, MaxGuesses),
+		CurrentRow:     0,
+		GameOver:       false,
+		Won:            false,
+		TargetWord:     "",
+		SessionWord:    sessionWord,
+		GuessHistory:   []string{},
+		LastAccessTime: time.Now(),
+	}
+	for i := range newGame.Guesses {
+		newGame.Guesses[i] = make([]GuessResult, WordLength)
+	}
+
+	sessionMutex.Lock()
+	gameSessions[sessionID] = newGame
+	sessionMutex.Unlock()
+
+	// Remove session file if it exists (optional, to avoid stale state)
+	sessionFile := filepath.Join("data/sessions", sessionID+".json")
+	os.Remove(sessionFile)
+
+	c.Redirect(http.StatusSeeOther, "/")
 }
