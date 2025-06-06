@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
@@ -46,8 +47,6 @@ func main() {
 	isProduction = os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
 	log.Printf("Starting Vortludo in %s mode", map[bool]string{true: "production", false: "development"}[isProduction])
 
-	rand.Seed(time.Now().UnixNano())
-
 	// Load game data
 	if err := loadWords(); err != nil {
 		log.Fatalf("Failed to load words: %v", err)
@@ -65,7 +64,9 @@ func main() {
 
 	// Setup web server
 	router := gin.Default()
-	router.SetTrustedProxies([]string{"127.0.0.1"})
+	if err := router.SetTrustedProxies([]string{"127.0.0.1"}); err != nil {
+		log.Printf("Warning: Failed to set trusted proxies: %v", err)
+	}
 
 	// Apply cache control middleware
 	if isProduction {
@@ -109,8 +110,12 @@ func main() {
 		port = "8080"
 	}
 	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: router,
+		Addr:              ":" + port,
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second, // Prevent Slowloris attacks
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	// Graceful shutdown handler
@@ -185,9 +190,15 @@ func loadWords() error {
 	return nil
 }
 
-// getRandomWordEntry returns a random word entry from the word list
+// getRandomWordEntry returns a random word entry from the word list using crypto/rand
 func getRandomWordEntry() WordEntry {
-	return wordList[rand.Intn(len(wordList))]
+	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(wordList))))
+	if err != nil {
+		// Fallback to first word if crypto/rand fails
+		log.Printf("Error generating random number: %v, using fallback", err)
+		return wordList[0]
+	}
+	return wordList[n.Int64()]
 }
 
 // sessionCleanupScheduler removes old session files and in-memory sessions every hour
@@ -264,7 +275,9 @@ func newGameHandler(c *gin.Context) {
 
 	// Remove session file
 	if sessionFile, err := getSecureSessionPath(sessionID); err == nil {
-		os.Remove(sessionFile)
+		if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
+			log.Printf("Warning: Failed to remove session file: %v", err)
+		}
 	}
 
 	// Create completely new session if requested
@@ -542,7 +555,11 @@ func saveGameState(sessionID string, game *GameState) {
 // dirExists checks if a directory path exists
 func dirExists(path string) bool {
 	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+		log.Printf("Error checking directory existence: %v", err)
 		return false
 	}
 	return info.IsDir()
@@ -643,7 +660,9 @@ func retryWordHandler(c *gin.Context) {
 
 	// Remove stale session file
 	if sessionFile, err := getSecureSessionPath(sessionID); err == nil {
-		os.Remove(sessionFile)
+		if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
+			log.Printf("Warning: Failed to remove session file: %v", err)
+		}
 	}
 
 	c.Redirect(http.StatusSeeOther, "/")

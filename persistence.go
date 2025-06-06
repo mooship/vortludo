@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -16,9 +18,9 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 		return err
 	}
 
-	// Create sessions directory
+	// Create sessions directory with restrictive permissions
 	sessionDir := "data/sessions"
-	if err := os.MkdirAll(sessionDir, 0755); err != nil {
+	if err := os.MkdirAll(sessionDir, 0750); err != nil {
 		log.Printf("Failed to create sessions directory: %v", err)
 		return err
 	}
@@ -32,7 +34,8 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 		return err
 	}
 
-	err = os.WriteFile(sessionFile, data, 0644)
+	// Write with restrictive permissions (owner read/write only)
+	err = os.WriteFile(sessionFile, data, 0600)
 	if err != nil {
 		log.Printf("Failed to write session file %s: %v", sessionFile, err)
 	} else {
@@ -62,8 +65,25 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	fileAge := time.Since(info.ModTime())
 	if fileAge > SessionTimeout {
 		log.Printf("Session file is too old (%v, max: %v), removing: %s", fileAge, SessionTimeout, sessionFile)
-		os.Remove(sessionFile)
+		if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
+			log.Printf("Warning: Failed to remove old session file: %v", err)
+		}
 		return nil, os.ErrNotExist
+	}
+
+	// Additional validation: ensure file is in sessions directory
+	absSessionFile, err := filepath.Abs(sessionFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve session file path: %w", err)
+	}
+
+	absSessionDir, err := filepath.Abs("data/sessions")
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve sessions directory: %w", err)
+	}
+
+	if !strings.HasPrefix(absSessionFile, absSessionDir+string(filepath.Separator)) {
+		return nil, fmt.Errorf("session file path escapes sessions directory")
 	}
 
 	data, err := os.ReadFile(sessionFile)
@@ -75,7 +95,9 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	var game GameState
 	if err := json.Unmarshal(data, &game); err != nil {
 		log.Printf("Failed to unmarshal session file %s (corrupted), removing: %v", sessionFile, err)
-		os.Remove(sessionFile)
+		if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
+			log.Printf("Warning: Failed to remove corrupted session file: %v", err)
+		}
 		return nil, os.ErrNotExist
 	}
 
@@ -84,7 +106,9 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	// Validate game state structure
 	if len(game.Guesses) != MaxGuesses || game.SessionWord == "" {
 		log.Printf("Session file %s has invalid structure (guesses: %d, word: '%s'), removing", sessionFile, len(game.Guesses), game.SessionWord)
-		os.Remove(sessionFile)
+		if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
+			log.Printf("Warning: Failed to remove invalid session file: %v", err)
+		}
 		return nil, os.ErrNotExist
 	}
 
