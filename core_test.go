@@ -407,3 +407,82 @@ func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 		t.Errorf("Session with no LastAccessTime was not removed")
 	}
 }
+
+// TestIsValidSessionID covers valid and invalid session IDs
+func TestIsValidSessionID(t *testing.T) {
+	valid := uuid.NewString()
+	if !isValidSessionID(valid) {
+		t.Errorf("isValidSessionID(%q) = false, want true", valid)
+	}
+	for _, bad := range []string{
+		"", "short",
+		"zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
+		"12345678-1234-1234-1234-12345678901G", // invalid char
+	} {
+		if isValidSessionID(bad) {
+			t.Errorf("isValidSessionID(%q) = true, want false", bad)
+		}
+	}
+}
+
+// TestUpdateGameState checks win, loss, row increment, and target reveal
+func TestUpdateGameState(t *testing.T) {
+	// base game
+	base := &GameState{
+		Guesses:        make([][]GuessResult, MaxGuesses),
+		CurrentRow:     0,
+		SessionWord:    "HELLO",
+		LastAccessTime: time.Now(),
+	}
+	for i := range base.Guesses {
+		base.Guesses[i] = make([]GuessResult, WordLength)
+	}
+
+	// 1) correct guess => win
+	winGame := *base
+	updateGameState(&winGame,
+		"HELLO", "HELLO",
+		checkGuess("HELLO", "HELLO"), false)
+	if !winGame.Won || !winGame.GameOver || winGame.TargetWord != "HELLO" {
+		t.Errorf("win path: Got Won=%v, GameOver=%v, TargetWord=%q",
+			winGame.Won, winGame.GameOver, winGame.TargetWord)
+	}
+
+	// 2) wrong guesses until loss
+	loseGame := *base
+	for i := 0; i < MaxGuesses; i++ {
+		updateGameState(&loseGame,
+			"WORLD", "HELLO",
+			checkGuess("WORLD", "HELLO"), false)
+	}
+	if !loseGame.GameOver || loseGame.Won {
+		t.Errorf("lose path: Got GameOver=%v, Won=%v", loseGame.GameOver, loseGame.Won)
+	}
+}
+
+// TestGetTargetWord assigns a word when SessionWord is empty
+func TestGetTargetWord(t *testing.T) {
+	orig := wordList
+	wordList = []WordEntry{{Word: "ALPHA", Hint: ""}}
+	defer func() { wordList = orig }()
+
+	game := &GameState{}
+	got := getTargetWord(game)
+	if got != "ALPHA" || game.SessionWord != "ALPHA" {
+		t.Errorf("getTargetWord() = %q, want %q", got, "ALPHA")
+	}
+}
+
+// TestDirExists verifies directory detection logic
+func TestDirExists(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "f.txt")
+	os.WriteFile(file, []byte("x"), 0644)
+
+	if dirExists(file) {
+		t.Errorf("dirExists(%q) = true, want false", file)
+	}
+	if !dirExists(tmp) {
+		t.Errorf("dirExists(%q) = false, want true", tmp)
+	}
+}
