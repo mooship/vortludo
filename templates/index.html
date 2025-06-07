@@ -197,19 +197,13 @@
                         <div x-data="{ hintVisible: false }" class="mb-2">
                             <button
                                 class="btn btn-outline-primary btn-sm"
-                                @click="if (canShowHint()) hintVisible = !hintVisible"
-                                :disabled="!canShowHint()"
+                                @click="hintVisible = !hintVisible"
                             >
                                 <i class="bi bi-lightbulb"></i>
                                 <span
                                     x-text="hintVisible ? 'Hide Hint' : 'Show Hint'"
                                 ></span>
                             </button>
-                            <template x-if="!canShowHint()">
-                                <span class="ms-2 text-muted small"
-                                    >(Available after 3 guesses)</span
-                                >
-                            </template>
                             <p
                                 class="text-muted fst-italic small mt-2"
                                 x-show="hintVisible"
