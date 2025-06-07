@@ -239,17 +239,10 @@ window.gameApp = function () {
         },
         animateNewGuess() {
             const rows = document.querySelectorAll('#game-board > div');
-            const lastFilledRow = Array.from(rows).find((row, index) => {
-                const filledTiles = row.querySelectorAll('.tile.filled');
-                return (
-                    filledTiles.length === this.WORD_LENGTH &&
-                    !row.classList.contains('animated') &&
-                    (row.classList.contains('submitting') ||
-                        index < this.currentRow)
-                );
-            });
-            if (!lastFilledRow) return;
-            const tiles = lastFilledRow.querySelectorAll('.tile.filled');
+            const row = rows[this.currentRow - 1];
+            if (!row || row.classList.contains('animated')) return;
+            const tiles = row.querySelectorAll('.tile.filled');
+            if (tiles.length !== this.WORD_LENGTH) return;
             tiles.forEach((tile, index) => {
                 tile.style.setProperty('--tile-index', index);
                 setTimeout(
@@ -257,8 +250,8 @@ window.gameApp = function () {
                     index * this.ANIMATION_DELAY
                 );
             });
-            lastFilledRow.classList.add('animated');
-            lastFilledRow.classList.remove('submitting');
+            row.classList.add('animated');
+            row.classList.remove('submitting');
         },
         checkForWin() {
             const rows = document.querySelectorAll('#game-board > div');
