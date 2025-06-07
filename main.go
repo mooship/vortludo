@@ -57,11 +57,9 @@ var (
 	gameSessions = make(map[string]*GameState) // Session-based game storage.
 	sessionMutex sync.RWMutex                  // Protects gameSessions map.
 	isProduction bool                          // Environment flag for static file serving.
-
 	limiterMap   = make(map[string]*rate.Limiter)
 	limiterMutex sync.Mutex
-
-	startTime = time.Now() // Track server start time.
+	startTime    = time.Now() // Track server start time.
 )
 
 func main() {
