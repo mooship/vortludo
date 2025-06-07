@@ -82,6 +82,14 @@
         ></script>
     </head>
     <body x-data="gameApp()" x-init="initGame()">
+        <noscript>
+            <div class="alert alert-danger text-center m-3" role="alert">
+                <strong>JavaScript Required:</strong> Vortludo needs JavaScript
+                enabled to function. Please enable JavaScript in your browser
+                settings.
+            </div>
+        </noscript>
+
         <div
             class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"
             style="z-index: 1060"
