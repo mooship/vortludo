@@ -71,9 +71,14 @@
                 <div class="text-center">
                     <p class="mb-2 small">{{.message}}</p>
                     {{if .hint}}
-                        <p class="mb-2 text-muted fst-italic small">
-                            <i class="bi bi-lightbulb text-warning"></i> Hint: {{.hint}}
-                        </p>
+                        <div x-data="{ hintVisible: false }" class="mb-2">
+                            <button class="btn btn-outline-primary btn-sm" @click="hintVisible = true" x-show="!hintVisible">
+                                <i class="bi bi-lightbulb"></i> Show Hint
+                            </button>
+                            <p class="text-muted fst-italic small" x-show="hintVisible" x-transition>
+                                <i class="bi bi-lightbulb text-warning"></i> Hint: {{.hint}}
+                            </p>
+                        </div>
                     {{end}}
                 </div>
                 
@@ -89,7 +94,8 @@
                       hx-post="/guess" 
                       hx-target="#game-board-container" 
                       hx-swap="innerHTML" 
-                      class="d-none">
+                      style="display:none;" 
+                      @submit.prevent="submitGuess">
                     <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control">
                 </form>
 
