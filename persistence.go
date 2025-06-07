@@ -2,12 +2,22 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+)
+
+// Constants for persistence operations
+const (
+	SessionsDirectory = "data/sessions"
+	SessionsDirPerm   = 0750 // Owner: read/write/execute, Group: read/execute
+	SessionFilePerm   = 0600 // Owner: read/write only
+	JSONMarshalPrefix = ""
+	JSONMarshalIndent = "  "
 )
 
 // saveGameSessionToFile persists a game session to disk
@@ -19,8 +29,7 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	}
 
 	// Create sessions directory with restrictive permissions
-	sessionDir := "data/sessions"
-	if err := os.MkdirAll(sessionDir, 0750); err != nil {
+	if err := os.MkdirAll(SessionsDirectory, SessionsDirPerm); err != nil {
 		log.Printf("Failed to create sessions directory: %v", err)
 		return err
 	}
@@ -28,14 +37,14 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	log.Printf("Saving game session to file: %s", sessionFile)
 
 	game.LastAccessTime = time.Now()
-	data, err := json.MarshalIndent(game, "", "  ")
+	data, err := json.MarshalIndent(game, JSONMarshalPrefix, JSONMarshalIndent)
 	if err != nil {
 		log.Printf("Failed to marshal game state for session %s: %v", sessionID, err)
 		return err
 	}
 
 	// Write with restrictive permissions (owner read/write only)
-	err = os.WriteFile(sessionFile, data, 0600)
+	err = os.WriteFile(sessionFile, data, SessionFilePerm)
 	if err != nil {
 		log.Printf("Failed to write session file %s: %v", sessionFile, err)
 	} else {
@@ -49,7 +58,7 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	sessionFile, err := getSecureSessionPath(sessionID)
 	if err != nil {
-		log.Printf("Invalid session ID for loading: %s, error: %v", sessionID, err)
+		log.Printf("invalid session ID for loading: %s, error: %v", sessionID, err)
 		return nil, os.ErrNotExist
 	}
 
@@ -77,13 +86,13 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 		return nil, fmt.Errorf("failed to resolve session file path: %w", err)
 	}
 
-	absSessionDir, err := filepath.Abs("data/sessions")
+	absSessionDir, err := filepath.Abs(SessionsDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve sessions directory: %w", err)
 	}
 
 	if !strings.HasPrefix(absSessionFile, absSessionDir+string(filepath.Separator)) {
-		return nil, fmt.Errorf("session file path escapes sessions directory")
+		return nil, errors.New("session file path escapes sessions directory")
 	}
 
 	data, err := os.ReadFile(sessionFile)
@@ -118,10 +127,9 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 
 // cleanupOldSessions removes session files older than specified duration
 var cleanupOldSessions = func(maxAge time.Duration) error {
-	sessionDir := "data/sessions"
-	log.Printf("Starting cleanup of sessions older than %v in directory: %s", maxAge, sessionDir)
+	log.Printf("Starting cleanup of sessions older than %v in directory: %s", maxAge, SessionsDirectory)
 
-	entries, err := os.ReadDir(sessionDir)
+	entries, err := os.ReadDir(SessionsDirectory)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Printf("Sessions directory doesn't exist, skipping cleanup")
@@ -148,7 +156,7 @@ var cleanupOldSessions = func(maxAge time.Duration) error {
 		}
 
 		if info.ModTime().Before(cutoff) {
-			sessionFile := filepath.Join(sessionDir, entry.Name())
+			sessionFile := filepath.Join(SessionsDirectory, entry.Name())
 			if err := os.Remove(sessionFile); err != nil {
 				log.Printf("Failed to remove old session file %s: %v", sessionFile, err)
 				errorCount++

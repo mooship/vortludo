@@ -20,6 +20,8 @@ import (
 	"github.com/google/uuid"
 	cachecontrol "go.eigsys.de/gin-cachecontrol/v2"
 
+	"errors"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +32,20 @@ const (
 	SessionTimeout = 2 * time.Hour
 	CookieMaxAge   = 2 * time.Hour
 	StaticCacheAge = 5 * time.Minute
-	sessionCookie  = "session_id"
+)
+
+// Constants for cookie names, paths, and error messages
+const (
+	SessionCookieName  = "session_id"
+	RouteHome          = "/"
+	RouteNewGame       = "/new-game"
+	RouteRetryWord     = "/retry-word"
+	RouteGuess         = "/guess"
+	RouteGameState     = "/game-state"
+	ErrorGameOver      = "game is over"
+	ErrorInvalidLength = "word must be 5 letters"
+	ErrorNoMoreGuesses = "no more guesses allowed"
+	ErrorNotInWordList = "not in word list"
 )
 
 // Global application state
@@ -283,16 +298,16 @@ func newGameHandler(c *gin.Context) {
 	// Create completely new session if requested
 	if c.Query("reset") == "1" {
 		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie("session_id", "", -1, "/", "", false, true)
+		c.SetCookie(SessionCookieName, "", -1, "/", "", false, true)
 		newSessionID := uuid.NewString()
 		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie("session_id", newSessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
+		c.SetCookie(SessionCookieName, newSessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session ID: %s", newSessionID)
 		createNewGame(newSessionID)
 	} else {
 		createNewGame(sessionID)
 	}
-	c.Redirect(http.StatusSeeOther, "/")
+	c.Redirect(http.StatusSeeOther, RouteHome)
 }
 
 // guessHandler processes a player's word guess
@@ -313,9 +328,9 @@ func guessHandler(c *gin.Context) {
 // validateGameState checks if the game can accept guesses
 func validateGameState(c *gin.Context, game *GameState) error {
 	if game.GameOver {
-		log.Printf("Session attempted guess on completed game")
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Game is over!"})
-		return fmt.Errorf("game is over")
+		log.Print("session attempted guess on completed game")
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": ErrorGameOver})
+		return errors.New(ErrorGameOver)
 	}
 	return nil
 }
@@ -327,20 +342,18 @@ func normalizeGuess(input string) string {
 
 // processGuess handles the guess logic
 func processGuess(c *gin.Context, sessionID string, game *GameState, guess string) error {
-	log.Printf("Session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
+	log.Printf("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
 
-	// Validate guess length
 	if len(guess) != WordLength {
-		log.Printf("Session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": fmt.Sprintf("Word must be %d letters!", WordLength)})
-		return fmt.Errorf("invalid word length")
+		log.Printf("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": ErrorInvalidLength})
+		return errors.New(ErrorInvalidLength)
 	}
 
-	// Prevent guess overflow
 	if game.CurrentRow >= MaxGuesses {
-		log.Printf("Session %s attempted guess after max guesses reached", sessionID)
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "No more guesses allowed!"})
-		return fmt.Errorf("guess overflow")
+		log.Printf("session %s attempted guess after max guesses reached", sessionID)
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": ErrorNoMoreGuesses})
+		return errors.New(ErrorNoMoreGuesses)
 	}
 
 	targetWord := getTargetWord(game)
@@ -350,7 +363,7 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 	saveGameState(sessionID, game)
 
 	if isInvalid {
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": "Not in word list!"})
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": ErrorNotInWordList})
 	} else {
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 	}
@@ -454,11 +467,11 @@ func isValidWord(word string) bool {
 
 // getOrCreateSession retrieves or creates a session ID cookie
 func getOrCreateSession(c *gin.Context) string {
-	sessionID, err := c.Cookie(sessionCookie)
+	sessionID, err := c.Cookie(SessionCookieName)
 	if err != nil || len(sessionID) < 10 {
 		sessionID = uuid.NewString()
 		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie(sessionCookie, sessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
+		c.SetCookie(SessionCookieName, sessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session: %s", sessionID)
 	}
 	return sessionID
@@ -591,7 +604,7 @@ func isValidSessionID(sessionID string) bool {
 // getSecureSessionPath returns a validated file path for a session, preventing path traversal
 func getSecureSessionPath(sessionID string) (string, error) {
 	if !isValidSessionID(sessionID) {
-		return "", fmt.Errorf("invalid session ID format")
+		return "", errors.New("invalid session ID format")
 	}
 
 	// Build path using only the validated session ID
@@ -615,7 +628,7 @@ func getSecureSessionPath(sessionID string) (string, error) {
 	// Ensure file path remains within sessions directory
 	absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
 	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir) {
-		return "", fmt.Errorf("session path would escape sessions directory")
+		return "", errors.New("session path would escape sessions directory")
 	}
 
 	// Verify filename matches expected pattern
