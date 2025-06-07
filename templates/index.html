@@ -189,13 +189,15 @@
                         <div x-data="{ hintVisible: false }" class="mb-2">
                             <button
                                 class="btn btn-outline-primary btn-sm"
-                                @click="hintVisible = true"
-                                x-show="!hintVisible"
+                                @click="hintVisible = !hintVisible"
                             >
-                                <i class="bi bi-lightbulb"></i> Show Hint
+                                <i class="bi bi-lightbulb"></i>
+                                <span
+                                    x-text="hintVisible ? 'Hide Hint' : 'Show Hint'"
+                                ></span>
                             </button>
                             <p
-                                class="text-muted fst-italic small"
+                                class="text-muted fst-italic small mt-2"
                                 x-show="hintVisible"
                                 x-transition
                             >
