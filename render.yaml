@@ -1,13 +1,13 @@
 services:
-  - type: web
-    name: vortludo
-    env: go
-    buildCommand: go build -tags netgo -ldflags '-s -w' -o vortludo
-    startCommand: ./vortludo
-    envVars:
-      - key: GIN_MODE
-        value: release
-      - key: ENV
-        value: production
-      - key: PORT
-        value: 10000
+    - type: web
+      name: vortludo
+      env: go
+      buildCommand: go build -tags netgo -ldflags '-s -w' -o vortludo
+      startCommand: ./vortludo
+      envVars:
+          - key: GIN_MODE
+            value: release
+          - key: ENV
+            value: production
+          - key: PORT
+            value: 10000

@@ -8,27 +8,46 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
-// Constants for persistence operations
-const (
-	SessionsDirectory = "data/sessions"
-	SessionsDirPerm   = 0750 // Owner: read/write/execute, Group: read/execute
-	SessionFilePerm   = 0600 // Owner: read/write only
-	JSONMarshalPrefix = ""
-	JSONMarshalIndent = "  "
+// lastSaveTimes tracks the last save time for each session for rate limiting.
+var (
+	lastSaveTimes  = make(map[string]time.Time)
+	lastSaveTimesM sync.Mutex
 )
 
-// saveGameSessionToFile persists a game session to disk
+// Constants for persistence operations.
+const (
+	SessionsDirectory     = "data/sessions"
+	SessionsDirPerm       = 0750 // Owner: read/write/execute, group: read/execute.
+	SessionFilePerm       = 0600 // Owner: read/write only.
+	JSONMarshalPrefix     = ""
+	JSONMarshalIndent     = "  "
+	SaveRateLimitInterval = time.Second
+)
+
+// saveGameSessionToFile persists a game session to disk (rate-limited).
 var saveGameSessionToFile = func(sessionID string, game *GameState) error {
+	// Rate-limit disk writes.
+	lastSaveTimesM.Lock()
+	last, ok := lastSaveTimes[sessionID]
+	now := time.Now()
+	if ok && now.Sub(last) < SaveRateLimitInterval {
+		lastSaveTimesM.Unlock()
+		return nil
+	}
+	lastSaveTimes[sessionID] = now
+	lastSaveTimesM.Unlock()
+
 	sessionFile, err := getSecureSessionPath(sessionID)
 	if err != nil {
 		log.Printf("Invalid session ID for saving: %s, error: %v", sessionID, err)
 		return err
 	}
 
-	// Create sessions directory with restrictive permissions
+	// Create sessions directory with restrictive permissions.
 	if err := os.MkdirAll(SessionsDirectory, SessionsDirPerm); err != nil {
 		log.Printf("Failed to create sessions directory: %v", err)
 		return err
@@ -43,7 +62,7 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 		return err
 	}
 
-	// Write with restrictive permissions (owner read/write only)
+	// Write with restrictive permissions (owner read/write only).
 	err = os.WriteFile(sessionFile, data, SessionFilePerm)
 	if err != nil {
 		log.Printf("Failed to write session file %s: %v", sessionFile, err)
@@ -54,17 +73,17 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	return err
 }
 
-// loadGameSessionFromFile loads a game session from disk
+// loadGameSessionFromFile loads a game session from disk.
 var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	sessionFile, err := getSecureSessionPath(sessionID)
 	if err != nil {
-		log.Printf("invalid session ID for loading: %s, error: %v", sessionID, err)
+		log.Printf("Invalid session ID for loading: %s, error: %v", sessionID, err)
 		return nil, os.ErrNotExist
 	}
 
 	log.Printf("Attempting to load session from file: %s", sessionFile)
 
-	// Check if file exists and age
+	// Check if file exists and age.
 	info, err := os.Stat(sessionFile)
 	if err != nil {
 		log.Printf("Session file not found: %s", sessionFile)
@@ -80,7 +99,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 		return nil, os.ErrNotExist
 	}
 
-	// Additional validation: ensure file is in sessions directory
+	// Additional validation: ensure file is in sessions directory.
 	absSessionFile, err := filepath.Abs(sessionFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve session file path: %w", err)
@@ -112,7 +131,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 
 	game.LastAccessTime = time.Now()
 
-	// Validate game state structure
+	// Validate game state structure.
 	if len(game.Guesses) != MaxGuesses || game.SessionWord == "" {
 		log.Printf("Session file %s has invalid structure (guesses: %d, word: '%s'), removing", sessionFile, len(game.Guesses), game.SessionWord)
 		if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
@@ -125,7 +144,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	return &game, nil
 }
 
-// cleanupOldSessions removes session files older than specified duration
+// cleanupOldSessions removes session files older than specified duration.
 var cleanupOldSessions = func(maxAge time.Duration) error {
 	log.Printf("Starting cleanup of sessions older than %v in directory: %s", maxAge, SessionsDirectory)
 

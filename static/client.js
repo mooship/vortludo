@@ -79,14 +79,14 @@ window.gameApp = function () {
                 const error = errorData.getAttribute('data-error');
                 if (error) {
                     const isValidationError =
-                        error.includes('Word must be 5 letters') ||
-                        error.includes('Not in word list') ||
-                        error.includes('No more guesses allowed') ||
-                        error.includes('Game is over');
+                        error.includes('word must be 5 letters') ||
+                        error.includes('not in word list') ||
+                        error.includes('no more guesses allowed') ||
+                        error.includes('game is over');
 
                     if (isValidationError) {
                         const isWarning = error.includes(
-                            'Word must be 5 letters'
+                            'word must be 5 letters'
                         );
                         this.showToastNotification(error, !isWarning);
 
@@ -218,10 +218,10 @@ window.gameApp = function () {
                 const status = tile.classList.contains('tile-correct')
                     ? 'correct'
                     : tile.classList.contains('tile-present')
-                    ? 'present'
-                    : tile.classList.contains('tile-absent')
-                    ? 'absent'
-                    : '';
+                      ? 'present'
+                      : tile.classList.contains('tile-absent')
+                        ? 'absent'
+                        : '';
                 if (letter && status) {
                     if (
                         !this.keyStatus[letter] ||

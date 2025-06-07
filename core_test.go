@@ -9,29 +9,29 @@ import (
 	"github.com/google/uuid"
 )
 
-// Test constants
+// Test constants.
 const (
-	// Test words
-	TestWordApple = "APPLE"
-	TestWordBanjo = "BANJO"
-	TestWordPeach = "PEACH"
-	TestWordTable = "TABLE"
-	TestWordAlley = "ALLEY"
-	TestWordZzzzz = "ZZZZZ"
-	TestWordTests = "TESTS"
-	TestWordCache = "CACHE"
-	TestWordSaver = "SAVER"
-	TestWordHello = "HELLO"
-	TestWordWorld = "WORLD"
-	TestWordAlpha = "ALPHA"
+	// Test words.
+	TestWordApple  = "APPLE"
+	TestWordBanjo  = "BANJO"
+	TestWordPeach  = "PEACH"
+	TestWordTable  = "TABLE"
+	TestWordAlley  = "ALLEY"
+	TestWordZzzzz  = "ZZZZZ"
+	TestWordTests  = "TESTS"
+	TestWordCache  = "CACHE"
+	TestWordSaver  = "SAVER"
+	TestWordHello  = "HELLO"
+	TestWordWorld  = "WORLD"
+	TestWordAlpha  = "ALPHA"
 	TestWordLoaded = "LOADED"
 
-	// Test hints
+	// Test hints.
 	TestHintFruit     = "A fruit"
 	TestHintFurniture = "Furniture"
 	TestHintTesting   = "For testing"
 
-	// Test session ID patterns
+	// Test session ID patterns.
 	TestSessionCreateNew = "test-session-createnewgame"
 	TestSessionGetState  = "test-session-getstatecache"
 	TestSessionSaveGame  = "test-session-savegame"
@@ -40,21 +40,21 @@ const (
 	TestSessionExpired2  = "expired-session-2"
 	TestSessionNoTime    = "no-time-session"
 
-	// Test file operations
+	// Test file operations.
 	TestFileName    = "f.txt"
 	TestFileContent = "x"
 
-	// Guess status constants
+	// Guess status constants.
 	StatusCorrect = "correct"
 	StatusPresent = "present"
 	StatusAbsent  = "absent"
 
-	// Test comments
-	CommentAllCorrect = "All correct"
-	CommentMixed      = "Mix of correct, present, absent"
-	CommentAllAbsent  = "All absent"
+	// Test comments.
+	CommentAllCorrect = "All correct."
+	CommentMixed      = "Mix of correct, present, absent."
+	CommentAllAbsent  = "All absent."
 
-	// Test validation constants
+	// Test validation constants.
 	InvalidSessionFormat = "invalid-session-format"
 )
 
@@ -277,7 +277,7 @@ func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	gameSessions[TestSessionActive] = &GameState{LastAccessTime: now.Add(-SessionTimeout / 2)}               // Active
 	gameSessions[TestSessionExpired1] = &GameState{LastAccessTime: now.Add(-(SessionTimeout + time.Minute))} // Expired
 	gameSessions[TestSessionExpired2] = &GameState{LastAccessTime: now.Add(-(SessionTimeout + time.Hour))}   // Expired
-	gameSessions[TestSessionNoTime] = &GameState{}                                                         // Zero time = expired
+	gameSessions[TestSessionNoTime] = &GameState{}                                                           // Zero time = expired
 	sessionMutex.Unlock()
 
 	// Test cleanup logic

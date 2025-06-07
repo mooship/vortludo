@@ -1,586 +1,1918 @@
 {
-  "words": [
-    {"word": "ABOUT", "hint": "Relating to a subject; approximately."},
-    {"word": "ABOVE", "hint": "In a superior position to; overhead."},
-    {"word": "ABUSE", "hint": "Improper treatment or misuse."},
-    {"word": "ACTOR", "hint": "Performer on stage or screen."},
-    {"word": "ACUTE", "hint": "Sharp, severe, or keenly perceptive."},
-    {"word": "ADMIT", "hint": "Acknowledge truth or grant access."},
-    {"word": "ADOPT", "hint": "Legally take as one's own, like a child or idea."},
-    {"word": "ADULT", "hint": "A mature, fully developed person or organism."},
-    {"word": "AFTER", "hint": "Subsequent to in time or order; behind."},
-    {"word": "AGAIN", "hint": "Repeating an action or occurrence; once more."},
-    {"word": "AGENT", "hint": "One who acts on behalf of another; a representative."},
-    {"word": "AGREE", "hint": "Share a viewpoint or consent to something."},
-    {"word": "AHEAD", "hint": "In a forward position or direction; in advance."},
-    {"word": "ALARM", "hint": "A warning of danger or a device that gives it."},
-    {"word": "ALBUM", "hint": "A collection, often of music or photographs."},
-    {"word": "ALERT", "hint": "Watchful and quick to notice; a warning."},
-    {"word": "ALIEN", "hint": "Foreigner or being from another world."},
-    {"word": "ALIGN", "hint": "Arrange in a straight line or proper relative positions."},
-    {"word": "ALIKE", "hint": "Similar in appearance, nature, or manner."},
-    {"word": "ALIVE", "hint": "Possessing life; not deceased."},
-    {"word": "ALLOW", "hint": "Grant permission for; permit."},
-    {"word": "ALONE", "hint": "Without others; solitary or isolated."},
-    {"word": "ALONG", "hint": "Moving in a constant direction on; beside."},
-    {"word": "ALTER", "hint": "To change or modify in some way."},
-    {"word": "ANGEL", "hint": "Spiritual messenger or a very kind person."},
-    {"word": "ANGER", "hint": "Strong feeling of annoyance or displeasure."},
-    {"word": "ANGLE", "hint": "Space between intersecting lines; a viewpoint."},
-    {"word": "ANGRY", "hint": "Feeling or showing strong displeasure or rage."},
-    {"word": "APART", "hint": "Separated by distance; into pieces."},
-    {"word": "APPLE", "hint": "Common pome fruit, proverbially keeps doctors away."},
-    {"word": "APPLY", "hint": "Make a formal request or put to practical use."},
-    {"word": "ARENA", "hint": "Venue for sports, entertainment, or contests."},
-    {"word": "ARGUE", "hint": "Exchange differing views, often heatedly."},
-    {"word": "ARISE", "hint": "Emerge, appear, or get up."},
-    {"word": "ARRAY", "hint": "An impressive display or an ordered series."},
-    {"word": "ASIDE", "hint": "To one side; out of the way."},
-    {"word": "ASSET", "hint": "A useful or valuable quality or resource."},
-    {"word": "AVOID", "hint": "Keep away from or prevent from happening."},
-    {"word": "AWARD", "hint": "A prize or recognition for achievement."},
-    {"word": "AWARE", "hint": "Having knowledge or perception of a situation."},
-    {"word": "BADGE", "hint": "Emblem worn to show affiliation or rank."},
-    {"word": "BADLY", "hint": "In an unsatisfactory or severe manner."},
-    {"word": "BAKER", "hint": "One who makes bread, cakes, and pastries."},
-    {"word": "BASES", "hint": "Foundations or starting points; in baseball, for runners."},
-    {"word": "BASIC", "hint": "Fundamental, essential, or forming a starting point."},
-    {"word": "BEACH", "hint": "Sandy or pebbly shore by a body of water."},
-    {"word": "BEGAN", "hint": "Past tense of starting an action or process."},
-    {"word": "BEING", "hint": "Existence; the nature or essence of a person."},
-    {"word": "BELOW", "hint": "At a lower level or position than something else."},
-    {"word": "BENCH", "hint": "Long seat for several people; a judge's seat."},
-    {"word": "BIRTH", "hint": "The emergence of a new life from its parent."},
-    {"word": "BLACK", "hint": "The color of coal, night, or mourning."},
-    {"word": "BLAME", "hint": "Assign responsibility for a fault or wrong."},
-    {"word": "BLANK", "hint": "Empty space; without marks or expression."},
-    {"word": "BLIND", "hint": "Unable to see; lacking perception or judgment."},
-    {"word": "BLOCK", "hint": "Solid piece of material; an obstruction."},
-    {"word": "BLOOD", "hint": "Life-sustaining red fluid in humans and animals."},
-    {"word": "BOARD", "hint": "Flat piece of wood; a group of directors."},
-    {"word": "BOOST", "hint": "Help or encourage to increase or improve; an uplift."},
-    {"word": "BOOTH", "hint": "Small compartment or stall, e.g., for voting or sales."},
-    {"word": "BOUND", "hint": "Tied or secured; destined for a place."},
-    {"word": "BRAIN", "hint": "Organ of thought and control center of the body."},
-    {"word": "BRAND", "hint": "A type of product or a distinguishing mark."},
-    {"word": "BRASS", "hint": "Yellow alloy of copper and zinc; bold impudence."},
-    {"word": "BRAVE", "hint": "Showing courage in the face of danger or pain."},
-    {"word": "BREAD", "hint": "Staple food made from flour, water, and yeast."},
-    {"word": "BREAK", "hint": "Separate into pieces; interrupt or pause."},
-    {"word": "BREED", "hint": "Produce offspring; a particular type of animal."},
-    {"word": "BRIEF", "hint": "Short in duration; concise summary."},
-    {"word": "BRING", "hint": "Carry or accompany someone or something to a place."},
-    {"word": "BROAD", "hint": "Wide in extent; covering a large area."},
-    {"word": "BROKE", "hint": "Having no money; past tense of break."},
-    {"word": "BROWN", "hint": "Color of earth, wood, or chocolate."},
-    {"word": "BRUSH", "hint": "Implement with bristles for cleaning or painting."},
-    {"word": "BUILD", "hint": "Construct by putting parts together."},
-    {"word": "BUILT", "hint": "Past tense and past participle of construct."},
-    {"word": "BUYER", "hint": "A person who makes a purchase."},
-    {"word": "CABLE", "hint": "Thick rope or wire; system for TV signals."},
-    {"word": "CARRY", "hint": "Support and move something from one place to another."},
-    {"word": "CATCH", "hint": "Intercept and hold; to apprehend."},
-    {"word": "CAUSE", "hint": "A reason for an action or condition; to make happen."},
-    {"word": "CHAIN", "hint": "Series of connected links or a sequence of events."},
-    {"word": "CHAIR", "hint": "Seat for one person, with a back and legs."},
-    {"word": "CHAOS", "hint": "Complete disorder and confusion."},
-    {"word": "CHARM", "hint": "Power of delighting or attracting; a small ornament."},
-    {"word": "CHART", "hint": "Visual representation of data, like a graph or map."},
-    {"word": "CHASE", "hint": "Pursue in order to catch or overtake."},
-    {"word": "CHEAP", "hint": "Low in price; of poor quality."},
-    {"word": "CHECK", "hint": "Examine for accuracy; a pattern of squares."},
-    {"word": "CHEST", "hint": "Upper front part of the torso; a storage box."},
-    {"word": "CHIEF", "hint": "Leader or ruler; most important."},
-    {"word": "CHILD", "hint": "A young human being below puberty."},
-    {"word": "CHIPS", "hint": "Thin slices of fried potato; small pieces of wood."},
-    {"word": "CHOSE", "hint": "Past tense of selecting or picking out."},
-    {"word": "CIVIL", "hint": "Relating to citizens; courteous and polite."},
-    {"word": "CLAIM", "hint": "Assert something as true; a demand for something due."},
-    {"word": "CLASS", "hint": "A group with common characteristics; a school lesson."},
-    {"word": "CLEAN", "hint": "Free from dirt, marks, or stains; unsoiled."},
-    {"word": "CLEAR", "hint": "Easy to perceive or understand; transparent."},
-    {"word": "CLICK", "hint": "Short, sharp sound; select with a computer mouse."},
-    {"word": "CLIMB", "hint": "Go up or ascend, often using hands and feet."},
-    {"word": "CLOCK", "hint": "Instrument for measuring and indicating time."},
-    {"word": "CLOSE", "hint": "Near in proximity; to shut or seal."},
-    {"word": "CLOUD", "hint": "Visible mass of water vapor in the atmosphere."},
-    {"word": "COACH", "hint": "Instructor or trainer; a type of bus or carriage."},
-    {"word": "COAST", "hint": "The part of the land near the sea; edge of land."},
-    {"word": "COULD", "hint": "Past tense of 'can', expressing possibility or ability."},
-    {"word": "COUNT", "hint": "Determine the total number of; to matter or be significant."},
-    {"word": "COURT", "hint": "Place where legal cases are heard; an area for games."},
-    {"word": "COVER", "hint": "Place something over or on top of; a lid or protection."},
-    {"word": "CRAFT", "hint": "Activity involving skill in making things by hand; a vessel."},
-    {"word": "CRANE", "hint": "Tall machine for lifting heavy objects; a long-necked bird."},
-    {"word": "CRASH", "hint": "Violent collision; a sudden loud noise or system failure."},
-    {"word": "CRAZY", "hint": "Mentally deranged (informal); extremely enthusiastic."},
-    {"word": "CREAM", "hint": "Fatty part of milk; the best part of something."},
-    {"word": "CRIME", "hint": "An action that constitutes an offense punishable by law."},
-    {"word": "CRISP", "hint": "Firm, dry, and brittle; sharp and invigorating."},
-    {"word": "CROSS", "hint": "Go from one side to the other; a symbol of intersecting lines."},
-    {"word": "CROWD", "hint": "A large number of people gathered together."},
-    {"word": "CROWN", "hint": "Monarch's ceremonial headdress; top part of the head."},
-    {"word": "CRUDE", "hint": "In a natural or raw state; lacking refinement."},
-    {"word": "CRUMB", "hint": "A very small piece, especially of bread or cake."},
-    {"word": "CURVE", "hint": "A smoothly bending line or surface."},
-    {"word": "CYCLE", "hint": "A series of events that are regularly repeated; a bicycle."},
-    {"word": "DAILY", "hint": "Occurring or produced every day."},
-    {"word": "DANCE", "hint": "Move rhythmically to music, typically following a set sequence."},
-    {"word": "DATED", "hint": "Marked with a date; old-fashioned."},
-    {"word": "DEALT", "hint": "Past tense of distributing or handling something."},
-    {"word": "DEATH", "hint": "The permanent end of life."},
-    {"word": "DEBUT", "hint": "A person's first appearance or performance in a role."},
-    {"word": "DELAY", "hint": "Postpone or slow down; a period of waiting."},
-    {"word": "DEPTH", "hint": "Distance from top to bottom or surface to interior."},
-    {"word": "DOING", "hint": "The act of performing an action."},
-    {"word": "DOUBT", "hint": "A feeling of uncertainty or lack of conviction."},
-    {"word": "DOZEN", "hint": "A group or set of twelve."},
-    {"word": "DRAFT", "hint": "Preliminary version of a text; a current of air."},
-    {"word": "DRAIN", "hint": "Cause liquid to flow out; a pipe for waste water."},
-    {"word": "DRANK", "hint": "Past tense of consuming a liquid."},
-    {"word": "DRAWN", "hint": "Pulled or dragged; sketched with a pen or pencil."},
-    {"word": "DREAM", "hint": "Series of thoughts and images occurring in sleep; an aspiration."},
-    {"word": "DRESS", "hint": "An item of clothing for women/girls; to put on clothes."},
-    {"word": "DRIED", "hint": "Freed from moisture or liquid."},
-    {"word": "DRINK", "hint": "To take liquid into the mouth and swallow."},
-    {"word": "DRIVE", "hint": "Operate a vehicle; motivation or an organized effort."},
-    {"word": "DROVE", "hint": "Past tense of operating a vehicle; a herd of animals."},
-    {"word": "DYING", "hint": "In the process of ceasing to live; coming to an end."},
-    {"word": "EAGER", "hint": "Strongly wanting to do or have something; keenly expectant."},
-    {"word": "EARLY", "hint": "Happening or done before the usual or expected time."},
-    {"word": "EARTH", "hint": "The planet on which we live; soil or land."},
-    {"word": "EIGHT", "hint": "The cardinal number equivalent to the sum of seven and one."},
-    {"word": "ELBOW", "hint": "The joint between the forearm and the upper arm."},
-    {"word": "ELITE", "hint": "A select group that is superior in terms of ability or qualities."},
-    {"word": "EMPTY", "hint": "Containing nothing; not filled or occupied."},
-    {"word": "ENEMY", "hint": "A person who is actively opposed or hostile to another."},
-    {"word": "ENJOY", "hint": "Take delight or pleasure in an activity or occasion."},
-    {"word": "ENTER", "hint": "Come or go into a place or a state."},
-    {"word": "ENTRY", "hint": "An act of going in; an item recorded in a list or diary."},
-    {"word": "EQUAL", "hint": "Being the same in quantity, size, degree, or value."},
-    {"word": "ERROR", "hint": "A mistake or a deviation from accuracy."},
-    {"word": "EVENT", "hint": "A thing that happens, especially one of importance."},
-    {"word": "EVERY", "hint": "Constituting all members of a group without exception."},
-    {"word": "EXACT", "hint": "Precise and accurate in all details."},
-    {"word": "EXIST", "hint": "Have objective reality or being; to live."},
-    {"word": "EXTRA", "hint": "Additional to what is usual or expected."},
-    {"word": "FAITH", "hint": "Complete trust or confidence in someone or something."},
-    {"word": "FALSE", "hint": "Not true or correct; deceptive."},
-    {"word": "FANCY", "hint": "Elaborate in structure or decoration; to imagine or suppose."},
-    {"word": "FAULT", "hint": "A defect or imperfection; responsibility for an error."},
-    {"word": "FIBER", "hint": "Thread-like structure; dietary material resistant to digestion."},
-    {"word": "FIELD", "hint": "An open area of land; a particular branch of study."},
-    {"word": "FIFTH", "hint": "Ordinal number corresponding to five; one part in five."},
-    {"word": "FIFTY", "hint": "The cardinal number equivalent to five times ten."},
-    {"word": "FIGHT", "hint": "Engage in a violent struggle; a quarrel or contest."},
-    {"word": "FINAL", "hint": "Coming at the end of a series; conclusive."},
-    {"word": "FIRST", "hint": "Coming before all others in time or order; initial."},
-    {"word": "FIXED", "hint": "Fastened securely; predetermined and unchangeable."},
-    {"word": "FLASH", "hint": "A sudden bright light; a brief moment."},
-    {"word": "FLEET", "hint": "A group of ships sailing together or under the same command."},
-    {"word": "FLOOR", "hint": "The lower surface of a room; a level in a building."},
-    {"word": "FLUID", "hint": "A substance that flows, like a liquid or gas."},
-    {"word": "FOCUS", "hint": "The center of interest or activity; to concentrate."},
-    {"word": "FORCE", "hint": "Strength or energy as an attribute of physical action; compel."},
-    {"word": "FORTH", "hint": "Forward or onward in time or place."},
-    {"word": "FORTY", "hint": "The cardinal number equivalent to four times ten."},
-    {"word": "FORUM", "hint": "A place or meeting for public discussion."},
-    {"word": "FOUND", "hint": "Discovered by chance or searching; established."},
-    {"word": "FRAME", "hint": "A rigid structure surrounding something; to incriminate falsely."},
-    {"word": "FRANK", "hint": "Open, honest, and direct in speech or writing."},
-    {"word": "FRAUD", "hint": "Wrongful or criminal deception for gain."},
-    {"word": "FRESH", "hint": "Newly made or obtained; not stale or preserved."},
-    {"word": "FRONT", "hint": "The most forward part or surface of something."},
-    {"word": "FRUIT", "hint": "Sweet, fleshy product of a tree or plant containing seed."},
-    {"word": "FULLY", "hint": "Completely or entirely; to the whole extent."},
-    {"word": "FUNNY", "hint": "Causing laughter or amusement; strange or peculiar."},
-    {"word": "FUZZY", "hint": "Having a fluffy or blurred texture; indistinct."},
-    {"word": "GIANT", "hint": "An imaginary being of superhuman size; extremely large."},
-    {"word": "GIVEN", "hint": "Provided or specified; inclined or disposed to."},
-    {"word": "GLASS", "hint": "Transparent material used for windows; a drinking container."},
-    {"word": "GLOBE", "hint": "A spherical representation of the Earth; the world."},
-    {"word": "GLOVE", "hint": "A covering for the hand with separate fingers."},
-    {"word": "GOING", "hint": "The act of departing or moving; progress or conditions."},
-    {"word": "GRACE", "hint": "Simple elegance or refinement; courteous goodwill."},
-    {"word": "GRADE", "hint": "A level of rank or quality; a mark indicating performance."},
-    {"word": "GRAIN", "hint": "Cereal seed; the texture of wood or stone."},
-    {"word": "GRAND", "hint": "Magnificent and imposing; large or ambitious."},
-    {"word": "GRANT", "hint": "Agree to give or allow; a sum of money for a purpose."},
-    {"word": "GRAPE", "hint": "Small, round, pulpy fruit, typically green, purple, or red."},
-    {"word": "GRASS", "hint": "Green vegetation covering lawns and pastures."},
-    {"word": "GRAVE", "hint": "A place of burial; serious or solemn."},
-    {"word": "GREAT", "hint": "Considerably above average in size, extent, or ability."},
-    {"word": "GREEN", "hint": "Color of growing foliage; environmentally friendly."},
-    {"word": "GROSS", "hint": "Total amount before deductions; repulsive or coarse."},
-    {"word": "GROUP", "hint": "A number of people or things classed together."},
-    {"word": "GROWN", "hint": "Increased in size or developed; cultivated."},
-    {"word": "GUARD", "hint": "Protect or supervise; a person who keeps watch."},
-    {"word": "GUESS", "hint": "Estimate or form an opinion without all information."},
-    {"word": "GUEST", "hint": "A person invited to visit or stay in someone's home."},
-    {"word": "GUIDE", "hint": "A person who shows the way; to direct or lead."},
-    {"word": "GUILT", "hint": "The feeling or fact of having done wrong."},
-    {"word": "HAPPY", "hint": "Feeling or showing pleasure or contentment."},
-    {"word": "HARSH", "hint": "Unpleasantly rough or severe; cruel."},
-    {"word": "HEART", "hint": "Organ that pumps blood; center of emotion or courage."},
-    {"word": "HEAVY", "hint": "Of great weight; difficult to lift or move."},
-    {"word": "HELLO", "hint": "A common salutation or greeting."},
-    {"word": "HENCE", "hint": "As a consequence; for this reason; from now."},
-    {"word": "HERBS", "hint": "Aromatic plants used for flavoring or medicine."},
-    {"word": "HONEY", "hint": "Sweet, viscous fluid made by bees from nectar."},
-    {"word": "HORSE", "hint": "Hoofed mammal, often ridden or used for work."},
-    {"word": "HOTEL", "hint": "Establishment providing accommodation for travelers."},
-    {"word": "HOUSE", "hint": "A building for human habitation."},
-    {"word": "HUMAN", "hint": "Relating to or characteristic of people or humankind."},
-    {"word": "IDEAL", "hint": "Perfectly suitable; a standard of perfection."},
-    {"word": "IMAGE", "hint": "A visual representation; a mental picture or concept."},
-    {"word": "IMPLY", "hint": "Suggest something indirectly or without stating it."},
-    {"word": "INDEX", "hint": "Alphabetical list of names or subjects with references."},
-    {"word": "INNER", "hint": "Situated inside; relating to the mind or spirit."},
-    {"word": "INPUT", "hint": "What is put into a system; contribution or data."},
-    {"word": "ISSUE", "hint": "An important topic or problem; to distribute or supply."},
-    {"word": "JELLY", "hint": "Fruit preserve set firm with pectin or gelatin."},
-    {"word": "JEWEL", "hint": "A precious stone; a highly valued person or thing."},
-    {"word": "JOINT", "hint": "A connection between bones or parts; shared or combined."},
-    {"word": "JUICE", "hint": "Liquid extracted from fruit or vegetables."},
-    {"word": "JUDGE", "hint": "Form an opinion about; a public official in a law court."},
-    {"word": "KNOWN", "hint": "Recognized, familiar, or generally accepted."},
-    {"word": "LABEL", "hint": "A tag attached to an object giving information; to categorize."},
-    {"word": "LARGE", "hint": "Of considerable or relatively great size or extent."},
-    {"word": "LASER", "hint": "Device emitting a highly concentrated beam of light."},
-    {"word": "LATER", "hint": "At a time in the future or subsequent to a specified time."},
-    {"word": "LAUGH", "hint": "Spontaneous expression of amusement or joy."},
-    {"word": "LAYER", "hint": "A sheet or thickness of material covering a surface."},
-    {"word": "LEARN", "hint": "Gain knowledge or skill through study or experience."},
-    {"word": "LEAST", "hint": "Smallest in amount, extent, or significance."},
-    {"word": "LEAVE", "hint": "Go away from; depart or abandon."},
-    {"word": "LEGAL", "hint": "Relating to or permitted by law."},
-    {"word": "LEMON", "hint": "Sour, yellow citrus fruit."},
-    {"word": "LEVEL", "hint": "A flat, horizontal surface; a position or rank."},
-    {"word": "LIGHT", "hint": "Source of illumination; not heavy."},
-    {"word": "LIMIT", "hint": "A boundary or point beyond which something cannot pass."},
-    {"word": "LINKS", "hint": "Connections between things; segments of a chain."},
-    {"word": "LIVES", "hint": "Plural of the state of being alive; resides or exists."},
-    {"word": "LOCAL", "hint": "Relating to a particular area or neighborhood."},
-    {"word": "LOGIC", "hint": "Reasoning conducted according to principles of validity."},
-    {"word": "LOOSE", "hint": "Not firmly fixed; free from restraint."},
-    {"word": "LOWER", "hint": "Move to a less high position; reduce in amount or rank."},
-    {"word": "LUCKY", "hint": "Having or resulting from good fortune."},
-    {"word": "LUNCH", "hint": "A meal eaten in the middle of the day."},
-    {"word": "LYING", "hint": "Telling falsehoods; in a horizontal resting position."},
-    {"word": "MAGIC", "hint": "The power of apparently influencing events by supernatural means."},
-    {"word": "MAJOR", "hint": "Important, serious, or significant; a military rank."},
-    {"word": "MAKER", "hint": "A person or company that produces something."},
-    {"word": "MARCH", "hint": "Walk in a military manner; third month of the year."},
-    {"word": "MATCH", "hint": "A contest or game; something that corresponds or is similar."},
-    {"word": "MAYBE", "hint": "Perhaps; possibly."},
-    {"word": "MAYOR", "hint": "The elected head of a city or town."},
-    {"word": "MEANT", "hint": "Intended or signified (past tense)."},
-    {"word": "MEDIA", "hint": "Channels of mass communication, like TV or internet."},
-    {"word": "METAL", "hint": "Hard, shiny, malleable material like iron or gold."},
-    {"word": "MIGHT", "hint": "Possibility or probability; great strength or power."},
-    {"word": "MINOR", "hint": "Lesser in importance or seriousness; under legal age."},
-    {"word": "MINUS", "hint": "With the subtraction of; indicating a negative value."},
-    {"word": "MIXED", "hint": "Combined or blended together; of varied kinds."},
-    {"word": "MODEL", "hint": "A representation or example; a person who poses."},
-    {"word": "MONEY", "hint": "Currency used as a medium of exchange; wealth."},
-    {"word": "MONTH", "hint": "A period of approximately four weeks or 30 days."},
-    {"word": "MORAL", "hint": "Concerned with principles of right and wrong behavior."},
-    {"word": "MOTOR", "hint": "An engine that produces motion."},
-    {"word": "MOUNT", "hint": "To climb up or get on; a mountain or hill."},
-    {"word": "MOUSE", "hint": "Small rodent; a computer input device."},
-    {"word": "MOUTH", "hint": "Facial opening for eating and speaking; an entrance."},
-    {"word": "MOVED", "hint": "Changed position or residence; emotionally affected."},
-    {"word": "MOVIE", "hint": "A film shown in a cinema or on television."},
-    {"word": "MUFFIN", "hint": "Small, cup-shaped quick bread, often sweet."},
-    {"word": "MUSIC", "hint": "Art form using sound, rhythm, and harmony."},
-    {"word": "NEEDS", "hint": "Requires something because it is essential or very important."},
-    {"word": "NEVER", "hint": "At no time in the past or future; not ever."},
-    {"word": "NEWLY", "hint": "Recently; a short time ago."},
-    {"word": "NIGHT", "hint": "The period of darkness between sunset and sunrise."},
-    {"word": "NOISE", "hint": "A sound, especially one that is loud or unpleasant."},
-    {"word": "NORTH", "hint": "Direction opposite to south; cardinal point."},
-    {"word": "NOTED", "hint": "Well-known or famous; observed or remarked upon."},
-    {"word": "NOVEL", "hint": "A long fictional prose narrative; new and unusual."},
-    {"word": "NURSE", "hint": "A person trained to care for the sick or injured."},
-    {"word": "OCCUR", "hint": "Happen; take place or come into existence."},
-    {"word": "OCEAN", "hint": "A very large expanse of sea."},
-    {"word": "OFFER", "hint": "Present something for acceptance or rejection."},
-    {"word": "OFTEN", "hint": "Frequently; many times."},
-    {"word": "ONION", "hint": "Pungent bulb vegetable with concentric layers."},
-    {"word": "ORDER", "hint": "Arrangement or sequence; a command or instruction."},
-    {"word": "OTHER", "hint": "Different from one already mentioned; additional."},
-    {"word": "OUGHT", "hint": "Used to indicate duty, correctness, or advisability."},
-    {"word": "OUTER", "hint": "External; situated on the outside."},
-    {"word": "OWNER", "hint": "A person who possesses something."},
-    {"word": "PAINT", "hint": "Colored liquid applied to a surface; to create a picture."},
-    {"word": "PANEL", "hint": "A flat section of a wall or door; a group of experts."},
-    {"word": "PAPER", "hint": "Thin material for writing or printing; a newspaper."},
-    {"word": "PASTA", "hint": "Italian food made from wheat dough, like spaghetti."},
-    {"word": "PARTY", "hint": "A social gathering; a political group."},
-    {"word": "PEACE", "hint": "Freedom from disturbance; tranquility or absence of war."},
-    {"word": "PEACH", "hint": "Soft, round, juicy fruit with downy, yellowish-orange skin."},
-    {"word": "PHASE", "hint": "A distinct stage in a process of change or development."},
-    {"word": "PHONE", "hint": "Device for voice communication over a distance."},
-    {"word": "PHOTO", "hint": "A picture produced by photography."},
-    {"word": "PIANO", "hint": "Large keyboard musical instrument with strings and hammers."},
-    {"word": "PIECE", "hint": "A part or portion of something larger."},
-    {"word": "PILOT", "hint": "A person who operates an aircraft or ship."},
-    {"word": "PITCH", "hint": "To throw; the highness or lowness of a musical tone."},
-    {"word": "PIZZA", "hint": "Baked dish of Italian origin with a flat, round dough base and toppings."},
-    {"word": "PLACE", "hint": "A particular position, point, or area."},
-    {"word": "PLAIN", "hint": "Simple or ordinary; a large area of flat land with few trees."},
-    {"word": "PLANE", "hint": "An aircraft with wings and one or more engines; a flat surface."},
-    {"word": "PLANT", "hint": "A living organism like a tree or flower; a factory."},
-    {"word": "PLATE", "hint": "A flat dish for food; a thin, flat sheet of metal."},
-    {"word": "PLAZA", "hint": "A public square or open space in a town or city."},
-    {"word": "POINT", "hint": "A sharp end; a particular spot or purpose."},
-    {"word": "POUND", "hint": "A unit of weight; to strike heavily and repeatedly."},
-    {"word": "POWER", "hint": "The ability to act or influence; strength or energy."},
-    {"word": "PRESS", "hint": "To push firmly; media organizations collectively."},
-    {"word": "PRICE", "hint": "The amount of money required to buy something."},
-    {"word": "PRIDE", "hint": "Deep pleasure from one's achievements; a group of lions."},
-    {"word": "PRIME", "hint": "Of first importance; main or chief."},
-    {"word": "PRINT", "hint": "Produce text or images on paper; a mark or impression."},
-    {"word": "PRIOR", "hint": "Existing or coming before in time, order, or importance."},
-    {"word": "PRIZE", "hint": "An award for victory or excellence."},
-    {"word": "PROOF", "hint": "Evidence establishing a fact or truth."},
-    {"word": "PROUD", "hint": "Feeling satisfaction from one's own or another's achievements."},
-    {"word": "PROVE", "hint": "Demonstrate the truth or existence of something."},
-    {"word": "QUEEN", "hint": "Female monarch; the most powerful chess piece."},
-    {"word": "QUICK", "hint": "Moving fast or doing something in a short time."},
-    {"word": "QUIET", "hint": "Making little or no noise; calm and peaceful."},
-    {"word": "QUITE", "hint": "To a certain extent; rather or completely."},
-    {"word": "RADIO", "hint": "Device for receiving sound broadcasts; wireless communication."},
-    {"word": "RAISE", "hint": "Lift or move to a higher position; to increase."},
-    {"word": "RANGE", "hint": "The extent of variation; a series of mountains."},
-    {"word": "RAPID", "hint": "Happening in a short time or at a fast pace."},
-    {"word": "RATIO", "hint": "Quantitative relation between two amounts."},
-    {"word": "REACH", "hint": "Extend to or arrive at; achieve or attain."},
-    {"word": "READY", "hint": "Prepared for an activity or situation."},
-    {"word": "REALM", "hint": "A kingdom or domain; a field of activity or interest."},
-    {"word": "REFER", "hint": "Mention or direct attention to someone or something."},
-    {"word": "RELAX", "hint": "Become less tense or anxious; rest from work."},
-    {"word": "REPLY", "hint": "To answer or respond in words or action."},
-    {"word": "RIGHT", "hint": "Correct or true; a moral or legal entitlement; opposite of left."},
-    {"word": "RIVAL", "hint": "A competitor for the same objective or superiority."},
-    {"word": "RIVER", "hint": "A large natural stream of water flowing to the sea or a lake."},
-    {"word": "ROAST", "hint": "Cook food, especially meat, with dry heat in an oven or over a fire."},
-    {"word": "ROCKY", "hint": "Full of stones or pertaining to a music genre."},
-    {"word": "ROLLS", "hint": "Small, individual baked breads; moves by turning over."},
-    {"word": "ROUGH", "hint": "Having an uneven surface; not gentle or smooth."},
-    {"word": "ROUND", "hint": "Circular in shape; a stage in a competition."},
-    {"word": "ROUTE", "hint": "A way or course taken to a destination."},
-    {"word": "ROYAL", "hint": "Relating to a king, queen, or their family."},
-    {"word": "RULER", "hint": "A person who governs; a straight-edged measuring device."},
-    {"word": "RURAL", "hint": "Relating to the countryside rather than the town."},
-    {"word": "SCALE", "hint": "Device for weighing; relative size or extent; to climb."},
-    {"word": "SCENE", "hint": "A view or setting; a part of a play or film."},
-    {"word": "SCOPE", "hint": "The extent of an area or subject matter; range."},
-    {"word": "SCORE", "hint": "Points in a game; a written piece of music; twenty."},
-    {"word": "SCREW", "hint": "A threaded fastener; to twist or turn."},
-    {"word": "SENSE", "hint": "Perception through faculties like sight or hearing; meaning."},
-    {"word": "SERVE", "hint": "Provide a service or assistance; to present food or drink."},
-    {"word": "SEVEN", "hint": "The cardinal number after six and before eight."},
-    {"word": "SHALL", "hint": "Expressing a strong assertion or intention (formal)."},
-    {"word": "SHAPE", "hint": "The external form or outline of someone or something."},
-    {"word": "SHARE", "hint": "A part or portion belonging to or contributed by a person."},
-    {"word": "SHARP", "hint": "Having a cutting edge or pointed end; intelligent."},
-    {"word": "SHEEP", "hint": "Woolly farm animal, often kept in flocks."},
-    {"word": "SHEET", "hint": "A thin layer of paper or fabric; a bed covering."},
-    {"word": "SHELF", "hint": "A flat horizontal support for storing items."},
-    {"word": "SHELL", "hint": "Hard protective outer covering of an animal or egg."},
-    {"word": "SHIFT", "hint": "To move or change position; a period of work."},
-    {"word": "SHINE", "hint": "To emit or reflect light; be bright."},
-    {"word": "SHIRT", "hint": "Garment for the upper body, typically with sleeves and a collar."},
-    {"word": "SHOCK", "hint": "A sudden upsetting surprise; an electrical jolt."},
-    {"word": "SHOES", "hint": "Footwear, typically worn in pairs for protection."},
-    {"word": "SHOOT", "hint": "To fire a weapon; to film or photograph."},
-    {"word": "SHORE", "hint": "The land along the edge of a sea, lake, or river."},
-    {"word": "SHORT", "hint": "Measuring a small distance; not long in duration."},
-    {"word": "SHOWN", "hint": "Displayed or exhibited (past participle)."},
-    {"word": "SIDED", "hint": "Having a specified number or kind of surfaces or aspects."},
-    {"word": "SIGHT", "hint": "The faculty of vision; something seen."},
-    {"word": "SILLY", "hint": "Foolish, playful, or lacking good sense."},
-    {"word": "SILKY", "hint": "Smooth, soft, and lustrous, like fine fabric."},
-    {"word": "SINCE", "hint": "From a particular time in the past until now."},
-    {"word": "SIXTH", "hint": "Ordinal number corresponding to six."},
-    {"word": "SIZED", "hint": "Having a particular dimension or magnitude."},
-    {"word": "SKILL", "hint": "The ability to do something well; expertise."},
-    {"word": "SLASH", "hint": "To cut with a sweeping motion; a diagonal line (/)."},
-    {"word": "SLEEP", "hint": "A state of rest with closed eyes and reduced consciousness."},
-    {"word": "SLIDE", "hint": "To move smoothly along a surface."},
-    {"word": "SLIME", "hint": "A moist, soft, and slippery, often unpleasant substance."},
-    {"word": "SLING", "hint": "A strap for carrying or throwing something."},
-    {"word": "SLOPE", "hint": "An inclined surface or gradient."},
-    {"word": "SMALL", "hint": "Of a size that is less than normal or average."},
-    {"word": "SMART", "hint": "Intelligent or clever; neat and stylish."},
-    {"word": "SMILE", "hint": "A pleased or amused facial expression with upturned mouth corners."},
-    {"word": "SNACK", "hint": "A small amount of food eaten between meals."},
-    {"word": "SMOKE", "hint": "Visible vapor from burning material."},
-    {"word": "SOLID", "hint": "Firm and stable in shape; not liquid or gas."},
-    {"word": "SOLVE", "hint": "Find an answer or explanation for a problem or mystery."},
-    {"word": "SORRY", "hint": "Feeling regret, sympathy, or pity."},
-    {"word": "SOUND", "hint": "Vibrations perceived by the ear; apparently good or valid."},
-    {"word": "SPACE", "hint": "An empty area; the region beyond Earth's atmosphere."},
-    {"word": "SPARE", "hint": "Extra or additional; to refrain from harming."},
-    {"word": "SPEAK", "hint": "To talk or communicate verbally."},
-    {"word": "SPEED", "hint": "The rate of movement or operation."},
-    {"word": "SPEND", "hint": "To use money or time on something."},
-    {"word": "SPENT", "hint": "Used up or exhausted (past tense)."},
-    {"word": "SPICE", "hint": "Aromatic substance used to flavor food."},
-    {"word": "SPLIT", "hint": "To divide or separate into parts."},
-    {"word": "SPOKE", "hint": "Talked (past tense); a rod in a wheel."},
-    {"word": "SPORT", "hint": "A physical activity game or competition."},
-    {"word": "SQUAD", "hint": "A small team or group with a specific task."},
-    {"word": "STAFF", "hint": "Employees of an organization; a long stick or rod."},
-    {"word": "STAGE", "hint": "A platform for performances; a phase in a process."},
-    {"word": "STAKE", "hint": "A pointed post driven into the ground; something risked."},
-    {"word": "STAND", "hint": "To be in an upright position on one's feet."},
-    {"word": "START", "hint": "To begin an action or process."},
-    {"word": "STATE", "hint": "Condition of something; a nation or territory."},
-    {"word": "STEAM", "hint": "Water in its gaseous form; vapor."},
-    {"word": "STEEL", "hint": "Strong, hard alloy of iron and carbon."},
-    {"word": "STEER", "hint": "To guide the direction of a vehicle or vessel."},
-    {"word": "STICK", "hint": "A thin piece of wood; to adhere or attach."},
-    {"word": "STILL", "hint": "Not moving or making a sound; yet or nevertheless."},
-    {"word": "STOCK", "hint": "Supply of goods; shares in a company; broth."},
-    {"word": "STONE", "hint": "Hard, solid mineral matter; a gem."},
-    {"word": "STOOD", "hint": "Was in an upright position (past tense)."},
-    {"word": "STORE", "hint": "A place where goods are sold; to keep for future use."},
-    {"word": "STORM", "hint": "Violent weather with strong winds, rain, or snow."},
-    {"word": "STORY", "hint": "A narrative or tale; an account of events."},
-    {"word": "STRAP", "hint": "A strip of material for fastening or carrying."},
-    {"word": "STRIP", "hint": "A long, narrow piece; to remove covering."},
-    {"word": "STUCK", "hint": "Unable to move or fixed in place."},
-    {"word": "STUDY", "hint": "To learn or examine a subject in detail."},
-    {"word": "STUFF", "hint": "Things, material, or belongings (informal)."},
-    {"word": "STYLE", "hint": "A manner of doing something; fashion or design."},
-    {"word": "SUGAR", "hint": "Sweet crystalline substance used in food and drinks."},
-    {"word": "SUITE", "hint": "A set of connected rooms; a musical composition."},
-    {"word": "SUNNY", "hint": "Bright with sunlight; cheerful."},
-    {"word": "SUPER", "hint": "Excellent or outstanding; of a higher grade or rank."},
-    {"word": "SURGE", "hint": "A sudden powerful forward or upward movement."},
-    {"word": "SWEET", "hint": "Having a sugary taste; pleasant or charming."},
-    {"word": "TABLE", "hint": "Furniture with a flat top and legs, for eating or working."},
-    {"word": "TAKEN", "hint": "Received or captured (past participle)."},
-    {"word": "TASTE", "hint": "The sensation of flavor perceived in the mouth."},
-    {"word": "TAXES", "hint": "Compulsory financial contributions to government revenue."},
-    {"word": "TEACH", "hint": "To instruct or impart knowledge or skills."},
-    {"word": "TEMPO", "hint": "The speed at which music is played; pace."},
-    {"word": "TENTH", "hint": "Ordinal number corresponding to ten."},
-    {"word": "THANK", "hint": "To express gratitude or appreciation."},
-    {"word": "THEFT", "hint": "The act of unlawfully taking another's property."},
-    {"word": "THEIR", "hint": "Belonging to or associated with them."},
-    {"word": "THEME", "hint": "The main subject or topic of a discourse or work."},
-    {"word": "THERE", "hint": "In, at, or to that place or position."},
-    {"word": "THICK", "hint": "Having a relatively great distance between opposite sides."},
-    {"word": "THING", "hint": "An object, item, or entity."},
-    {"word": "THINK", "hint": "To use one's mind to consider or form ideas."},
-    {"word": "THIRD", "hint": "Ordinal number corresponding to three."},
-    {"word": "THORN", "hint": "A sharp, pointed projection on a plant stem."},
-    {"word": "THREE", "hint": "The cardinal number after two and before four."},
-    {"word": "THREW", "hint": "Tossed or propelled through the air (past tense)."},
-    {"word": "THROW", "hint": "To toss or hurl something through the air."},
-    {"word": "THUMB", "hint": "The short, thick first digit of the human hand."},
-    {"word": "TIGER", "hint": "Large, striped feline predator of Asia."},
-    {"word": "TIGHT", "hint": "Firmly fixed or fastened; fitting closely."},
-    {"word": "TIMER", "hint": "A device that measures or records elapsed time."},
-    {"word": "TITLE", "hint": "A name of a book or work; a designation of rank or office."},
-    {"word": "TOAST", "hint": "Sliced bread browned by heat; a call to drink in honor."},
-    {"word": "TODAY", "hint": "This present day; the current time."},
-    {"word": "TOKEN", "hint": "A symbol or small item representing something else."},
-    {"word": "TOPIC", "hint": "A subject of discussion, writing, or thought."},
-    {"word": "TORCH", "hint": "A portable burning light; a flashlight (UK)."},
-    {"word": "TOTAL", "hint": "The complete amount or sum; absolute."},
-    {"word": "TOUCH", "hint": "To make physical contact with; to affect emotionally."},
-    {"word": "TOUGH", "hint": "Strong and durable; difficult to accomplish."},
-    {"word": "TOWER", "hint": "A tall, narrow structure, often part of a larger building."},
-    {"word": "TRACK", "hint": "A path or trail; to follow the course of something."},
-    {"word": "TRADE", "hint": "The buying and selling of goods or services."},
-    {"word": "TRAIL", "hint": "A path or track through a wild area; to follow behind."},
-    {"word": "TRAIN", "hint": "Connected rail cars; to teach a skill."},
-    {"word": "TRASH", "hint": "Waste material or garbage; something worthless."},
-    {"word": "TREAT", "hint": "To behave towards or handle in a certain way; a special reward."},
-    {"word": "TREND", "hint": "A general direction of change or development."},
-    {"word": "TRIAL", "hint": "A test of performance or quality; a legal examination."},
-    {"word": "TRIBE", "hint": "A social group with common ancestry or culture."},
-    {"word": "TRICK", "hint": "A clever act intended to deceive or amuse."},
-    {"word": "TRIED", "hint": "Attempted or tested (past tense)."},
-    {"word": "TRULY", "hint": "Genuinely or sincerely; in accordance with fact."},
-    {"word": "TRUNK", "hint": "Main stem of a tree; a large storage box; an elephant's nose."},
-    {"word": "TRUST", "hint": "Firm belief in the reliability or truth of someone or something."},
-    {"word": "TRUTH", "hint": "That which is real, factual, or in accordance with reality."},
-    {"word": "TULIP", "hint": "Colorful, cup-shaped spring flower grown from a bulb."},
-    {"word": "TWIST", "hint": "To turn or rotate; an unexpected development."},
-    {"word": "TWICE", "hint": "Two times; on two occasions."},
-    {"word": "ULTRA", "hint": "Beyond the usual or ordinary; extreme."},
-    {"word": "UNCLE", "hint": "The brother of one's parent or the husband of one's aunt."},
-    {"word": "UNDER", "hint": "Below or beneath something; less than."},
-    {"word": "UNDUE", "hint": "Excessive, inappropriate, or unwarranted."},
-    {"word": "UNION", "hint": "A joining together; an association of workers."},
-    {"word": "UNITY", "hint": "The state of being united or forming a whole."},
-    {"word": "UNTIL", "hint": "Up to the point in time or the event mentioned."},
-    {"word": "UPPER", "hint": "Higher in position, rank, or status."},
-    {"word": "UPSET", "hint": "Disturbed, worried, or unhappy; an unexpected defeat."},
-    {"word": "URBAN", "hint": "Relating to or characteristic of a city or town."},
-    {"word": "USAGE", "hint": "The way something is used; customary practice."},
-    {"word": "USUAL", "hint": "Normal, typical, or customary."},
-    {"word": "VALID", "hint": "Acceptable, sound, or legally binding."},
-    {"word": "VALUE", "hint": "Worth, importance, or usefulness."},
-    {"word": "VAPOR", "hint": "A substance in a gaseous state, like steam or mist."},
-    {"word": "VIDEO", "hint": "Recording or broadcasting of moving visual images."},
-    {"word": "VIRUS", "hint": "Microscopic infectious agent that replicates in living cells."},
-    {"word": "VISIT", "hint": "To go see someone or a place for a short time."},
-    {"word": "VITAL", "hint": "Essential for life; critically important."},
-    {"word": "VOCAL", "hint": "Relating to or produced by the voice."},
-    {"word": "VOICE", "hint": "Sound produced by speaking or singing."},
-    {"word": "VOTER", "hint": "A person who has the right to or does participate in an election."},
-    {"word": "WAIST", "hint": "The part of the body between the ribs and hips."},
-    {"word": "WASTE", "hint": "To use carelessly or to no purpose; unwanted material."},
-    {"word": "WATCH", "hint": "To observe attentively; a timepiece worn on the wrist."},
-    {"word": "WATER", "hint": "Essential liquid for life, H₂O."},
-    {"word": "WHALE", "hint": "Very large marine mammal with a blowhole."},
-    {"word": "WHEAT", "hint": "Cereal grain used to make flour for bread and pasta."},
-    {"word": "WHEEL", "hint": "A circular object that rotates, enabling movement."},
-    {"word": "WHERE", "hint": "At, in, or to what place or position."},
-    {"word": "WHICH", "hint": "Asking for specification from a definite set."},
-    {"word": "WHILE", "hint": "During the time that; at the same time as."},
-    {"word": "WHISK", "hint": "Kitchen utensil for whipping eggs or cream; a quick, light movement."},
-    {"word": "WHITE", "hint": "The color of milk or fresh snow; lightest color."},
-    {"word": "WHOLE", "hint": "Complete or entire; all of something."},
-    {"word": "WHOSE", "hint": "Belonging to or associated with which person."},
-    {"word": "WIDTH", "hint": "The measurement or extent of something from side to side."},
-    {"word": "WOMAN", "hint": "An adult human female."},
-    {"word": "WORLD", "hint": "The Earth, with all its countries and peoples."},
-    {"word": "WORRY", "hint": "To feel anxious or troubled about potential problems."},
-    {"word": "WORSE", "hint": "Of poorer quality or lower standard; more bad."},
-    {"word": "WORST", "hint": "Most bad; of the poorest quality or lowest standard."},
-    {"word": "WORTH", "hint": "Value, merit, or importance."},
-    {"word": "WOULD", "hint": "Past tense of will; expressing a hypothetical situation."},
-    {"word": "WOUND", "hint": "An injury to living tissue, often involving a break in the skin."},
-    {"word": "WRIST", "hint": "The joint connecting the hand to the forearm."},
-    {"word": "WRITE", "hint": "To form letters or words on a surface with an implement."},
-    {"word": "WRONG", "hint": "Incorrect, mistaken, or not morally good."},
-    {"word": "WROTE", "hint": "Composed text or formed letters (past tense)."},
-    {"word": "YACHT", "hint": "A luxurious sailing or motor boat for pleasure or racing."},
-    {"word": "YIELD", "hint": "To produce or provide; to give way or surrender."},
-    {"word": "YOUNG", "hint": "Not old; in an early stage of life or development."},
-    {"word": "YOUTH", "hint": "The period between childhood and adulthood; young people."},
-    {"word": "ZEBRA", "hint": "African wild horse with distinctive black and white stripes."},
-    {"word": "AUDIO", "hint": "Relating to sound or its reproduction."},
-    {"word": "BEAST", "hint": "An animal, especially a large or dangerous four-footed one."},
-    {"word": "BLITZ", "hint": "A sudden, intensive, and concerted attack or effort."},
-    {"word": "BOXER", "hint": "A pugilist; a breed of dog."},
-    {"word": "BRIBE", "hint": "Persuade someone to act in one's favor, typically illegally, by a gift of money."},
-    {"word": "CHALK", "hint": "Soft white limestone formed from skeletal remains of sea creatures."},
-    {"word": "CORAL", "hint": "Marine invertebrate that forms reefs; a pinkish-red color."},
-    {"word": "DIARY", "hint": "A book for recording daily events or personal thoughts."},
-    {"word": "EMAIL", "hint": "Messages distributed by electronic means from one computer user to another."},
-    {"word": "FLUTE", "hint": "A wind instrument made from a tube with holes along it."},
-    {"word": "FROST", "hint": "A deposit of small white ice crystals formed on the ground or other surfaces."},
-    {"word": "GHOST", "hint": "An apparition of a dead person, often believed to haunt."},
-    {"word": "HONOR", "hint": "High respect; great esteem; adherence to what is right."},
-    {"word": "IVORY", "hint": "Hard creamy-white substance from tusks of elephants."},
-    {"word": "JOKER", "hint": "A person who is fond of telling amusing stories or playing pranks."}
-  ]
+    "words": [
+        { "word": "ABOUT", "hint": "Relating to a subject; approximately." },
+        { "word": "ABOVE", "hint": "In a superior position to; overhead." },
+        { "word": "ABUSE", "hint": "Improper treatment or misuse." },
+        { "word": "ACTOR", "hint": "Performer on stage or screen." },
+        { "word": "ACUTE", "hint": "Sharp, severe, or keenly perceptive." },
+        { "word": "ADMIT", "hint": "Acknowledge truth or grant access." },
+        {
+            "word": "ADOPT",
+            "hint": "Legally take as one's own, like a child or idea."
+        },
+        {
+            "word": "ADULT",
+            "hint": "A mature, fully developed person or organism."
+        },
+        { "word": "AFTER", "hint": "Subsequent to in time or order; behind." },
+        {
+            "word": "AGAIN",
+            "hint": "Repeating an action or occurrence; once more."
+        },
+        {
+            "word": "AGENT",
+            "hint": "One who acts on behalf of another; a representative."
+        },
+        {
+            "word": "AGREE",
+            "hint": "Share a viewpoint or consent to something."
+        },
+        {
+            "word": "AHEAD",
+            "hint": "In a forward position or direction; in advance."
+        },
+        {
+            "word": "ALARM",
+            "hint": "A warning of danger or a device that gives it."
+        },
+        {
+            "word": "ALBUM",
+            "hint": "A collection, often of music or photographs."
+        },
+        { "word": "ALERT", "hint": "Watchful and quick to notice; a warning." },
+        { "word": "ALIEN", "hint": "Foreigner or being from another world." },
+        {
+            "word": "ALIGN",
+            "hint": "Arrange in a straight line or proper relative positions."
+        },
+        {
+            "word": "ALIKE",
+            "hint": "Similar in appearance, nature, or manner."
+        },
+        { "word": "ALIVE", "hint": "Possessing life; not deceased." },
+        { "word": "ALLOW", "hint": "Grant permission for; permit." },
+        { "word": "ALONE", "hint": "Without others; solitary or isolated." },
+        {
+            "word": "ALONG",
+            "hint": "Moving in a constant direction on; beside."
+        },
+        { "word": "ALTER", "hint": "To change or modify in some way." },
+        {
+            "word": "ANGEL",
+            "hint": "Spiritual messenger or a very kind person."
+        },
+        {
+            "word": "ANGER",
+            "hint": "Strong feeling of annoyance or displeasure."
+        },
+        {
+            "word": "ANGLE",
+            "hint": "Space between intersecting lines; a viewpoint."
+        },
+        {
+            "word": "ANGRY",
+            "hint": "Feeling or showing strong displeasure or rage."
+        },
+        { "word": "APART", "hint": "Separated by distance; into pieces." },
+        {
+            "word": "APPLE",
+            "hint": "Common pome fruit, proverbially keeps doctors away."
+        },
+        {
+            "word": "APPLY",
+            "hint": "Make a formal request or put to practical use."
+        },
+        {
+            "word": "ARENA",
+            "hint": "Venue for sports, entertainment, or contests."
+        },
+        {
+            "word": "ARGUE",
+            "hint": "Exchange differing views, often heatedly."
+        },
+        { "word": "ARISE", "hint": "Emerge, appear, or get up." },
+        {
+            "word": "ARRAY",
+            "hint": "An impressive display or an ordered series."
+        },
+        { "word": "ASIDE", "hint": "To one side; out of the way." },
+        {
+            "word": "ASSET",
+            "hint": "A useful or valuable quality or resource."
+        },
+        {
+            "word": "AVOID",
+            "hint": "Keep away from or prevent from happening."
+        },
+        { "word": "AWARD", "hint": "A prize or recognition for achievement." },
+        {
+            "word": "AWARE",
+            "hint": "Having knowledge or perception of a situation."
+        },
+        { "word": "BADGE", "hint": "Emblem worn to show affiliation or rank." },
+        { "word": "BADLY", "hint": "In an unsatisfactory or severe manner." },
+        {
+            "word": "BAKER",
+            "hint": "One who makes bread, cakes, and pastries."
+        },
+        {
+            "word": "BASES",
+            "hint": "Foundations or starting points; in baseball, for runners."
+        },
+        {
+            "word": "BASIC",
+            "hint": "Fundamental, essential, or forming a starting point."
+        },
+        {
+            "word": "BEACH",
+            "hint": "Sandy or pebbly shore by a body of water."
+        },
+        {
+            "word": "BEGAN",
+            "hint": "Past tense of starting an action or process."
+        },
+        {
+            "word": "BEING",
+            "hint": "Existence; the nature or essence of a person."
+        },
+        {
+            "word": "BELOW",
+            "hint": "At a lower level or position than something else."
+        },
+        {
+            "word": "BENCH",
+            "hint": "Long seat for several people; a judge's seat."
+        },
+        {
+            "word": "BIRTH",
+            "hint": "The emergence of a new life from its parent."
+        },
+        { "word": "BLACK", "hint": "The color of coal, night, or mourning." },
+        {
+            "word": "BLAME",
+            "hint": "Assign responsibility for a fault or wrong."
+        },
+        {
+            "word": "BLANK",
+            "hint": "Empty space; without marks or expression."
+        },
+        {
+            "word": "BLIND",
+            "hint": "Unable to see; lacking perception or judgment."
+        },
+        { "word": "BLOCK", "hint": "Solid piece of material; an obstruction." },
+        {
+            "word": "BLOOD",
+            "hint": "Life-sustaining red fluid in humans and animals."
+        },
+        {
+            "word": "BOARD",
+            "hint": "Flat piece of wood; a group of directors."
+        },
+        {
+            "word": "BOOST",
+            "hint": "Help or encourage to increase or improve; an uplift."
+        },
+        {
+            "word": "BOOTH",
+            "hint": "Small compartment or stall, e.g., for voting or sales."
+        },
+        { "word": "BOUND", "hint": "Tied or secured; destined for a place." },
+        {
+            "word": "BRAIN",
+            "hint": "Organ of thought and control center of the body."
+        },
+        {
+            "word": "BRAND",
+            "hint": "A type of product or a distinguishing mark."
+        },
+        {
+            "word": "BRASS",
+            "hint": "Yellow alloy of copper and zinc; bold impudence."
+        },
+        {
+            "word": "BRAVE",
+            "hint": "Showing courage in the face of danger or pain."
+        },
+        {
+            "word": "BREAD",
+            "hint": "Staple food made from flour, water, and yeast."
+        },
+        {
+            "word": "BREAK",
+            "hint": "Separate into pieces; interrupt or pause."
+        },
+        {
+            "word": "BREED",
+            "hint": "Produce offspring; a particular type of animal."
+        },
+        { "word": "BRIEF", "hint": "Short in duration; concise summary." },
+        {
+            "word": "BRING",
+            "hint": "Carry or accompany someone or something to a place."
+        },
+        { "word": "BROAD", "hint": "Wide in extent; covering a large area." },
+        { "word": "BROKE", "hint": "Having no money; past tense of break." },
+        { "word": "BROWN", "hint": "Color of earth, wood, or chocolate." },
+        {
+            "word": "BRUSH",
+            "hint": "Implement with bristles for cleaning or painting."
+        },
+        { "word": "BUILD", "hint": "Construct by putting parts together." },
+        {
+            "word": "BUILT",
+            "hint": "Past tense and past participle of construct."
+        },
+        { "word": "BUYER", "hint": "A person who makes a purchase." },
+        {
+            "word": "CABLE",
+            "hint": "Thick rope or wire; system for TV signals."
+        },
+        {
+            "word": "CARRY",
+            "hint": "Support and move something from one place to another."
+        },
+        { "word": "CATCH", "hint": "Intercept and hold; to apprehend." },
+        {
+            "word": "CAUSE",
+            "hint": "A reason for an action or condition; to make happen."
+        },
+        {
+            "word": "CHAIN",
+            "hint": "Series of connected links or a sequence of events."
+        },
+        {
+            "word": "CHAIR",
+            "hint": "Seat for one person, with a back and legs."
+        },
+        { "word": "CHAOS", "hint": "Complete disorder and confusion." },
+        {
+            "word": "CHARM",
+            "hint": "Power of delighting or attracting; a small ornament."
+        },
+        {
+            "word": "CHART",
+            "hint": "Visual representation of data, like a graph or map."
+        },
+        { "word": "CHASE", "hint": "Pursue in order to catch or overtake." },
+        { "word": "CHEAP", "hint": "Low in price; of poor quality." },
+        {
+            "word": "CHECK",
+            "hint": "Examine for accuracy; a pattern of squares."
+        },
+        {
+            "word": "CHEST",
+            "hint": "Upper front part of the torso; a storage box."
+        },
+        { "word": "CHIEF", "hint": "Leader or ruler; most important." },
+        { "word": "CHILD", "hint": "A young human being below puberty." },
+        {
+            "word": "CHIPS",
+            "hint": "Thin slices of fried potato; small pieces of wood."
+        },
+        { "word": "CHOSE", "hint": "Past tense of selecting or picking out." },
+        {
+            "word": "CIVIL",
+            "hint": "Relating to citizens; courteous and polite."
+        },
+        {
+            "word": "CLAIM",
+            "hint": "Assert something as true; a demand for something due."
+        },
+        {
+            "word": "CLASS",
+            "hint": "A group with common characteristics; a school lesson."
+        },
+        {
+            "word": "CLEAN",
+            "hint": "Free from dirt, marks, or stains; unsoiled."
+        },
+        {
+            "word": "CLEAR",
+            "hint": "Easy to perceive or understand; transparent."
+        },
+        {
+            "word": "CLICK",
+            "hint": "Short, sharp sound; select with a computer mouse."
+        },
+        {
+            "word": "CLIMB",
+            "hint": "Go up or ascend, often using hands and feet."
+        },
+        {
+            "word": "CLOCK",
+            "hint": "Instrument for measuring and indicating time."
+        },
+        { "word": "CLOSE", "hint": "Near in proximity; to shut or seal." },
+        {
+            "word": "CLOUD",
+            "hint": "Visible mass of water vapor in the atmosphere."
+        },
+        {
+            "word": "COACH",
+            "hint": "Instructor or trainer; a type of bus or carriage."
+        },
+        {
+            "word": "COAST",
+            "hint": "The part of the land near the sea; edge of land."
+        },
+        {
+            "word": "COULD",
+            "hint": "Past tense of 'can', expressing possibility or ability."
+        },
+        {
+            "word": "COUNT",
+            "hint": "Determine the total number of; to matter or be significant."
+        },
+        {
+            "word": "COURT",
+            "hint": "Place where legal cases are heard; an area for games."
+        },
+        {
+            "word": "COVER",
+            "hint": "Place something over or on top of; a lid or protection."
+        },
+        {
+            "word": "CRAFT",
+            "hint": "Activity involving skill in making things by hand; a vessel."
+        },
+        {
+            "word": "CRANE",
+            "hint": "Tall machine for lifting heavy objects; a long-necked bird."
+        },
+        {
+            "word": "CRASH",
+            "hint": "Violent collision; a sudden loud noise or system failure."
+        },
+        {
+            "word": "CRAZY",
+            "hint": "Mentally deranged (informal); extremely enthusiastic."
+        },
+        {
+            "word": "CREAM",
+            "hint": "Fatty part of milk; the best part of something."
+        },
+        {
+            "word": "CRIME",
+            "hint": "An action that constitutes an offense punishable by law."
+        },
+        {
+            "word": "CRISP",
+            "hint": "Firm, dry, and brittle; sharp and invigorating."
+        },
+        {
+            "word": "CROSS",
+            "hint": "Go from one side to the other; a symbol of intersecting lines."
+        },
+        {
+            "word": "CROWD",
+            "hint": "A large number of people gathered together."
+        },
+        {
+            "word": "CROWN",
+            "hint": "Monarch's ceremonial headdress; top part of the head."
+        },
+        {
+            "word": "CRUDE",
+            "hint": "In a natural or raw state; lacking refinement."
+        },
+        {
+            "word": "CRUMB",
+            "hint": "A very small piece, especially of bread or cake."
+        },
+        { "word": "CURVE", "hint": "A smoothly bending line or surface." },
+        {
+            "word": "CYCLE",
+            "hint": "A series of events that are regularly repeated; a bicycle."
+        },
+        { "word": "DAILY", "hint": "Occurring or produced every day." },
+        {
+            "word": "DANCE",
+            "hint": "Move rhythmically to music, typically following a set sequence."
+        },
+        { "word": "DATED", "hint": "Marked with a date; old-fashioned." },
+        {
+            "word": "DEALT",
+            "hint": "Past tense of distributing or handling something."
+        },
+        { "word": "DEATH", "hint": "The permanent end of life." },
+        {
+            "word": "DEBUT",
+            "hint": "A person's first appearance or performance in a role."
+        },
+        {
+            "word": "DELAY",
+            "hint": "Postpone or slow down; a period of waiting."
+        },
+        {
+            "word": "DEPTH",
+            "hint": "Distance from top to bottom or surface to interior."
+        },
+        { "word": "DOING", "hint": "The act of performing an action." },
+        {
+            "word": "DOUBT",
+            "hint": "A feeling of uncertainty or lack of conviction."
+        },
+        { "word": "DOZEN", "hint": "A group or set of twelve." },
+        {
+            "word": "DRAFT",
+            "hint": "Preliminary version of a text; a current of air."
+        },
+        {
+            "word": "DRAIN",
+            "hint": "Cause liquid to flow out; a pipe for waste water."
+        },
+        { "word": "DRANK", "hint": "Past tense of consuming a liquid." },
+        {
+            "word": "DRAWN",
+            "hint": "Pulled or dragged; sketched with a pen or pencil."
+        },
+        {
+            "word": "DREAM",
+            "hint": "Series of thoughts and images occurring in sleep; an aspiration."
+        },
+        {
+            "word": "DRESS",
+            "hint": "An item of clothing for women/girls; to put on clothes."
+        },
+        { "word": "DRIED", "hint": "Freed from moisture or liquid." },
+        {
+            "word": "DRINK",
+            "hint": "To take liquid into the mouth and swallow."
+        },
+        {
+            "word": "DRIVE",
+            "hint": "Operate a vehicle; motivation or an organized effort."
+        },
+        {
+            "word": "DROVE",
+            "hint": "Past tense of operating a vehicle; a herd of animals."
+        },
+        {
+            "word": "DYING",
+            "hint": "In the process of ceasing to live; coming to an end."
+        },
+        {
+            "word": "EAGER",
+            "hint": "Strongly wanting to do or have something; keenly expectant."
+        },
+        {
+            "word": "EARLY",
+            "hint": "Happening or done before the usual or expected time."
+        },
+        {
+            "word": "EARTH",
+            "hint": "The planet on which we live; soil or land."
+        },
+        {
+            "word": "EIGHT",
+            "hint": "The cardinal number equivalent to the sum of seven and one."
+        },
+        {
+            "word": "ELBOW",
+            "hint": "The joint between the forearm and the upper arm."
+        },
+        {
+            "word": "ELITE",
+            "hint": "A select group that is superior in terms of ability or qualities."
+        },
+        {
+            "word": "EMPTY",
+            "hint": "Containing nothing; not filled or occupied."
+        },
+        {
+            "word": "ENEMY",
+            "hint": "A person who is actively opposed or hostile to another."
+        },
+        {
+            "word": "ENJOY",
+            "hint": "Take delight or pleasure in an activity or occasion."
+        },
+        { "word": "ENTER", "hint": "Come or go into a place or a state." },
+        {
+            "word": "ENTRY",
+            "hint": "An act of going in; an item recorded in a list or diary."
+        },
+        {
+            "word": "EQUAL",
+            "hint": "Being the same in quantity, size, degree, or value."
+        },
+        { "word": "ERROR", "hint": "A mistake or a deviation from accuracy." },
+        {
+            "word": "EVENT",
+            "hint": "A thing that happens, especially one of importance."
+        },
+        {
+            "word": "EVERY",
+            "hint": "Constituting all members of a group without exception."
+        },
+        { "word": "EXACT", "hint": "Precise and accurate in all details." },
+        {
+            "word": "EXIST",
+            "hint": "Have objective reality or being; to live."
+        },
+        { "word": "EXTRA", "hint": "Additional to what is usual or expected." },
+        {
+            "word": "FAITH",
+            "hint": "Complete trust or confidence in someone or something."
+        },
+        { "word": "FALSE", "hint": "Not true or correct; deceptive." },
+        {
+            "word": "FANCY",
+            "hint": "Elaborate in structure or decoration; to imagine or suppose."
+        },
+        {
+            "word": "FAULT",
+            "hint": "A defect or imperfection; responsibility for an error."
+        },
+        {
+            "word": "FIBER",
+            "hint": "Thread-like structure; dietary material resistant to digestion."
+        },
+        {
+            "word": "FIELD",
+            "hint": "An open area of land; a particular branch of study."
+        },
+        {
+            "word": "FIFTH",
+            "hint": "Ordinal number corresponding to five; one part in five."
+        },
+        {
+            "word": "FIFTY",
+            "hint": "The cardinal number equivalent to five times ten."
+        },
+        {
+            "word": "FIGHT",
+            "hint": "Engage in a violent struggle; a quarrel or contest."
+        },
+        {
+            "word": "FINAL",
+            "hint": "Coming at the end of a series; conclusive."
+        },
+        {
+            "word": "FIRST",
+            "hint": "Coming before all others in time or order; initial."
+        },
+        {
+            "word": "FIXED",
+            "hint": "Fastened securely; predetermined and unchangeable."
+        },
+        { "word": "FLASH", "hint": "A sudden bright light; a brief moment." },
+        {
+            "word": "FLEET",
+            "hint": "A group of ships sailing together or under the same command."
+        },
+        {
+            "word": "FLOOR",
+            "hint": "The lower surface of a room; a level in a building."
+        },
+        {
+            "word": "FLUID",
+            "hint": "A substance that flows, like a liquid or gas."
+        },
+        {
+            "word": "FOCUS",
+            "hint": "The center of interest or activity; to concentrate."
+        },
+        {
+            "word": "FORCE",
+            "hint": "Strength or energy as an attribute of physical action; compel."
+        },
+        { "word": "FORTH", "hint": "Forward or onward in time or place." },
+        {
+            "word": "FORTY",
+            "hint": "The cardinal number equivalent to four times ten."
+        },
+        {
+            "word": "FORUM",
+            "hint": "A place or meeting for public discussion."
+        },
+        {
+            "word": "FOUND",
+            "hint": "Discovered by chance or searching; established."
+        },
+        {
+            "word": "FRAME",
+            "hint": "A rigid structure surrounding something; to incriminate falsely."
+        },
+        {
+            "word": "FRANK",
+            "hint": "Open, honest, and direct in speech or writing."
+        },
+        { "word": "FRAUD", "hint": "Wrongful or criminal deception for gain." },
+        {
+            "word": "FRESH",
+            "hint": "Newly made or obtained; not stale or preserved."
+        },
+        {
+            "word": "FRONT",
+            "hint": "The most forward part or surface of something."
+        },
+        {
+            "word": "FRUIT",
+            "hint": "Sweet, fleshy product of a tree or plant containing seed."
+        },
+        {
+            "word": "FULLY",
+            "hint": "Completely or entirely; to the whole extent."
+        },
+        {
+            "word": "FUNNY",
+            "hint": "Causing laughter or amusement; strange or peculiar."
+        },
+        {
+            "word": "FUZZY",
+            "hint": "Having a fluffy or blurred texture; indistinct."
+        },
+        {
+            "word": "GIANT",
+            "hint": "An imaginary being of superhuman size; extremely large."
+        },
+        {
+            "word": "GIVEN",
+            "hint": "Provided or specified; inclined or disposed to."
+        },
+        {
+            "word": "GLASS",
+            "hint": "Transparent material used for windows; a drinking container."
+        },
+        {
+            "word": "GLOBE",
+            "hint": "A spherical representation of the Earth; the world."
+        },
+        {
+            "word": "GLOVE",
+            "hint": "A covering for the hand with separate fingers."
+        },
+        {
+            "word": "GOING",
+            "hint": "The act of departing or moving; progress or conditions."
+        },
+        {
+            "word": "GRACE",
+            "hint": "Simple elegance or refinement; courteous goodwill."
+        },
+        {
+            "word": "GRADE",
+            "hint": "A level of rank or quality; a mark indicating performance."
+        },
+        {
+            "word": "GRAIN",
+            "hint": "Cereal seed; the texture of wood or stone."
+        },
+        {
+            "word": "GRAND",
+            "hint": "Magnificent and imposing; large or ambitious."
+        },
+        {
+            "word": "GRANT",
+            "hint": "Agree to give or allow; a sum of money for a purpose."
+        },
+        {
+            "word": "GRAPE",
+            "hint": "Small, round, pulpy fruit, typically green, purple, or red."
+        },
+        {
+            "word": "GRASS",
+            "hint": "Green vegetation covering lawns and pastures."
+        },
+        { "word": "GRAVE", "hint": "A place of burial; serious or solemn." },
+        {
+            "word": "GREAT",
+            "hint": "Considerably above average in size, extent, or ability."
+        },
+        {
+            "word": "GREEN",
+            "hint": "Color of growing foliage; environmentally friendly."
+        },
+        {
+            "word": "GROSS",
+            "hint": "Total amount before deductions; repulsive or coarse."
+        },
+        {
+            "word": "GROUP",
+            "hint": "A number of people or things classed together."
+        },
+        {
+            "word": "GROWN",
+            "hint": "Increased in size or developed; cultivated."
+        },
+        {
+            "word": "GUARD",
+            "hint": "Protect or supervise; a person who keeps watch."
+        },
+        {
+            "word": "GUESS",
+            "hint": "Estimate or form an opinion without all information."
+        },
+        {
+            "word": "GUEST",
+            "hint": "A person invited to visit or stay in someone's home."
+        },
+        {
+            "word": "GUIDE",
+            "hint": "A person who shows the way; to direct or lead."
+        },
+        {
+            "word": "GUILT",
+            "hint": "The feeling or fact of having done wrong."
+        },
+        {
+            "word": "HAPPY",
+            "hint": "Feeling or showing pleasure or contentment."
+        },
+        { "word": "HARSH", "hint": "Unpleasantly rough or severe; cruel." },
+        {
+            "word": "HEART",
+            "hint": "Organ that pumps blood; center of emotion or courage."
+        },
+        {
+            "word": "HEAVY",
+            "hint": "Of great weight; difficult to lift or move."
+        },
+        { "word": "HELLO", "hint": "A common salutation or greeting." },
+        {
+            "word": "HENCE",
+            "hint": "As a consequence; for this reason; from now."
+        },
+        {
+            "word": "HERBS",
+            "hint": "Aromatic plants used for flavoring or medicine."
+        },
+        {
+            "word": "HONEY",
+            "hint": "Sweet, viscous fluid made by bees from nectar."
+        },
+        {
+            "word": "HORSE",
+            "hint": "Hoofed mammal, often ridden or used for work."
+        },
+        {
+            "word": "HOTEL",
+            "hint": "Establishment providing accommodation for travelers."
+        },
+        { "word": "HOUSE", "hint": "A building for human habitation." },
+        {
+            "word": "HUMAN",
+            "hint": "Relating to or characteristic of people or humankind."
+        },
+        {
+            "word": "IDEAL",
+            "hint": "Perfectly suitable; a standard of perfection."
+        },
+        {
+            "word": "IMAGE",
+            "hint": "A visual representation; a mental picture or concept."
+        },
+        {
+            "word": "IMPLY",
+            "hint": "Suggest something indirectly or without stating it."
+        },
+        {
+            "word": "INDEX",
+            "hint": "Alphabetical list of names or subjects with references."
+        },
+        {
+            "word": "INNER",
+            "hint": "Situated inside; relating to the mind or spirit."
+        },
+        {
+            "word": "INPUT",
+            "hint": "What is put into a system; contribution or data."
+        },
+        {
+            "word": "ISSUE",
+            "hint": "An important topic or problem; to distribute or supply."
+        },
+        {
+            "word": "JELLY",
+            "hint": "Fruit preserve set firm with pectin or gelatin."
+        },
+        {
+            "word": "JEWEL",
+            "hint": "A precious stone; a highly valued person or thing."
+        },
+        {
+            "word": "JOINT",
+            "hint": "A connection between bones or parts; shared or combined."
+        },
+        {
+            "word": "JUICE",
+            "hint": "Liquid extracted from fruit or vegetables."
+        },
+        {
+            "word": "JUDGE",
+            "hint": "Form an opinion about; a public official in a law court."
+        },
+        {
+            "word": "KNOWN",
+            "hint": "Recognized, familiar, or generally accepted."
+        },
+        {
+            "word": "LABEL",
+            "hint": "A tag attached to an object giving information; to categorize."
+        },
+        {
+            "word": "LARGE",
+            "hint": "Of considerable or relatively great size or extent."
+        },
+        {
+            "word": "LASER",
+            "hint": "Device emitting a highly concentrated beam of light."
+        },
+        {
+            "word": "LATER",
+            "hint": "At a time in the future or subsequent to a specified time."
+        },
+        {
+            "word": "LAUGH",
+            "hint": "Spontaneous expression of amusement or joy."
+        },
+        {
+            "word": "LAYER",
+            "hint": "A sheet or thickness of material covering a surface."
+        },
+        {
+            "word": "LEARN",
+            "hint": "Gain knowledge or skill through study or experience."
+        },
+        {
+            "word": "LEAST",
+            "hint": "Smallest in amount, extent, or significance."
+        },
+        { "word": "LEAVE", "hint": "Go away from; depart or abandon." },
+        { "word": "LEGAL", "hint": "Relating to or permitted by law." },
+        { "word": "LEMON", "hint": "Sour, yellow citrus fruit." },
+        {
+            "word": "LEVEL",
+            "hint": "A flat, horizontal surface; a position or rank."
+        },
+        { "word": "LIGHT", "hint": "Source of illumination; not heavy." },
+        {
+            "word": "LIMIT",
+            "hint": "A boundary or point beyond which something cannot pass."
+        },
+        {
+            "word": "LINKS",
+            "hint": "Connections between things; segments of a chain."
+        },
+        {
+            "word": "LIVES",
+            "hint": "Plural of the state of being alive; resides or exists."
+        },
+        {
+            "word": "LOCAL",
+            "hint": "Relating to a particular area or neighborhood."
+        },
+        {
+            "word": "LOGIC",
+            "hint": "Reasoning conducted according to principles of validity."
+        },
+        { "word": "LOOSE", "hint": "Not firmly fixed; free from restraint." },
+        {
+            "word": "LOWER",
+            "hint": "Move to a less high position; reduce in amount or rank."
+        },
+        { "word": "LUCKY", "hint": "Having or resulting from good fortune." },
+        { "word": "LUNCH", "hint": "A meal eaten in the middle of the day." },
+        {
+            "word": "LYING",
+            "hint": "Telling falsehoods; in a horizontal resting position."
+        },
+        {
+            "word": "MAGIC",
+            "hint": "The power of apparently influencing events by supernatural means."
+        },
+        {
+            "word": "MAJOR",
+            "hint": "Important, serious, or significant; a military rank."
+        },
+        {
+            "word": "MAKER",
+            "hint": "A person or company that produces something."
+        },
+        {
+            "word": "MARCH",
+            "hint": "Walk in a military manner; third month of the year."
+        },
+        {
+            "word": "MATCH",
+            "hint": "A contest or game; something that corresponds or is similar."
+        },
+        { "word": "MAYBE", "hint": "Perhaps; possibly." },
+        { "word": "MAYOR", "hint": "The elected head of a city or town." },
+        { "word": "MEANT", "hint": "Intended or signified (past tense)." },
+        {
+            "word": "MEDIA",
+            "hint": "Channels of mass communication, like TV or internet."
+        },
+        {
+            "word": "METAL",
+            "hint": "Hard, shiny, malleable material like iron or gold."
+        },
+        {
+            "word": "MIGHT",
+            "hint": "Possibility or probability; great strength or power."
+        },
+        {
+            "word": "MINOR",
+            "hint": "Lesser in importance or seriousness; under legal age."
+        },
+        {
+            "word": "MINUS",
+            "hint": "With the subtraction of; indicating a negative value."
+        },
+        {
+            "word": "MIXED",
+            "hint": "Combined or blended together; of varied kinds."
+        },
+        {
+            "word": "MODEL",
+            "hint": "A representation or example; a person who poses."
+        },
+        {
+            "word": "MONEY",
+            "hint": "Currency used as a medium of exchange; wealth."
+        },
+        {
+            "word": "MONTH",
+            "hint": "A period of approximately four weeks or 30 days."
+        },
+        {
+            "word": "MORAL",
+            "hint": "Concerned with principles of right and wrong behavior."
+        },
+        { "word": "MOTOR", "hint": "An engine that produces motion." },
+        {
+            "word": "MOUNT",
+            "hint": "To climb up or get on; a mountain or hill."
+        },
+        { "word": "MOUSE", "hint": "Small rodent; a computer input device." },
+        {
+            "word": "MOUTH",
+            "hint": "Facial opening for eating and speaking; an entrance."
+        },
+        {
+            "word": "MOVED",
+            "hint": "Changed position or residence; emotionally affected."
+        },
+        {
+            "word": "MOVIE",
+            "hint": "A film shown in a cinema or on television."
+        },
+        {
+            "word": "MUFFIN",
+            "hint": "Small, cup-shaped quick bread, often sweet."
+        },
+        {
+            "word": "MUSIC",
+            "hint": "Art form using sound, rhythm, and harmony."
+        },
+        {
+            "word": "NEEDS",
+            "hint": "Requires something because it is essential or very important."
+        },
+        {
+            "word": "NEVER",
+            "hint": "At no time in the past or future; not ever."
+        },
+        { "word": "NEWLY", "hint": "Recently; a short time ago." },
+        {
+            "word": "NIGHT",
+            "hint": "The period of darkness between sunset and sunrise."
+        },
+        {
+            "word": "NOISE",
+            "hint": "A sound, especially one that is loud or unpleasant."
+        },
+        {
+            "word": "NORTH",
+            "hint": "Direction opposite to south; cardinal point."
+        },
+        {
+            "word": "NOTED",
+            "hint": "Well-known or famous; observed or remarked upon."
+        },
+        {
+            "word": "NOVEL",
+            "hint": "A long fictional prose narrative; new and unusual."
+        },
+        {
+            "word": "NURSE",
+            "hint": "A person trained to care for the sick or injured."
+        },
+        {
+            "word": "OCCUR",
+            "hint": "Happen; take place or come into existence."
+        },
+        { "word": "OCEAN", "hint": "A very large expanse of sea." },
+        {
+            "word": "OFFER",
+            "hint": "Present something for acceptance or rejection."
+        },
+        { "word": "OFTEN", "hint": "Frequently; many times." },
+        {
+            "word": "ONION",
+            "hint": "Pungent bulb vegetable with concentric layers."
+        },
+        {
+            "word": "ORDER",
+            "hint": "Arrangement or sequence; a command or instruction."
+        },
+        {
+            "word": "OTHER",
+            "hint": "Different from one already mentioned; additional."
+        },
+        {
+            "word": "OUGHT",
+            "hint": "Used to indicate duty, correctness, or advisability."
+        },
+        { "word": "OUTER", "hint": "External; situated on the outside." },
+        { "word": "OWNER", "hint": "A person who possesses something." },
+        {
+            "word": "PAINT",
+            "hint": "Colored liquid applied to a surface; to create a picture."
+        },
+        {
+            "word": "PANEL",
+            "hint": "A flat section of a wall or door; a group of experts."
+        },
+        {
+            "word": "PAPER",
+            "hint": "Thin material for writing or printing; a newspaper."
+        },
+        {
+            "word": "PASTA",
+            "hint": "Italian food made from wheat dough, like spaghetti."
+        },
+        { "word": "PARTY", "hint": "A social gathering; a political group." },
+        {
+            "word": "PEACE",
+            "hint": "Freedom from disturbance; tranquility or absence of war."
+        },
+        {
+            "word": "PEACH",
+            "hint": "Soft, round, juicy fruit with downy, yellowish-orange skin."
+        },
+        {
+            "word": "PHASE",
+            "hint": "A distinct stage in a process of change or development."
+        },
+        {
+            "word": "PHONE",
+            "hint": "Device for voice communication over a distance."
+        },
+        { "word": "PHOTO", "hint": "A picture produced by photography." },
+        {
+            "word": "PIANO",
+            "hint": "Large keyboard musical instrument with strings and hammers."
+        },
+        { "word": "PIECE", "hint": "A part or portion of something larger." },
+        {
+            "word": "PILOT",
+            "hint": "A person who operates an aircraft or ship."
+        },
+        {
+            "word": "PITCH",
+            "hint": "To throw; the highness or lowness of a musical tone."
+        },
+        {
+            "word": "PIZZA",
+            "hint": "Baked dish of Italian origin with a flat, round dough base and toppings."
+        },
+        { "word": "PLACE", "hint": "A particular position, point, or area." },
+        {
+            "word": "PLAIN",
+            "hint": "Simple or ordinary; a large area of flat land with few trees."
+        },
+        {
+            "word": "PLANE",
+            "hint": "An aircraft with wings and one or more engines; a flat surface."
+        },
+        {
+            "word": "PLANT",
+            "hint": "A living organism like a tree or flower; a factory."
+        },
+        {
+            "word": "PLATE",
+            "hint": "A flat dish for food; a thin, flat sheet of metal."
+        },
+        {
+            "word": "PLAZA",
+            "hint": "A public square or open space in a town or city."
+        },
+        {
+            "word": "POINT",
+            "hint": "A sharp end; a particular spot or purpose."
+        },
+        {
+            "word": "POUND",
+            "hint": "A unit of weight; to strike heavily and repeatedly."
+        },
+        {
+            "word": "POWER",
+            "hint": "The ability to act or influence; strength or energy."
+        },
+        {
+            "word": "PRESS",
+            "hint": "To push firmly; media organizations collectively."
+        },
+        {
+            "word": "PRICE",
+            "hint": "The amount of money required to buy something."
+        },
+        {
+            "word": "PRIDE",
+            "hint": "Deep pleasure from one's achievements; a group of lions."
+        },
+        { "word": "PRIME", "hint": "Of first importance; main or chief." },
+        {
+            "word": "PRINT",
+            "hint": "Produce text or images on paper; a mark or impression."
+        },
+        {
+            "word": "PRIOR",
+            "hint": "Existing or coming before in time, order, or importance."
+        },
+        { "word": "PRIZE", "hint": "An award for victory or excellence." },
+        { "word": "PROOF", "hint": "Evidence establishing a fact or truth." },
+        {
+            "word": "PROUD",
+            "hint": "Feeling satisfaction from one's own or another's achievements."
+        },
+        {
+            "word": "PROVE",
+            "hint": "Demonstrate the truth or existence of something."
+        },
+        {
+            "word": "QUEEN",
+            "hint": "Female monarch; the most powerful chess piece."
+        },
+        {
+            "word": "QUICK",
+            "hint": "Moving fast or doing something in a short time."
+        },
+        {
+            "word": "QUIET",
+            "hint": "Making little or no noise; calm and peaceful."
+        },
+        {
+            "word": "QUITE",
+            "hint": "To a certain extent; rather or completely."
+        },
+        {
+            "word": "RADIO",
+            "hint": "Device for receiving sound broadcasts; wireless communication."
+        },
+        {
+            "word": "RAISE",
+            "hint": "Lift or move to a higher position; to increase."
+        },
+        {
+            "word": "RANGE",
+            "hint": "The extent of variation; a series of mountains."
+        },
+        {
+            "word": "RAPID",
+            "hint": "Happening in a short time or at a fast pace."
+        },
+        {
+            "word": "RATIO",
+            "hint": "Quantitative relation between two amounts."
+        },
+        {
+            "word": "REACH",
+            "hint": "Extend to or arrive at; achieve or attain."
+        },
+        { "word": "READY", "hint": "Prepared for an activity or situation." },
+        {
+            "word": "REALM",
+            "hint": "A kingdom or domain; a field of activity or interest."
+        },
+        {
+            "word": "REFER",
+            "hint": "Mention or direct attention to someone or something."
+        },
+        {
+            "word": "RELAX",
+            "hint": "Become less tense or anxious; rest from work."
+        },
+        { "word": "REPLY", "hint": "To answer or respond in words or action." },
+        {
+            "word": "RIGHT",
+            "hint": "Correct or true; a moral or legal entitlement; opposite of left."
+        },
+        {
+            "word": "RIVAL",
+            "hint": "A competitor for the same objective or superiority."
+        },
+        {
+            "word": "RIVER",
+            "hint": "A large natural stream of water flowing to the sea or a lake."
+        },
+        {
+            "word": "ROAST",
+            "hint": "Cook food, especially meat, with dry heat in an oven or over a fire."
+        },
+        {
+            "word": "ROCKY",
+            "hint": "Full of stones or pertaining to a music genre."
+        },
+        {
+            "word": "ROLLS",
+            "hint": "Small, individual baked breads; moves by turning over."
+        },
+        {
+            "word": "ROUGH",
+            "hint": "Having an uneven surface; not gentle or smooth."
+        },
+        {
+            "word": "ROUND",
+            "hint": "Circular in shape; a stage in a competition."
+        },
+        { "word": "ROUTE", "hint": "A way or course taken to a destination." },
+        {
+            "word": "ROYAL",
+            "hint": "Relating to a king, queen, or their family."
+        },
+        {
+            "word": "RULER",
+            "hint": "A person who governs; a straight-edged measuring device."
+        },
+        {
+            "word": "RURAL",
+            "hint": "Relating to the countryside rather than the town."
+        },
+        {
+            "word": "SCALE",
+            "hint": "Device for weighing; relative size or extent; to climb."
+        },
+        {
+            "word": "SCENE",
+            "hint": "A view or setting; a part of a play or film."
+        },
+        {
+            "word": "SCOPE",
+            "hint": "The extent of an area or subject matter; range."
+        },
+        {
+            "word": "SCORE",
+            "hint": "Points in a game; a written piece of music; twenty."
+        },
+        { "word": "SCREW", "hint": "A threaded fastener; to twist or turn." },
+        {
+            "word": "SENSE",
+            "hint": "Perception through faculties like sight or hearing; meaning."
+        },
+        {
+            "word": "SERVE",
+            "hint": "Provide a service or assistance; to present food or drink."
+        },
+        {
+            "word": "SEVEN",
+            "hint": "The cardinal number after six and before eight."
+        },
+        {
+            "word": "SHALL",
+            "hint": "Expressing a strong assertion or intention (formal)."
+        },
+        {
+            "word": "SHAPE",
+            "hint": "The external form or outline of someone or something."
+        },
+        {
+            "word": "SHARE",
+            "hint": "A part or portion belonging to or contributed by a person."
+        },
+        {
+            "word": "SHARP",
+            "hint": "Having a cutting edge or pointed end; intelligent."
+        },
+        {
+            "word": "SHEEP",
+            "hint": "Woolly farm animal, often kept in flocks."
+        },
+        {
+            "word": "SHEET",
+            "hint": "A thin layer of paper or fabric; a bed covering."
+        },
+        {
+            "word": "SHELF",
+            "hint": "A flat horizontal support for storing items."
+        },
+        {
+            "word": "SHELL",
+            "hint": "Hard protective outer covering of an animal or egg."
+        },
+        {
+            "word": "SHIFT",
+            "hint": "To move or change position; a period of work."
+        },
+        { "word": "SHINE", "hint": "To emit or reflect light; be bright." },
+        {
+            "word": "SHIRT",
+            "hint": "Garment for the upper body, typically with sleeves and a collar."
+        },
+        {
+            "word": "SHOCK",
+            "hint": "A sudden upsetting surprise; an electrical jolt."
+        },
+        {
+            "word": "SHOES",
+            "hint": "Footwear, typically worn in pairs for protection."
+        },
+        { "word": "SHOOT", "hint": "To fire a weapon; to film or photograph." },
+        {
+            "word": "SHORE",
+            "hint": "The land along the edge of a sea, lake, or river."
+        },
+        {
+            "word": "SHORT",
+            "hint": "Measuring a small distance; not long in duration."
+        },
+        {
+            "word": "SHOWN",
+            "hint": "Displayed or exhibited (past participle)."
+        },
+        {
+            "word": "SIDED",
+            "hint": "Having a specified number or kind of surfaces or aspects."
+        },
+        { "word": "SIGHT", "hint": "The faculty of vision; something seen." },
+        { "word": "SILLY", "hint": "Foolish, playful, or lacking good sense." },
+        {
+            "word": "SILKY",
+            "hint": "Smooth, soft, and lustrous, like fine fabric."
+        },
+        {
+            "word": "SINCE",
+            "hint": "From a particular time in the past until now."
+        },
+        { "word": "SIXTH", "hint": "Ordinal number corresponding to six." },
+        {
+            "word": "SIZED",
+            "hint": "Having a particular dimension or magnitude."
+        },
+        {
+            "word": "SKILL",
+            "hint": "The ability to do something well; expertise."
+        },
+        {
+            "word": "SLASH",
+            "hint": "To cut with a sweeping motion; a diagonal line (/)."
+        },
+        {
+            "word": "SLEEP",
+            "hint": "A state of rest with closed eyes and reduced consciousness."
+        },
+        { "word": "SLIDE", "hint": "To move smoothly along a surface." },
+        {
+            "word": "SLIME",
+            "hint": "A moist, soft, and slippery, often unpleasant substance."
+        },
+        {
+            "word": "SLING",
+            "hint": "A strap for carrying or throwing something."
+        },
+        { "word": "SLOPE", "hint": "An inclined surface or gradient." },
+        {
+            "word": "SMALL",
+            "hint": "Of a size that is less than normal or average."
+        },
+        { "word": "SMART", "hint": "Intelligent or clever; neat and stylish." },
+        {
+            "word": "SMILE",
+            "hint": "A pleased or amused facial expression with upturned mouth corners."
+        },
+        {
+            "word": "SNACK",
+            "hint": "A small amount of food eaten between meals."
+        },
+        { "word": "SMOKE", "hint": "Visible vapor from burning material." },
+        {
+            "word": "SOLID",
+            "hint": "Firm and stable in shape; not liquid or gas."
+        },
+        {
+            "word": "SOLVE",
+            "hint": "Find an answer or explanation for a problem or mystery."
+        },
+        { "word": "SORRY", "hint": "Feeling regret, sympathy, or pity." },
+        {
+            "word": "SOUND",
+            "hint": "Vibrations perceived by the ear; apparently good or valid."
+        },
+        {
+            "word": "SPACE",
+            "hint": "An empty area; the region beyond Earth's atmosphere."
+        },
+        {
+            "word": "SPARE",
+            "hint": "Extra or additional; to refrain from harming."
+        },
+        { "word": "SPEAK", "hint": "To talk or communicate verbally." },
+        { "word": "SPEED", "hint": "The rate of movement or operation." },
+        { "word": "SPEND", "hint": "To use money or time on something." },
+        { "word": "SPENT", "hint": "Used up or exhausted (past tense)." },
+        { "word": "SPICE", "hint": "Aromatic substance used to flavor food." },
+        { "word": "SPLIT", "hint": "To divide or separate into parts." },
+        { "word": "SPOKE", "hint": "Talked (past tense); a rod in a wheel." },
+        { "word": "SPORT", "hint": "A physical activity game or competition." },
+        {
+            "word": "SQUAD",
+            "hint": "A small team or group with a specific task."
+        },
+        {
+            "word": "STAFF",
+            "hint": "Employees of an organization; a long stick or rod."
+        },
+        {
+            "word": "STAGE",
+            "hint": "A platform for performances; a phase in a process."
+        },
+        {
+            "word": "STAKE",
+            "hint": "A pointed post driven into the ground; something risked."
+        },
+        {
+            "word": "STAND",
+            "hint": "To be in an upright position on one's feet."
+        },
+        { "word": "START", "hint": "To begin an action or process." },
+        {
+            "word": "STATE",
+            "hint": "Condition of something; a nation or territory."
+        },
+        { "word": "STEAM", "hint": "Water in its gaseous form; vapor." },
+        { "word": "STEEL", "hint": "Strong, hard alloy of iron and carbon." },
+        {
+            "word": "STEER",
+            "hint": "To guide the direction of a vehicle or vessel."
+        },
+        {
+            "word": "STICK",
+            "hint": "A thin piece of wood; to adhere or attach."
+        },
+        {
+            "word": "STILL",
+            "hint": "Not moving or making a sound; yet or nevertheless."
+        },
+        {
+            "word": "STOCK",
+            "hint": "Supply of goods; shares in a company; broth."
+        },
+        { "word": "STONE", "hint": "Hard, solid mineral matter; a gem." },
+        { "word": "STOOD", "hint": "Was in an upright position (past tense)." },
+        {
+            "word": "STORE",
+            "hint": "A place where goods are sold; to keep for future use."
+        },
+        {
+            "word": "STORM",
+            "hint": "Violent weather with strong winds, rain, or snow."
+        },
+        {
+            "word": "STORY",
+            "hint": "A narrative or tale; an account of events."
+        },
+        {
+            "word": "STRAP",
+            "hint": "A strip of material for fastening or carrying."
+        },
+        {
+            "word": "STRIP",
+            "hint": "A long, narrow piece; to remove covering."
+        },
+        { "word": "STUCK", "hint": "Unable to move or fixed in place." },
+        { "word": "STUDY", "hint": "To learn or examine a subject in detail." },
+        {
+            "word": "STUFF",
+            "hint": "Things, material, or belongings (informal)."
+        },
+        {
+            "word": "STYLE",
+            "hint": "A manner of doing something; fashion or design."
+        },
+        {
+            "word": "SUGAR",
+            "hint": "Sweet crystalline substance used in food and drinks."
+        },
+        {
+            "word": "SUITE",
+            "hint": "A set of connected rooms; a musical composition."
+        },
+        { "word": "SUNNY", "hint": "Bright with sunlight; cheerful." },
+        {
+            "word": "SUPER",
+            "hint": "Excellent or outstanding; of a higher grade or rank."
+        },
+        {
+            "word": "SURGE",
+            "hint": "A sudden powerful forward or upward movement."
+        },
+        {
+            "word": "SWEET",
+            "hint": "Having a sugary taste; pleasant or charming."
+        },
+        {
+            "word": "TABLE",
+            "hint": "Furniture with a flat top and legs, for eating or working."
+        },
+        { "word": "TAKEN", "hint": "Received or captured (past participle)." },
+        {
+            "word": "TASTE",
+            "hint": "The sensation of flavor perceived in the mouth."
+        },
+        {
+            "word": "TAXES",
+            "hint": "Compulsory financial contributions to government revenue."
+        },
+        {
+            "word": "TEACH",
+            "hint": "To instruct or impart knowledge or skills."
+        },
+        {
+            "word": "TEMPO",
+            "hint": "The speed at which music is played; pace."
+        },
+        { "word": "TENTH", "hint": "Ordinal number corresponding to ten." },
+        { "word": "THANK", "hint": "To express gratitude or appreciation." },
+        {
+            "word": "THEFT",
+            "hint": "The act of unlawfully taking another's property."
+        },
+        { "word": "THEIR", "hint": "Belonging to or associated with them." },
+        {
+            "word": "THEME",
+            "hint": "The main subject or topic of a discourse or work."
+        },
+        { "word": "THERE", "hint": "In, at, or to that place or position." },
+        {
+            "word": "THICK",
+            "hint": "Having a relatively great distance between opposite sides."
+        },
+        { "word": "THING", "hint": "An object, item, or entity." },
+        {
+            "word": "THINK",
+            "hint": "To use one's mind to consider or form ideas."
+        },
+        { "word": "THIRD", "hint": "Ordinal number corresponding to three." },
+        {
+            "word": "THORN",
+            "hint": "A sharp, pointed projection on a plant stem."
+        },
+        {
+            "word": "THREE",
+            "hint": "The cardinal number after two and before four."
+        },
+        {
+            "word": "THREW",
+            "hint": "Tossed or propelled through the air (past tense)."
+        },
+        {
+            "word": "THROW",
+            "hint": "To toss or hurl something through the air."
+        },
+        {
+            "word": "THUMB",
+            "hint": "The short, thick first digit of the human hand."
+        },
+        { "word": "TIGER", "hint": "Large, striped feline predator of Asia." },
+        {
+            "word": "TIGHT",
+            "hint": "Firmly fixed or fastened; fitting closely."
+        },
+        {
+            "word": "TIMER",
+            "hint": "A device that measures or records elapsed time."
+        },
+        {
+            "word": "TITLE",
+            "hint": "A name of a book or work; a designation of rank or office."
+        },
+        {
+            "word": "TOAST",
+            "hint": "Sliced bread browned by heat; a call to drink in honor."
+        },
+        { "word": "TODAY", "hint": "This present day; the current time." },
+        {
+            "word": "TOKEN",
+            "hint": "A symbol or small item representing something else."
+        },
+        {
+            "word": "TOPIC",
+            "hint": "A subject of discussion, writing, or thought."
+        },
+        {
+            "word": "TORCH",
+            "hint": "A portable burning light; a flashlight (UK)."
+        },
+        { "word": "TOTAL", "hint": "The complete amount or sum; absolute." },
+        {
+            "word": "TOUCH",
+            "hint": "To make physical contact with; to affect emotionally."
+        },
+        {
+            "word": "TOUGH",
+            "hint": "Strong and durable; difficult to accomplish."
+        },
+        {
+            "word": "TOWER",
+            "hint": "A tall, narrow structure, often part of a larger building."
+        },
+        {
+            "word": "TRACK",
+            "hint": "A path or trail; to follow the course of something."
+        },
+        {
+            "word": "TRADE",
+            "hint": "The buying and selling of goods or services."
+        },
+        {
+            "word": "TRAIL",
+            "hint": "A path or track through a wild area; to follow behind."
+        },
+        { "word": "TRAIN", "hint": "Connected rail cars; to teach a skill." },
+        {
+            "word": "TRASH",
+            "hint": "Waste material or garbage; something worthless."
+        },
+        {
+            "word": "TREAT",
+            "hint": "To behave towards or handle in a certain way; a special reward."
+        },
+        {
+            "word": "TREND",
+            "hint": "A general direction of change or development."
+        },
+        {
+            "word": "TRIAL",
+            "hint": "A test of performance or quality; a legal examination."
+        },
+        {
+            "word": "TRIBE",
+            "hint": "A social group with common ancestry or culture."
+        },
+        {
+            "word": "TRICK",
+            "hint": "A clever act intended to deceive or amuse."
+        },
+        { "word": "TRIED", "hint": "Attempted or tested (past tense)." },
+        {
+            "word": "TRULY",
+            "hint": "Genuinely or sincerely; in accordance with fact."
+        },
+        {
+            "word": "TRUNK",
+            "hint": "Main stem of a tree; a large storage box; an elephant's nose."
+        },
+        {
+            "word": "TRUST",
+            "hint": "Firm belief in the reliability or truth of someone or something."
+        },
+        {
+            "word": "TRUTH",
+            "hint": "That which is real, factual, or in accordance with reality."
+        },
+        {
+            "word": "TULIP",
+            "hint": "Colorful, cup-shaped spring flower grown from a bulb."
+        },
+        {
+            "word": "TWIST",
+            "hint": "To turn or rotate; an unexpected development."
+        },
+        { "word": "TWICE", "hint": "Two times; on two occasions." },
+        { "word": "ULTRA", "hint": "Beyond the usual or ordinary; extreme." },
+        {
+            "word": "UNCLE",
+            "hint": "The brother of one's parent or the husband of one's aunt."
+        },
+        { "word": "UNDER", "hint": "Below or beneath something; less than." },
+        {
+            "word": "UNDUE",
+            "hint": "Excessive, inappropriate, or unwarranted."
+        },
+        {
+            "word": "UNION",
+            "hint": "A joining together; an association of workers."
+        },
+        {
+            "word": "UNITY",
+            "hint": "The state of being united or forming a whole."
+        },
+        {
+            "word": "UNTIL",
+            "hint": "Up to the point in time or the event mentioned."
+        },
+        { "word": "UPPER", "hint": "Higher in position, rank, or status." },
+        {
+            "word": "UPSET",
+            "hint": "Disturbed, worried, or unhappy; an unexpected defeat."
+        },
+        {
+            "word": "URBAN",
+            "hint": "Relating to or characteristic of a city or town."
+        },
+        {
+            "word": "USAGE",
+            "hint": "The way something is used; customary practice."
+        },
+        { "word": "USUAL", "hint": "Normal, typical, or customary." },
+        { "word": "VALID", "hint": "Acceptable, sound, or legally binding." },
+        { "word": "VALUE", "hint": "Worth, importance, or usefulness." },
+        {
+            "word": "VAPOR",
+            "hint": "A substance in a gaseous state, like steam or mist."
+        },
+        {
+            "word": "VIDEO",
+            "hint": "Recording or broadcasting of moving visual images."
+        },
+        {
+            "word": "VIRUS",
+            "hint": "Microscopic infectious agent that replicates in living cells."
+        },
+        {
+            "word": "VISIT",
+            "hint": "To go see someone or a place for a short time."
+        },
+        {
+            "word": "VITAL",
+            "hint": "Essential for life; critically important."
+        },
+        { "word": "VOCAL", "hint": "Relating to or produced by the voice." },
+        { "word": "VOICE", "hint": "Sound produced by speaking or singing." },
+        {
+            "word": "VOTER",
+            "hint": "A person who has the right to or does participate in an election."
+        },
+        {
+            "word": "WAIST",
+            "hint": "The part of the body between the ribs and hips."
+        },
+        {
+            "word": "WASTE",
+            "hint": "To use carelessly or to no purpose; unwanted material."
+        },
+        {
+            "word": "WATCH",
+            "hint": "To observe attentively; a timepiece worn on the wrist."
+        },
+        { "word": "WATER", "hint": "Essential liquid for life, H₂O." },
+        {
+            "word": "WHALE",
+            "hint": "Very large marine mammal with a blowhole."
+        },
+        {
+            "word": "WHEAT",
+            "hint": "Cereal grain used to make flour for bread and pasta."
+        },
+        {
+            "word": "WHEEL",
+            "hint": "A circular object that rotates, enabling movement."
+        },
+        { "word": "WHERE", "hint": "At, in, or to what place or position." },
+        {
+            "word": "WHICH",
+            "hint": "Asking for specification from a definite set."
+        },
+        {
+            "word": "WHILE",
+            "hint": "During the time that; at the same time as."
+        },
+        {
+            "word": "WHISK",
+            "hint": "Kitchen utensil for whipping eggs or cream; a quick, light movement."
+        },
+        {
+            "word": "WHITE",
+            "hint": "The color of milk or fresh snow; lightest color."
+        },
+        { "word": "WHOLE", "hint": "Complete or entire; all of something." },
+        {
+            "word": "WHOSE",
+            "hint": "Belonging to or associated with which person."
+        },
+        {
+            "word": "WIDTH",
+            "hint": "The measurement or extent of something from side to side."
+        },
+        { "word": "WOMAN", "hint": "An adult human female." },
+        {
+            "word": "WORLD",
+            "hint": "The Earth, with all its countries and peoples."
+        },
+        {
+            "word": "WORRY",
+            "hint": "To feel anxious or troubled about potential problems."
+        },
+        {
+            "word": "WORSE",
+            "hint": "Of poorer quality or lower standard; more bad."
+        },
+        {
+            "word": "WORST",
+            "hint": "Most bad; of the poorest quality or lowest standard."
+        },
+        { "word": "WORTH", "hint": "Value, merit, or importance." },
+        {
+            "word": "WOULD",
+            "hint": "Past tense of will; expressing a hypothetical situation."
+        },
+        {
+            "word": "WOUND",
+            "hint": "An injury to living tissue, often involving a break in the skin."
+        },
+        {
+            "word": "WRIST",
+            "hint": "The joint connecting the hand to the forearm."
+        },
+        {
+            "word": "WRITE",
+            "hint": "To form letters or words on a surface with an implement."
+        },
+        {
+            "word": "WRONG",
+            "hint": "Incorrect, mistaken, or not morally good."
+        },
+        {
+            "word": "WROTE",
+            "hint": "Composed text or formed letters (past tense)."
+        },
+        {
+            "word": "YACHT",
+            "hint": "A luxurious sailing or motor boat for pleasure or racing."
+        },
+        {
+            "word": "YIELD",
+            "hint": "To produce or provide; to give way or surrender."
+        },
+        {
+            "word": "YOUNG",
+            "hint": "Not old; in an early stage of life or development."
+        },
+        {
+            "word": "YOUTH",
+            "hint": "The period between childhood and adulthood; young people."
+        },
+        {
+            "word": "ZEBRA",
+            "hint": "African wild horse with distinctive black and white stripes."
+        },
+        { "word": "AUDIO", "hint": "Relating to sound or its reproduction." },
+        {
+            "word": "BEAST",
+            "hint": "An animal, especially a large or dangerous four-footed one."
+        },
+        {
+            "word": "BLITZ",
+            "hint": "A sudden, intensive, and concerted attack or effort."
+        },
+        { "word": "BOXER", "hint": "A pugilist; a breed of dog." },
+        {
+            "word": "BRIBE",
+            "hint": "Persuade someone to act in one's favor, typically illegally, by a gift of money."
+        },
+        {
+            "word": "CHALK",
+            "hint": "Soft white limestone formed from skeletal remains of sea creatures."
+        },
+        {
+            "word": "CORAL",
+            "hint": "Marine invertebrate that forms reefs; a pinkish-red color."
+        },
+        {
+            "word": "DIARY",
+            "hint": "A book for recording daily events or personal thoughts."
+        },
+        {
+            "word": "EMAIL",
+            "hint": "Messages distributed by electronic means from one computer user to another."
+        },
+        {
+            "word": "FLUTE",
+            "hint": "A wind instrument made from a tube with holes along it."
+        },
+        {
+            "word": "FROST",
+            "hint": "A deposit of small white ice crystals formed on the ground or other surfaces."
+        },
+        {
+            "word": "GHOST",
+            "hint": "An apparition of a dead person, often believed to haunt."
+        },
+        {
+            "word": "HONOR",
+            "hint": "High respect; great esteem; adherence to what is right."
+        },
+        {
+            "word": "IVORY",
+            "hint": "Hard creamy-white substance from tusks of elephants."
+        },
+        {
+            "word": "JOKER",
+            "hint": "A person who is fond of telling amusing stories or playing pranks."
+        }
+    ]
 }
