@@ -29,6 +29,7 @@ window.gameApp = function () {
         toastMessage: '',
         toastType: 'primary',
         submittingGuess: false,
+        justSubmittedGuess: false,
         initGame() {
             this.resetGameState();
             this.initTheme();
@@ -53,6 +54,10 @@ window.gameApp = function () {
                 this.handleServerErrors();
                 this.restoreUserInput();
                 this.updateGameState();
+                if (this.justSubmittedGuess) {
+                    this.animateNewGuess();
+                    this.justSubmittedGuess = false;
+                }
             });
             document.body.addEventListener('htmx:beforeSwap', (evt) => {
                 if (this.currentGuess) {
@@ -89,6 +94,8 @@ window.gameApp = function () {
                             'Word must be 5 letters'
                         );
                         this.showToastNotification(error, !isWarning);
+
+                        this.announceGameState(error);
 
                         if (isWarning && this.tempCurrentGuess) {
                             this.currentGuess = this.tempCurrentGuess;
@@ -173,10 +180,24 @@ window.gameApp = function () {
             if (!board) return;
             this.currentGuess = '';
             this.keyStatus = {};
-            const gameOverContainer = board.parentElement.querySelector(
-                '.mt-3.p-3.bg-body-secondary'
-            );
-            this.gameOver = gameOverContainer !== null;
+            if (this.gameOver) {
+                const gameOverContainer = board.parentElement.querySelector(
+                    '.mt-3.p-3.bg-body-secondary'
+                );
+                if (gameOverContainer) {
+                    const isWin =
+                        gameOverContainer.querySelector('.text-success');
+                    if (isWin) {
+                        this.announceGameState(
+                            'Congratulations! You won the game!'
+                        );
+                    } else {
+                        this.announceGameState(
+                            'Game over. Better luck next time!'
+                        );
+                    }
+                }
+            }
             const rows = document.querySelectorAll('.guess-row');
             let completedRows = 0;
             rows.forEach((row) => {
@@ -191,7 +212,6 @@ window.gameApp = function () {
             });
             this.currentRow = Math.min(completedRows, rows.length - 1);
             this.updateKeyboardColors();
-            this.animateNewGuess();
             this.checkForWin();
         },
         submitGuess() {
@@ -201,12 +221,20 @@ window.gameApp = function () {
                 this.currentGuess.length !== this.WORD_LENGTH
             ) {
                 this.shakeCurrentRow();
+                if (this.currentGuess.length !== this.WORD_LENGTH) {
+                    this.announceGameState(
+                        `Word must be ${this.WORD_LENGTH} letters long`
+                    );
+                }
                 return;
             }
 
             this.submittingGuess = true;
+            this.justSubmittedGuess = true;
             const guessInput = document.getElementById('guess-input');
             guessInput.value = this.currentGuess;
+
+            this.announceGameState(`Submitting guess: ${this.currentGuess}`);
 
             htmx.trigger('#guess-form', 'submit');
         },
@@ -218,10 +246,10 @@ window.gameApp = function () {
                 const status = tile.classList.contains('tile-correct')
                     ? 'correct'
                     : tile.classList.contains('tile-present')
-                    ? 'present'
-                    : tile.classList.contains('tile-absent')
-                    ? 'absent'
-                    : '';
+                      ? 'present'
+                      : tile.classList.contains('tile-absent')
+                        ? 'absent'
+                        : '';
                 if (letter && status) {
                     if (
                         !this.keyStatus[letter] ||
@@ -237,28 +265,77 @@ window.gameApp = function () {
         getKeyClass(letter) {
             return this.keyStatus[letter] || '';
         },
+        getKeyStatus(letter) {
+            const status = this.keyStatus[letter];
+            if (status === 'correct') return 'correct position';
+            if (status === 'present') return 'wrong position';
+            if (status === 'absent') return 'not in word';
+            return 'unused';
+        },
+        getTileAriaLabel(row, col, letter, status) {
+            const position = `Row ${row + 1}, Column ${col + 1}`;
+            if (!letter) {
+                return `${position}, empty`;
+            }
+
+            let statusText = '';
+            if (status === 'correct') statusText = ', correct position';
+            else if (status === 'present') statusText = ', wrong position';
+            else if (status === 'absent') statusText = ', not in word';
+
+            return `${position}, ${letter}${statusText}`;
+        },
+        announceGameState(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'assertive');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'visually-hidden';
+            announcement.textContent = message;
+
+            document.body.appendChild(announcement);
+
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        },
         animateNewGuess() {
             const rows = document.querySelectorAll('#game-board > div');
-            const lastFilledRow = Array.from(rows).find((row, index) => {
+
+            let mostRecentRow = null;
+            let mostRecentIndex = -1;
+
+            rows.forEach((row, index) => {
                 const filledTiles = row.querySelectorAll('.tile.filled');
-                return (
+                const hasStatusTiles = Array.from(filledTiles).some(
+                    (tile) =>
+                        tile.classList.contains('tile-correct') ||
+                        tile.classList.contains('tile-present') ||
+                        tile.classList.contains('tile-absent')
+                );
+
+                if (
                     filledTiles.length === this.WORD_LENGTH &&
+                    hasStatusTiles &&
                     !row.classList.contains('animated') &&
-                    (row.classList.contains('submitting') ||
-                        index < this.currentRow)
-                );
+                    index > mostRecentIndex
+                ) {
+                    mostRecentRow = row;
+                    mostRecentIndex = index;
+                }
             });
-            if (!lastFilledRow) return;
-            const tiles = lastFilledRow.querySelectorAll('.tile.filled');
-            tiles.forEach((tile, index) => {
-                tile.style.setProperty('--tile-index', index);
-                setTimeout(
-                    () => tile.classList.add('flip'),
-                    index * this.ANIMATION_DELAY
-                );
-            });
-            lastFilledRow.classList.add('animated');
-            lastFilledRow.classList.remove('submitting');
+
+            if (mostRecentRow) {
+                const tiles = mostRecentRow.querySelectorAll('.tile.filled');
+                tiles.forEach((tile, tileIndex) => {
+                    tile.style.setProperty('--tile-index', tileIndex);
+                    setTimeout(
+                        () => tile.classList.add('flip'),
+                        tileIndex * this.ANIMATION_DELAY
+                    );
+                });
+                mostRecentRow.classList.add('animated');
+                mostRecentRow.classList.remove('submitting');
+            }
         },
         checkForWin() {
             const rows = document.querySelectorAll('#game-board > div');

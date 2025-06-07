@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-bs-theme="light">
     <head>
         <meta charset="UTF-8" />
@@ -85,6 +85,8 @@
         <div
             class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"
             style="z-index: 1060"
+            aria-live="polite"
+            aria-atomic="true"
         >
             <div
                 id="notification-toast"
@@ -109,15 +111,22 @@
             tabindex="-1"
             style="background: rgba(0, 0, 0, 0.5)"
             x-transition
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="copy-modal-title"
+            :aria-hidden="!showCopyModal"
         >
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Copy Results</h5>
+                        <h5 class="modal-title" id="copy-modal-title">
+                            Copy Results
+                        </h5>
                         <button
                             type="button"
                             class="btn-close"
                             @click="closeCopyModal()"
+                            aria-label="Close copy results modal"
                         ></button>
                     </div>
                     <div class="modal-body">
@@ -131,13 +140,19 @@
                             readonly
                             x-model="copyModalText"
                             @click="selectAllText()"
+                            aria-label="Game results to copy"
+                            aria-describedby="copy-instructions"
                         ></textarea>
+                        <div id="copy-instructions" class="visually-hidden">
+                            Select all text and copy to share your game results
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button
                             type="button"
                             class="btn btn-secondary"
                             @click="closeCopyModal()"
+                            aria-label="Close modal"
                         >
                             Close
                         </button>
@@ -148,33 +163,45 @@
 
         <nav
             class="navbar navbar-expand-lg bg-body-tertiary border-bottom py-1"
+            role="navigation"
+            aria-label="Main navigation"
         >
             <div class="container-fluid">
-                <span class="navbar-brand fw-bold text-gradient">VORTLUDO</span>
+                <span
+                    class="navbar-brand fw-bold text-gradient"
+                    role="heading"
+                    aria-level="1"
+                    >VORTLUDO</span
+                >
                 <div class="d-flex align-items-center">
                     <button
                         class="btn btn-link text-decoration-none me-2 p-1 text-body"
                         @click="toggleTheme()"
-                        aria-label="Toggle theme"
+                        :aria-label="isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'"
                     >
                         <i
                             class="bi fs-4"
                             :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"
+                            aria-hidden="true"
                         ></i>
                     </button>
                     <button
                         class="btn btn-primary btn-sm"
                         onclick="location.href='/new-game'"
+                        aria-label="Start a new game"
                     >
-                        <i class="bi bi-arrow-clockwise"></i> New Game
+                        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                        New Game
                     </button>
                 </div>
             </div>
         </nav>
 
-        <div
+        <main
             class="container-fluid d-flex flex-column vh-100"
             @keydown.window="handleKeyPress($event)"
+            role="main"
+            aria-label="Wordle game"
         >
             <div
                 class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2"
@@ -183,25 +210,37 @@
                     class="d-flex flex-column align-items-center w-100"
                     style="max-width: 500px"
                 >
-                    <div class="text-center">
+                    <div class="text-center" role="status" aria-live="polite">
                         <p class="mb-2 small">{{.message}}</p>
                         {{if .hint}}
                         <div x-data="{ hintVisible: false }" class="mb-2">
                             <button
                                 class="btn btn-outline-primary btn-sm"
                                 @click="hintVisible = !hintVisible"
+                                :aria-expanded="hintVisible"
+                                aria-controls="hint-content"
+                                aria-label="Toggle hint visibility"
                             >
-                                <i class="bi bi-lightbulb"></i>
+                                <i
+                                    class="bi bi-lightbulb"
+                                    aria-hidden="true"
+                                ></i>
                                 <span
                                     x-text="hintVisible ? 'Hide Hint' : 'Show Hint'"
                                 ></span>
                             </button>
                             <p
+                                id="hint-content"
                                 class="text-muted fst-italic small mt-2"
                                 x-show="hintVisible"
                                 x-transition
+                                :aria-hidden="!hintVisible"
+                                role="note"
                             >
-                                <i class="bi bi-lightbulb text-warning"></i>
+                                <i
+                                    class="bi bi-lightbulb text-warning"
+                                    aria-hidden="true"
+                                ></i>
                                 Hint: {{.hint}}
                             </p>
                         </div>
@@ -214,6 +253,10 @@
                         hx-trigger="load once"
                         x-on:htmx:after-swap="updateGameState()"
                         class="mb-3"
+                        role="region"
+                        aria-label="Game board"
+                        aria-live="polite"
+                        aria-atomic="false"
                     >
                         {{template "game-board" .}}
                     </div>
@@ -225,6 +268,7 @@
                         hx-swap="innerHTML"
                         style="display: none"
                         @submit.prevent="submitGuess"
+                        aria-hidden="true"
                     >
                         <input
                             type="text"
@@ -232,6 +276,7 @@
                             name="guess"
                             maxlength="5"
                             class="form-control"
+                            aria-label="Current guess input"
                         />
                     </form>
 
@@ -240,8 +285,15 @@
                         style="max-width: 500px"
                         x-show="!shouldHideKeyboard()"
                         x-transition
+                        role="group"
+                        aria-label="Virtual keyboard"
+                        :aria-hidden="shouldHideKeyboard()"
                     >
-                        <div class="d-flex justify-content-center mb-1">
+                        <div
+                            class="d-flex justify-content-center mb-1"
+                            role="group"
+                            aria-label="First row of letters"
+                        >
                             <template
                                 x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']"
                             >
@@ -251,10 +303,17 @@
                                     :class="'key-' + getKeyClass(key)"
                                     @click="handleVirtualKey(key)"
                                     x-text="key"
+                                    :aria-label="`Letter ${key}, ${getKeyStatus(key)}`"
+                                    role="button"
+                                    tabindex="0"
                                 ></button>
                             </template>
                         </div>
-                        <div class="d-flex justify-content-center mb-1">
+                        <div
+                            class="d-flex justify-content-center mb-1"
+                            role="group"
+                            aria-label="Second row of letters"
+                        >
                             <template
                                 x-for="key in ['A','S','D','F','G','H','J','K','L']"
                             >
@@ -264,13 +323,23 @@
                                     :class="'key-' + getKeyClass(key)"
                                     @click="handleVirtualKey(key)"
                                     x-text="key"
+                                    :aria-label="`Letter ${key}, ${getKeyStatus(key)}`"
+                                    role="button"
+                                    tabindex="0"
                                 ></button>
                             </template>
                         </div>
-                        <div class="d-flex justify-content-center">
+                        <div
+                            class="d-flex justify-content-center"
+                            role="group"
+                            aria-label="Third row with Enter, letters, and Backspace"
+                        >
                             <button
                                 class="btn btn-secondary btn-sm m-1 px-3 key-button"
                                 @click="handleVirtualKey('ENTER')"
+                                aria-label="Submit guess"
+                                role="button"
+                                tabindex="0"
                             >
                                 ENTER
                             </button>
@@ -283,19 +352,28 @@
                                     :class="'key-' + getKeyClass(key)"
                                     @click="handleVirtualKey(key)"
                                     x-text="key"
+                                    :aria-label="`Letter ${key}, ${getKeyStatus(key)}`"
+                                    role="button"
+                                    tabindex="0"
                                 ></button>
                             </template>
                             <button
                                 class="btn btn-secondary btn-sm m-1 px-2 key-button"
                                 @click="handleVirtualKey('BACKSPACE')"
+                                aria-label="Delete last letter"
+                                role="button"
+                                tabindex="0"
                             >
-                                <i class="bi bi-backspace"></i>
+                                <i
+                                    class="bi bi-backspace"
+                                    aria-hidden="true"
+                                ></i>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </body>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </html>

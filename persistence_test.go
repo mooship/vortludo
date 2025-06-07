@@ -28,7 +28,7 @@ const (
 
 	// Error messages
 	ErrInvalidSessionFormat = "invalid session ID format"
-	ErrPathEscapes         = "session file path escapes sessions directory"
+	ErrPathEscapes          = "session file path escapes sessions directory"
 
 	// Test file permissions
 	TestDirPerm  = 0755
@@ -44,11 +44,11 @@ const (
 	InvalidHexSessionID  = "12345678-1234-5678-9ABC-123456789XYZ"
 
 	// Session ID patterns for path traversal tests
-	DirectoryTraversalUp   = "../session"
-	MultipleTraversal      = "../../session"
-	WindowsTraversal       = "..\\session"
-	MixedSeparators        = "../\\session"
-	CurrentDirectory       = "./session"
+	DirectoryTraversalUp = "../session"
+	MultipleTraversal    = "../../session"
+	WindowsTraversal     = "..\\session"
+	MixedSeparators      = "../\\session"
+	CurrentDirectory     = "./session"
 
 	// Test session ID formats
 	ValidUppercaseUUID = "12345678-1234-5678-9ABC-123456789DEF"
