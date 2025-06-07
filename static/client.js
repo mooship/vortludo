@@ -91,7 +91,8 @@ window.gameApp = function () {
                 }
             });
         },
-        shakeCurrentRow() {
+        shakeCurrentRow(isInvalid = true) {
+            if (!isInvalid) return;
             const rows = document.querySelectorAll('.guess-row');
             const targetRow = Math.max(0, this.currentRow);
             if (rows[targetRow]) {
@@ -140,6 +141,21 @@ window.gameApp = function () {
             document.documentElement.setAttribute('data-bs-theme', theme);
             localStorage.setItem('theme', theme);
         },
+        canShowHint() {
+            const rows = document.querySelectorAll('#game-board > div');
+            let completedRows = 0;
+            rows.forEach((row) => {
+                const tiles = row.querySelectorAll('.tile.filled');
+                const hasStatusTiles = Array.from(tiles).some(
+                    (tile) =>
+                        tile.classList.contains('tile-correct') ||
+                        tile.classList.contains('tile-present') ||
+                        tile.classList.contains('tile-absent')
+                );
+                if (hasStatusTiles) completedRows++;
+            });
+            return completedRows >= 3;
+        },
         updateGameState() {
             const board = document.getElementById('game-board');
             if (!board) return;
@@ -172,7 +188,7 @@ window.gameApp = function () {
                 this.gameOver ||
                 this.currentGuess.length !== this.WORD_LENGTH
             ) {
-                this.shakeCurrentRow();
+                this.shakeCurrentRow(true);
                 return;
             }
 
