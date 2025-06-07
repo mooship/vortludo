@@ -24,29 +24,25 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
 ### Installation
 
 1. **Clone the repository**
-
-    ```bash
-    git clone https://github.com/mooship/vortludo.git
-    cd vortludo
-    ```
+   ```bash
+   git clone https://github.com/mooship/vortludo.git
+   cd vortludo
+   ```
 
 2. **Install dependencies**
-
-    ```bash
-    go mod tidy && go mod download
-    ```
+   ```bash
+   go mod tidy && go mod download
+   ```
 
 3. **Create required directories**
-
-    ```bash
-    mkdir -p data
-    ```
+   ```bash
+   mkdir -p data
+   ```
 
 4. **Start development server**
-
-    ```bash
-    go run .
-    ```
+   ```bash
+   go run .
+   ```
 
 5. **Open your browser**
    Navigate to `http://localhost:8080`
@@ -109,7 +105,6 @@ Instead of a database, Vortludo uses simple JSON files:
 - **Word dictionary**: `data/words.json` (static)
 
 This approach is:
-
 - ✅ Simple and lightweight
 - ✅ Easy to backup and restore
 - ✅ No database setup required
@@ -142,13 +137,13 @@ This approach is:
 
 1. **Connect your GitHub repository** to Render
 2. **Create a new Web Service** with these settings:
-    - **Runtime**: `Go`
-    - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o vortludo`
-    - **Start Command**: `./vortludo`
+   - **Runtime**: `Go`
+   - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o vortludo`
+   - **Start Command**: `./vortludo`
 3. **Set Environment Variables**:
-    - `GIN_MODE=release`
-    - `ENV=production`
-    - `PORT=10000`
+   - `GIN_MODE=release`
+   - `ENV=production`
+   - `PORT=10000`
 4. **Deploy** - Render will automatically build and deploy your app
 
 Alternatively, you can use the included `render.yaml` file for automatic configuration by connecting your repo and Render will detect it automatically.
@@ -168,7 +163,6 @@ GIN_MODE=release PORT=8080 ENV=production ./vortludo
 ### Other Platforms
 
 The application can be deployed to any platform that supports Go:
-
 - Heroku
 - Railway
 - Fly.io

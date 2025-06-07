@@ -94,15 +94,6 @@ func main() {
 		})
 	}
 
-	// Register template functions
-	funcMap := template.FuncMap{
-		"hasPrefix": strings.HasPrefix,
-		"add": func(a, b int) int {
-			return a + b
-		},
-	}
-	router.SetFuncMap(funcMap)
-
 	// Serve static files with appropriate assets for environment
 	if isProduction && dirExists("dist") {
 		log.Printf("Serving minified assets from dist/ directory")
@@ -113,6 +104,12 @@ func main() {
 		router.LoadHTMLGlob("templates/*.html")
 		router.Static("/static", "./static")
 	}
+
+	// Register template functions
+	funcMap := template.FuncMap{
+		"hasPrefix": strings.HasPrefix,
+	}
+	router.SetFuncMap(funcMap)
 
 	// Define routes
 	router.GET("/", homeHandler)

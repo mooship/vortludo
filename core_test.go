@@ -12,18 +12,18 @@ import (
 // Test constants
 const (
 	// Test words
-	TestWordApple  = "APPLE"
-	TestWordBanjo  = "BANJO"
-	TestWordPeach  = "PEACH"
-	TestWordTable  = "TABLE"
-	TestWordAlley  = "ALLEY"
-	TestWordZzzzz  = "ZZZZZ"
-	TestWordTests  = "TESTS"
-	TestWordCache  = "CACHE"
-	TestWordSaver  = "SAVER"
-	TestWordHello  = "HELLO"
-	TestWordWorld  = "WORLD"
-	TestWordAlpha  = "ALPHA"
+	TestWordApple = "APPLE"
+	TestWordBanjo = "BANJO"
+	TestWordPeach = "PEACH"
+	TestWordTable = "TABLE"
+	TestWordAlley = "ALLEY"
+	TestWordZzzzz = "ZZZZZ"
+	TestWordTests = "TESTS"
+	TestWordCache = "CACHE"
+	TestWordSaver = "SAVER"
+	TestWordHello = "HELLO"
+	TestWordWorld = "WORLD"
+	TestWordAlpha = "ALPHA"
 	TestWordLoaded = "LOADED"
 
 	// Test hints
@@ -277,7 +277,7 @@ func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	gameSessions[TestSessionActive] = &GameState{LastAccessTime: now.Add(-SessionTimeout / 2)}               // Active
 	gameSessions[TestSessionExpired1] = &GameState{LastAccessTime: now.Add(-(SessionTimeout + time.Minute))} // Expired
 	gameSessions[TestSessionExpired2] = &GameState{LastAccessTime: now.Add(-(SessionTimeout + time.Hour))}   // Expired
-	gameSessions[TestSessionNoTime] = &GameState{}                                                           // Zero time = expired
+	gameSessions[TestSessionNoTime] = &GameState{}                                                         // Zero time = expired
 	sessionMutex.Unlock()
 
 	// Test cleanup logic
