@@ -252,10 +252,14 @@ window.gameApp = function () {
                 const script = document.createElement('script');
                 script.src =
                     'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
-                script.onload = () => this._doConfetti();
+                script.onload = () => {
+                    this._doConfetti();
+                    this._doFireworks();
+                };
                 document.body.appendChild(script);
             } else {
                 this._doConfetti();
+                this._doFireworks();
             }
         },
         _doConfetti() {
@@ -264,6 +268,52 @@ window.gameApp = function () {
                 spread: 80,
                 origin: { y: 0.6 },
             });
+        },
+        _doFireworks() {
+            const colors = [
+                '#ff0000',
+                '#00ff00',
+                '#0000ff',
+                '#ffff00',
+                '#ff00ff',
+                '#00ffff',
+                '#ffa500',
+                '#ff69b4',
+            ];
+
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * 0.8 + 0.1;
+                    const y = Math.random() * 0.4 + 0.2;
+
+                    window.confetti({
+                        particleCount: 50,
+                        angle: Math.random() * 360,
+                        spread: 360,
+                        startVelocity: 15,
+                        decay: 0.95,
+                        gravity: 0.8,
+                        colors: [
+                            colors[Math.floor(Math.random() * colors.length)],
+                        ],
+                        origin: { x: x, y: y },
+                        shapes: ['circle'],
+                        scalar: 0.8,
+                    });
+                }, i * 400);
+            }
+
+            setTimeout(() => {
+                window.confetti({
+                    particleCount: 100,
+                    spread: 120,
+                    startVelocity: 25,
+                    colors: ['#ffd700', '#ffff00', '#ffffff'],
+                    origin: { y: 0.4 },
+                    shapes: ['circle'],
+                    scalar: 0.6,
+                });
+            }, 1000);
         },
         shareResults() {
             const rows = document.querySelectorAll('#game-board > div');
