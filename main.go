@@ -60,6 +60,8 @@ var (
 
 	limiterMap   = make(map[string]*rate.Limiter)
 	limiterMutex sync.Mutex
+
+	startTime = time.Now() // Track server start time.
 )
 
 func main() {
@@ -123,6 +125,7 @@ func main() {
 	router.POST("/guess", rateLimitMiddleware(), guessHandler)
 	router.GET("/game-state", gameStateHandler)
 	router.POST("/retry-word", rateLimitMiddleware(), retryWordHandler)
+	router.GET("/health", healthHandler) // <-- Add health endpoint
 
 	// Start server with graceful shutdown.
 	port := os.Getenv("PORT")
@@ -710,4 +713,19 @@ func rateLimitMiddleware() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+// healthHandler provides a simple health/status endpoint.
+func healthHandler(c *gin.Context) {
+	sessionMutex.RLock()
+	sessionCount := len(gameSessions)
+	sessionMutex.RUnlock()
+	c.JSON(http.StatusOK, gin.H{
+		"status":         "ok",
+		"env":            map[bool]string{true: "production", false: "development"}[isProduction],
+		"words_loaded":   len(wordList),
+		"sessions_count": sessionCount,
+		"uptime":         time.Since(startTime).String(),
+		"timestamp":      time.Now().UTC().Format(time.RFC3339),
+	})
 }
