@@ -11,22 +11,68 @@ import (
 	"github.com/google/uuid"
 )
 
+// Test constants for persistence tests
+const (
+	// File extensions and paths
+	JSONExtension = ".json"
+	DataDir       = "data"
+	SessionsDir   = "sessions"
+
+	// Test session words
+	TestSessionWordLoaded    = "LOADED"
+	TestSessionWordBadStruct = "BADSTRUCT"
+	TestSessionWordTests     = "TESTS"
+
+	// Test content
+	CorruptJSONContent = "this is not json"
+
+	// Error messages
+	ErrInvalidSessionFormat = "invalid session ID format"
+	ErrPathEscapes         = "session file path escapes sessions directory"
+
+	// Test file permissions
+	TestDirPerm  = 0755
+	TestFilePerm = 0644
+
+	// Path traversal test strings
+	UnixPathTraversal    = "../../../etc/passwd"
+	WindowsPathTraversal = "..\\..\\windows\\system32\\drivers\\etc\\hosts"
+	AbsoluteUnixPath     = "/etc/passwd"
+	AbsolutePath         = "/tmp/session"
+	SessionWithTraversal = "session/../../../secret.txt"
+	ShortSessionID       = "short"
+	InvalidHexSessionID  = "12345678-1234-5678-9ABC-123456789XYZ"
+
+	// Session ID patterns for path traversal tests
+	DirectoryTraversalUp   = "../session"
+	MultipleTraversal      = "../../session"
+	WindowsTraversal       = "..\\session"
+	MixedSeparators        = "../\\session"
+	CurrentDirectory       = "./session"
+
+	// Test session ID formats
+	ValidUppercaseUUID = "12345678-1234-5678-9ABC-123456789DEF"
+	PathTraversalUUID  = "12345678-1234-5678-9ABC-123456789../"
+	SlashUUID          = "12345678/1234/5678/9ABC/123456789DEF"
+	BackslashUUID      = "12345678\\1234\\5678\\9ABC\\123456789DEF"
+)
+
 func TestLoadGameSessionFromFile(t *testing.T) {
 	tempDir := t.TempDir()
 	defer func() {
-		_ = os.RemoveAll(filepath.Join(tempDir, "data/sessions"))
+		_ = os.RemoveAll(filepath.Join(tempDir, DataDir, SessionsDir))
 	}()
 
-	sessionBaseDir := filepath.Join(tempDir, "data", "sessions")
-	if err := os.MkdirAll(sessionBaseDir, 0755); err != nil {
+	sessionBaseDir := filepath.Join(tempDir, DataDir, SessionsDir)
+	if err := os.MkdirAll(sessionBaseDir, TestDirPerm); err != nil {
 		t.Fatalf("Failed to create temp session dir: %v", err)
 	}
 
 	// Helper to create test session files
 	createTestSessionFile := func(sID string, game *GameState, modTime *time.Time) string {
-		filePath := filepath.Join(sessionBaseDir, sID+".json")
+		filePath := filepath.Join(sessionBaseDir, sID+JSONExtension)
 		data, _ := json.Marshal(game)
-		_ = os.WriteFile(filePath, data, 0644)
+		_ = os.WriteFile(filePath, data, TestFilePerm)
 		if modTime != nil {
 			_ = os.Chtimes(filePath, *modTime, *modTime)
 		}
@@ -40,14 +86,14 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 	}
 	defer os.Chdir(originalWD)
 
-	if err := os.MkdirAll(filepath.Join(tempDir, "data", "sessions"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(tempDir, DataDir, SessionsDir), TestDirPerm); err != nil {
 		t.Fatalf("Failed to create data/sessions in tempDir: %v", err)
 	}
 
 	// Test 1: Valid session file - use proper UUID format
 	sessionIDValid := uuid.NewString()
 	validGame := &GameState{
-		SessionWord: "LOADED",
+		SessionWord: TestSessionWordLoaded,
 		Guesses:     make([][]GuessResult, MaxGuesses),
 	}
 	for i := range validGame.Guesses {
@@ -59,8 +105,8 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("loadGameSessionFromFile failed for valid session: %v", err)
 	}
-	if loadedGame.SessionWord != "LOADED" {
-		t.Errorf("loadGameSessionFromFile got SessionWord %q, want %q", loadedGame.SessionWord, "LOADED")
+	if loadedGame.SessionWord != TestSessionWordLoaded {
+		t.Errorf("loadGameSessionFromFile got SessionWord %q, want %q", loadedGame.SessionWord, TestSessionWordLoaded)
 	}
 	if loadedGame.LastAccessTime.IsZero() {
 		t.Error("loadGameSessionFromFile did not set LastAccessTime for valid session")
@@ -81,8 +127,8 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 
 	// Test 3: Corrupted file (should be removed) - use proper UUID format
 	sessionIDCorrupt := uuid.NewString()
-	corruptFilePath := filepath.Join("data", "sessions", sessionIDCorrupt+".json")
-	_ = os.WriteFile(corruptFilePath, []byte("this is not json"), 0644)
+	corruptFilePath := filepath.Join(DataDir, SessionsDir, sessionIDCorrupt+JSONExtension)
+	_ = os.WriteFile(corruptFilePath, []byte(CorruptJSONContent), TestFilePerm)
 
 	_, err = loadGameSessionFromFile(sessionIDCorrupt)
 	if err == nil || !os.IsNotExist(err) {
@@ -95,7 +141,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 	// Test 4: Invalid structure (should be removed) - use proper UUID format
 	sessionIDInvalidStruct := uuid.NewString()
 	invalidStructGame := &GameState{
-		SessionWord: "BADSTRUCT",
+		SessionWord: TestSessionWordBadStruct,
 		Guesses:     make([][]GuessResult, MaxGuesses-1), // Wrong number
 	}
 	invalidStructPath := createTestSessionFile(sessionIDInvalidStruct, invalidStructGame, nil)
@@ -109,7 +155,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 	}
 
 	// Test 5: Invalid session ID format (should be rejected)
-	invalidSessionID := "invalid-session-format"
+	invalidSessionID := InvalidSessionFormat
 	_, err = loadGameSessionFromFile(invalidSessionID)
 	if err == nil || !os.IsNotExist(err) {
 		t.Errorf("loadGameSessionFromFile should reject invalid session ID format, got: %v", err)
@@ -130,56 +176,56 @@ func TestGetSecureSessionPath(t *testing.T) {
 		},
 		{
 			name:      "Valid UUID with uppercase",
-			sessionID: "12345678-1234-5678-9ABC-123456789DEF",
+			sessionID: ValidUppercaseUUID,
 			wantErr:   false,
 		},
 		{
 			name:      "Invalid format - too short",
-			sessionID: "short",
+			sessionID: ShortSessionID,
 			wantErr:   true,
-			errMsg:    "invalid session ID format",
+			errMsg:    ErrInvalidSessionFormat,
 		},
 		{
 			name:      "Invalid format - empty",
 			sessionID: "",
 			wantErr:   true,
-			errMsg:    "invalid session ID format",
+			errMsg:    ErrInvalidSessionFormat,
 		},
 		{
 			name:      "Path traversal attempt - relative path",
-			sessionID: "../../../etc/passwd",
+			sessionID: UnixPathTraversal,
 			wantErr:   true,
-			errMsg:    "invalid session ID format",
+			errMsg:    ErrInvalidSessionFormat,
 		},
 		{
 			name:      "Path traversal attempt - with dots",
-			sessionID: "12345678-1234-5678-9ABC-123456789../",
+			sessionID: PathTraversalUUID,
 			wantErr:   true,
-			errMsg:    "invalid session ID format",
+			errMsg:    ErrInvalidSessionFormat,
 		},
 		{
 			name:      "Path traversal attempt - absolute path",
-			sessionID: "/etc/passwd",
+			sessionID: AbsoluteUnixPath,
 			wantErr:   true,
-			errMsg:    "invalid session ID format",
+			errMsg:    ErrInvalidSessionFormat,
 		},
 		{
 			name:      "Invalid characters - special chars",
-			sessionID: "12345678-1234-5678-9ABC-123456789XYZ",
+			sessionID: InvalidHexSessionID,
 			wantErr:   true,
-			errMsg:    "invalid session ID format",
+			errMsg:    ErrInvalidSessionFormat,
 		},
 		{
 			name:      "Invalid characters - with slashes",
-			sessionID: "12345678/1234/5678/9ABC/123456789DEF",
+			sessionID: SlashUUID,
 			wantErr:   true,
-			errMsg:    "invalid session ID format",
+			errMsg:    ErrInvalidSessionFormat,
 		},
 		{
 			name:      "Invalid characters - with backslashes",
-			sessionID: "12345678\\1234\\5678\\9ABC\\123456789DEF",
+			sessionID: BackslashUUID,
 			wantErr:   true,
-			errMsg:    "invalid session ID format",
+			errMsg:    ErrInvalidSessionFormat,
 		},
 	}
 
@@ -202,13 +248,13 @@ func TestGetSecureSessionPath(t *testing.T) {
 				}
 
 				// Validate the returned path is safe
-				expectedPath := filepath.Join("data", "sessions", tt.sessionID+".json")
+				expectedPath := filepath.Join(DataDir, SessionsDir, tt.sessionID+JSONExtension)
 				if got != expectedPath {
 					t.Errorf("getSecureSessionPath() = %v, want %v", got, expectedPath)
 				}
 
 				// Ensure path is within sessions directory
-				absSessionDir, _ := filepath.Abs("data/sessions")
+				absSessionDir, _ := filepath.Abs(filepath.Join(DataDir, SessionsDir))
 				absResult, _ := filepath.Abs(got)
 				absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
 				if !strings.HasPrefix(absResult+string(filepath.Separator), absSessionDir) {
@@ -222,13 +268,13 @@ func TestGetSecureSessionPath(t *testing.T) {
 func TestSecureFileOperations(t *testing.T) {
 	// Test that file operations properly reject invalid session IDs
 	maliciousSessionIDs := []string{
-		"../../../etc/passwd",
-		"/etc/passwd",
-		"..\\..\\windows\\system32\\drivers\\etc\\hosts",
-		"session/../../../secret.txt",
+		UnixPathTraversal,
+		AbsoluteUnixPath,
+		WindowsPathTraversal,
+		SessionWithTraversal,
 		"",
-		"short",
-		"12345678-1234-5678-9ABC-123456789XYZ", // Invalid hex
+		ShortSessionID,
+		InvalidHexSessionID, // Invalid hex
 	}
 
 	// Store original functions to restore after test
@@ -240,7 +286,7 @@ func TestSecureFileOperations(t *testing.T) {
 	}()
 
 	testGame := &GameState{
-		SessionWord: "TESTS",
+		SessionWord: TestSessionWordTests,
 		Guesses:     make([][]GuessResult, MaxGuesses),
 	}
 	for i := range testGame.Guesses {
@@ -274,13 +320,13 @@ func TestPathTraversalPrevention(t *testing.T) {
 		expectErr bool
 	}{
 		{"Normal UUID", uuid.NewString(), false},
-		{"Directory traversal up", "../session", true},
-		{"Multiple traversal", "../../session", true},
-		{"Absolute path", "/tmp/session", true},
-		{"Windows path traversal", "..\\session", true},
-		{"Mixed separators", "../\\session", true},
+		{"Directory traversal up", DirectoryTraversalUp, true},
+		{"Multiple traversal", MultipleTraversal, true},
+		{"Absolute path", AbsolutePath, true},
+		{"Windows path traversal", WindowsTraversal, true},
+		{"Mixed separators", MixedSeparators, true},
 		{"Null byte injection", "session\x00.txt", true},
-		{"Current directory", "./session", true},
+		{"Current directory", CurrentDirectory, true},
 	}
 
 	for _, tc := range testCases {
@@ -296,7 +342,7 @@ func TestPathTraversalPrevention(t *testing.T) {
 					t.Errorf("Unexpected error for valid sessionID %q: %v", tc.sessionID, err)
 				} else {
 					// Verify the path stays within the sessions directory
-					absSessionDir, _ := filepath.Abs("data/sessions")
+					absSessionDir, _ := filepath.Abs(filepath.Join(DataDir, SessionsDir))
 					absPath, _ := filepath.Abs(path)
 					if !strings.HasPrefix(absPath, absSessionDir) {
 						t.Errorf("Path %q escapes sessions directory %q", absPath, absSessionDir)

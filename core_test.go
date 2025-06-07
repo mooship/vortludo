@@ -9,45 +9,94 @@ import (
 	"github.com/google/uuid"
 )
 
+// Test constants
+const (
+	// Test words
+	TestWordApple = "APPLE"
+	TestWordBanjo = "BANJO"
+	TestWordPeach = "PEACH"
+	TestWordTable = "TABLE"
+	TestWordAlley = "ALLEY"
+	TestWordZzzzz = "ZZZZZ"
+	TestWordTests = "TESTS"
+	TestWordCache = "CACHE"
+	TestWordSaver = "SAVER"
+	TestWordHello = "HELLO"
+	TestWordWorld = "WORLD"
+	TestWordAlpha = "ALPHA"
+	TestWordLoaded = "LOADED"
+
+	// Test hints
+	TestHintFruit     = "A fruit"
+	TestHintFurniture = "Furniture"
+	TestHintTesting   = "For testing"
+
+	// Test session ID patterns
+	TestSessionCreateNew = "test-session-createnewgame"
+	TestSessionGetState  = "test-session-getstatecache"
+	TestSessionSaveGame  = "test-session-savegame"
+	TestSessionActive    = "active-session"
+	TestSessionExpired1  = "expired-session-1"
+	TestSessionExpired2  = "expired-session-2"
+	TestSessionNoTime    = "no-time-session"
+
+	// Test file operations
+	TestFileName    = "f.txt"
+	TestFileContent = "x"
+
+	// Guess status constants
+	StatusCorrect = "correct"
+	StatusPresent = "present"
+	StatusAbsent  = "absent"
+
+	// Test comments
+	CommentAllCorrect = "All correct"
+	CommentMixed      = "Mix of correct, present, absent"
+	CommentAllAbsent  = "All absent"
+
+	// Test validation constants
+	InvalidSessionFormat = "invalid-session-format"
+)
+
 func TestCheckGuess(t *testing.T) {
-	target := "APPLE"
+	target := TestWordApple
 	tests := []struct {
 		guess   string
 		want    []GuessResult
 		comment string
 	}{
 		{
-			guess: "APPLE",
+			guess: TestWordApple,
 			want: []GuessResult{
-				{"A", "correct"},
-				{"P", "correct"},
-				{"P", "correct"},
-				{"L", "correct"},
-				{"E", "correct"},
+				{"A", StatusCorrect},
+				{"P", StatusCorrect},
+				{"P", StatusCorrect},
+				{"L", StatusCorrect},
+				{"E", StatusCorrect},
 			},
-			comment: "All correct",
+			comment: CommentAllCorrect,
 		},
 		{
-			guess: "ALLEY",
+			guess: TestWordAlley,
 			want: []GuessResult{
-				{"A", "correct"},
-				{"L", "present"},
-				{"L", "absent"},
-				{"E", "present"},
-				{"Y", "absent"},
+				{"A", StatusCorrect},
+				{"L", StatusPresent},
+				{"L", StatusAbsent},
+				{"E", StatusPresent},
+				{"Y", StatusAbsent},
 			},
-			comment: "Mix of correct, present, absent",
+			comment: CommentMixed,
 		},
 		{
-			guess: "ZZZZZ",
+			guess: TestWordZzzzz,
 			want: []GuessResult{
-				{"Z", "absent"},
-				{"Z", "absent"},
-				{"Z", "absent"},
-				{"Z", "absent"},
-				{"Z", "absent"},
+				{"Z", StatusAbsent},
+				{"Z", StatusAbsent},
+				{"Z", StatusAbsent},
+				{"Z", StatusAbsent},
+				{"Z", StatusAbsent},
 			},
-			comment: "All absent",
+			comment: CommentAllAbsent,
 		},
 	}
 
@@ -63,16 +112,16 @@ func TestCheckGuess(t *testing.T) {
 
 func TestIsValidWord(t *testing.T) {
 	wordSet = map[string]struct{}{
-		"APPLE": {},
-		"BANJO": {},
+		TestWordApple: {},
+		TestWordBanjo: {},
 	}
 	tests := []struct {
 		word string
 		want bool
 	}{
-		{"APPLE", true},
-		{"BANJO", true},
-		{"PEACH", false},
+		{TestWordApple, true},
+		{TestWordBanjo, true},
+		{TestWordPeach, false},
 		{"", false},
 	}
 	for _, tt := range tests {
@@ -88,9 +137,9 @@ func TestNormalizeGuess(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"apple", "APPLE"},
-		{"  banjo ", "BANJO"},
-		{"PeAch", "PEACH"},
+		{"apple", TestWordApple},
+		{"  banjo ", TestWordBanjo},
+		{"PeAch", TestWordPeach},
 		{"", ""},
 	}
 	for _, tt := range tests {
@@ -105,8 +154,8 @@ func TestGetHintForWord(t *testing.T) {
 	// Setup test data
 	originalWordList := wordList
 	wordList = []WordEntry{
-		{Word: "APPLE", Hint: "A fruit"},
-		{Word: "TABLE", Hint: "Furniture"},
+		{Word: TestWordApple, Hint: TestHintFruit},
+		{Word: TestWordTable, Hint: TestHintFurniture},
 	}
 	defer func() { wordList = originalWordList }()
 
@@ -114,8 +163,8 @@ func TestGetHintForWord(t *testing.T) {
 		word string
 		want string
 	}{
-		{"APPLE", "A fruit"},
-		{"TABLE", "Furniture"},
+		{TestWordApple, TestHintFruit},
+		{TestWordTable, TestHintFurniture},
 		{"GRAPE", ""}, // Not in list
 		{"", ""},      // Empty word
 	}
@@ -131,10 +180,10 @@ func TestGetHintForWord(t *testing.T) {
 func TestCreateNewGame_SetsLastAccessTime(t *testing.T) {
 	// Setup test data
 	originalWordList := wordList
-	wordList = []WordEntry{{Word: "TESTS", Hint: "For testing"}}
+	wordList = []WordEntry{{Word: TestWordTests, Hint: TestHintTesting}}
 	defer func() { wordList = originalWordList }()
 
-	sessionID := "test-session-createnewgame"
+	sessionID := TestSessionCreateNew
 	before := time.Now()
 	game := createNewGame(sessionID)
 	after := time.Now()
@@ -149,13 +198,13 @@ func TestCreateNewGame_SetsLastAccessTime(t *testing.T) {
 }
 
 func TestGetGameState_UpdatesLastAccessTimeFromCache(t *testing.T) {
-	sessionID := "test-session-getstatecache"
+	sessionID := TestSessionGetState
 	initialTime := time.Now().Add(-1 * time.Hour)
 
 	// Setup cached game
 	sessionMutex.Lock()
 	gameSessions[sessionID] = &GameState{
-		SessionWord:    "CACHE",
+		SessionWord:    TestWordCache,
 		LastAccessTime: initialTime,
 		Guesses:        make([][]GuessResult, MaxGuesses),
 	}
@@ -178,11 +227,11 @@ func TestGetGameState_UpdatesLastAccessTimeFromCache(t *testing.T) {
 }
 
 func TestSaveGameState_UpdatesLastAccessTime(t *testing.T) {
-	sessionID := "test-session-savegame"
+	sessionID := TestSessionSaveGame
 	initialTime := time.Now().Add(-1 * time.Hour)
 
 	game := &GameState{
-		SessionWord:    "SAVER",
+		SessionWord:    TestWordSaver,
 		LastAccessTime: initialTime,
 		Guesses:        make([][]GuessResult, MaxGuesses),
 	}
@@ -222,16 +271,13 @@ func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	defer func() { gameSessions = originalGameSessions }()
 
 	now := time.Now()
-	activeSessionID := "active-session"
-	expiredSessionID1 := "expired-session-1"
-	expiredSessionID2 := "expired-session-2"
 
 	// Setup test sessions
 	sessionMutex.Lock()
-	gameSessions[activeSessionID] = &GameState{LastAccessTime: now.Add(-SessionTimeout / 2)}               // Active
-	gameSessions[expiredSessionID1] = &GameState{LastAccessTime: now.Add(-(SessionTimeout + time.Minute))} // Expired
-	gameSessions[expiredSessionID2] = &GameState{LastAccessTime: now.Add(-(SessionTimeout + time.Hour))}   // Expired
-	gameSessions["no-time-session"] = &GameState{}                                                         // Zero time = expired
+	gameSessions[TestSessionActive] = &GameState{LastAccessTime: now.Add(-SessionTimeout / 2)}               // Active
+	gameSessions[TestSessionExpired1] = &GameState{LastAccessTime: now.Add(-(SessionTimeout + time.Minute))} // Expired
+	gameSessions[TestSessionExpired2] = &GameState{LastAccessTime: now.Add(-(SessionTimeout + time.Hour))}   // Expired
+	gameSessions[TestSessionNoTime] = &GameState{}                                                         // Zero time = expired
 	sessionMutex.Unlock()
 
 	// Test cleanup logic
@@ -253,16 +299,16 @@ func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	sessionMutex.RLock()
 	defer sessionMutex.RUnlock()
 
-	if _, exists := gameSessions[activeSessionID]; !exists {
-		t.Errorf("Active session %s was incorrectly removed", activeSessionID)
+	if _, exists := gameSessions[TestSessionActive]; !exists {
+		t.Errorf("Active session %s was incorrectly removed", TestSessionActive)
 	}
-	if _, exists := gameSessions[expiredSessionID1]; exists {
-		t.Errorf("Expired session %s was not removed", expiredSessionID1)
+	if _, exists := gameSessions[TestSessionExpired1]; exists {
+		t.Errorf("Expired session %s was not removed", TestSessionExpired1)
 	}
-	if _, exists := gameSessions[expiredSessionID2]; exists {
-		t.Errorf("Expired session %s was not removed", expiredSessionID2)
+	if _, exists := gameSessions[TestSessionExpired2]; exists {
+		t.Errorf("Expired session %s was not removed", TestSessionExpired2)
 	}
-	if _, exists := gameSessions["no-time-session"]; exists {
+	if _, exists := gameSessions[TestSessionNoTime]; exists {
 		t.Errorf("Session with no LastAccessTime was not removed")
 	}
 }
@@ -274,7 +320,7 @@ func TestIsValidSessionID(t *testing.T) {
 	}
 	for _, bad := range []string{
 		"", "short",
-		"zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
+		"zzzzzzzz-zzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
 		"12345678-1234-1234-1234-12345678901G", // Invalid char
 	} {
 		if isValidSessionID(bad) {
@@ -288,7 +334,7 @@ func TestUpdateGameState(t *testing.T) {
 	base := &GameState{
 		Guesses:        make([][]GuessResult, MaxGuesses),
 		CurrentRow:     0,
-		SessionWord:    "HELLO",
+		SessionWord:    TestWordHello,
 		LastAccessTime: time.Now(),
 	}
 	for i := range base.Guesses {
@@ -298,9 +344,9 @@ func TestUpdateGameState(t *testing.T) {
 	// Test win condition
 	winGame := *base
 	updateGameState(&winGame,
-		"HELLO", "HELLO",
-		checkGuess("HELLO", "HELLO"), false)
-	if !winGame.Won || !winGame.GameOver || winGame.TargetWord != "HELLO" {
+		TestWordHello, TestWordHello,
+		checkGuess(TestWordHello, TestWordHello), false)
+	if !winGame.Won || !winGame.GameOver || winGame.TargetWord != TestWordHello {
 		t.Errorf("win path: Got Won=%v, GameOver=%v, TargetWord=%q",
 			winGame.Won, winGame.GameOver, winGame.TargetWord)
 	}
@@ -309,8 +355,8 @@ func TestUpdateGameState(t *testing.T) {
 	loseGame := *base
 	for range MaxGuesses {
 		updateGameState(&loseGame,
-			"WORLD", "HELLO",
-			checkGuess("WORLD", "HELLO"), false)
+			TestWordWorld, TestWordHello,
+			checkGuess(TestWordWorld, TestWordHello), false)
 	}
 	if !loseGame.GameOver || loseGame.Won {
 		t.Errorf("lose path: Got GameOver=%v, Won=%v", loseGame.GameOver, loseGame.Won)
@@ -319,20 +365,20 @@ func TestUpdateGameState(t *testing.T) {
 
 func TestGetTargetWord(t *testing.T) {
 	orig := wordList
-	wordList = []WordEntry{{Word: "ALPHA", Hint: ""}}
+	wordList = []WordEntry{{Word: TestWordAlpha, Hint: ""}}
 	defer func() { wordList = orig }()
 
 	game := &GameState{}
 	got := getTargetWord(game)
-	if got != "ALPHA" || game.SessionWord != "ALPHA" {
-		t.Errorf("getTargetWord() = %q, want %q", got, "ALPHA")
+	if got != TestWordAlpha || game.SessionWord != TestWordAlpha {
+		t.Errorf("getTargetWord() = %q, want %q", got, TestWordAlpha)
 	}
 }
 
 func TestDirExists(t *testing.T) {
 	tmp := t.TempDir()
-	file := filepath.Join(tmp, "f.txt")
-	os.WriteFile(file, []byte("x"), 0644)
+	file := filepath.Join(tmp, TestFileName)
+	os.WriteFile(file, []byte(TestFileContent), 0644)
 
 	if dirExists(file) {
 		t.Errorf("dirExists(%q) = true, want false", file)
