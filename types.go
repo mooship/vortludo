@@ -30,13 +30,3 @@ type GuessResult struct {
 	Letter string // The guessed letter.
 	Status string // "correct", "present", "absent", or "invalid".
 }
-
-// PlayerStats tracks user statistics (for future implementation).
-// NOTE: Currently unused. Remove if not needed in future.
-type PlayerStats struct {
-	GamesPlayed       int         `json:"gamesPlayed"`
-	GamesWon          int         `json:"gamesWon"`
-	CurrentStreak     int         `json:"currentStreak"`
-	MaxStreak         int         `json:"maxStreak"`
-	GuessDistribution map[int]int `json:"guessDistribution"` // Tries -> count.
-}
