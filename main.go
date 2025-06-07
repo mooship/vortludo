@@ -695,7 +695,7 @@ func getLimiter(key string) *rate.Limiter {
 	if lim, ok := limiterMap[key]; ok {
 		return lim
 	}
-	// allow 5 requests/sec with burst of 10
+	// allow 5 requests/sec with burst of 10.
 	lim := rate.NewLimiter(rate.Every(time.Second/5), 10)
 	limiterMap[key] = lim
 	return lim
