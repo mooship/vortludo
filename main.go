@@ -440,7 +440,7 @@ func checkGuess(guess, target string) []GuessResult {
 	}
 
 	// Second pass: mark present letters in wrong position.
-	for i := 0; i < WordLength; i++ {
+	for i := range WordLength {
 		if result[i].Status == "" {
 			letter := string(guess[i])
 			result[i].Letter = letter

@@ -78,6 +78,37 @@ func TestRetryWordHandler(t *testing.T) {
 	}
 }
 
+// TestRateLimitMiddleware checks that the rate limiter blocks requests after the burst limit.
+func TestRateLimitMiddleware(t *testing.T) {
+	// Setup a router with rate limiting and a dummy endpoint.
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.Use(rateLimitMiddleware())
+	router.GET("/limited", func(c *gin.Context) {
+		c.String(http.StatusOK, "ok")
+	})
+
+	// Simulate requests from the same IP.
+	req, _ := http.NewRequest("GET", "/limited", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+
+	// The default limiter allows 10 burst requests.
+	for i := range 10 {
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		if w.Code != http.StatusOK {
+			t.Errorf("Request %d: expected 200, got %d", i+1, w.Code)
+		}
+	}
+
+	// The 11th request should be rate limited (429).
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusTooManyRequests {
+		t.Errorf("11th request: expected 429 Too Many Requests, got %d", w.Code)
+	}
+}
+
 // TestMain sets up a minimal word list and word set for all HTTP tests.
 func TestMain(m *testing.M) {
 	wordList = []WordEntry{{Word: "APPLE", Hint: "fruit"}}
