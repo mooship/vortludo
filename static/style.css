@@ -451,6 +451,56 @@
     animation-delay: calc(var(--tile-index) * 0.1s);
 }
 
+/* Hide tile status colors initially when flipping */
+.tile.flip:not(.flip-revealed) {
+    background-color: var(--sepia-tile-bg) !important;
+    border-color: var(--sepia-tile-border) !important;
+    color: var(--sepia-text) !important;
+}
+
+[data-bs-theme='dark'] .tile.flip:not(.flip-revealed) {
+    background-color: var(--sepia-dark-tile-bg) !important;
+    border-color: var(--sepia-dark-tile-border) !important;
+    color: var(--sepia-dark-text) !important;
+}
+
+/* Apply colors only after flip-revealed class is added */
+.tile.flip.flip-revealed.tile-correct {
+    background-color: var(--sepia-correct) !important;
+    border-color: var(--sepia-correct) !important;
+    color: #faf8f3 !important;
+}
+
+.tile.flip.flip-revealed.tile-present {
+    background-color: var(--sepia-present) !important;
+    border-color: var(--sepia-present) !important;
+    color: #faf8f3 !important;
+}
+
+.tile.flip.flip-revealed.tile-absent {
+    background-color: var(--sepia-absent) !important;
+    border-color: var(--sepia-absent) !important;
+    color: #faf8f3 !important;
+}
+
+[data-bs-theme='dark'] .tile.flip.flip-revealed.tile-correct {
+    background-color: var(--sepia-dark-correct) !important;
+    border-color: var(--sepia-dark-correct) !important;
+    color: #f4f1e8 !important;
+}
+
+[data-bs-theme='dark'] .tile.flip.flip-revealed.tile-present {
+    background-color: var(--sepia-dark-present) !important;
+    border-color: var(--sepia-dark-present) !important;
+    color: #f4f1e8 !important;
+}
+
+[data-bs-theme='dark'] .tile.flip.flip-revealed.tile-absent {
+    background-color: var(--sepia-dark-absent) !important;
+    border-color: var(--sepia-dark-absent) !important;
+    color: #f4f1e8 !important;
+}
+
 input[type='text'] {
     font-size: 16px !important;
 }

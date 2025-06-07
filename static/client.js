@@ -50,7 +50,6 @@ window.gameApp = function () {
         setupHTMXHandlers() {
             document.body.addEventListener('htmx:afterSwap', (evt) => {
                 this.submittingGuess = false;
-                this.handleServerErrors();
                 this.restoreUserInput();
                 this.updateGameState();
             });
@@ -71,33 +70,6 @@ window.gameApp = function () {
             } else {
                 this.tempCurrentGuess = null;
                 this.tempCurrentRow = null;
-            }
-        },
-        handleServerErrors() {
-            const errorData = document.getElementById('error-data');
-            if (errorData) {
-                const error = errorData.getAttribute('data-error');
-                if (error) {
-                    const isValidationError =
-                        error.includes('word must be 5 letters') ||
-                        error.includes('not in word list') ||
-                        error.includes('no more guesses allowed') ||
-                        error.includes('game is over');
-
-                    if (isValidationError) {
-                        const isWarning = error.includes(
-                            'word must be 5 letters'
-                        );
-                        this.showToastNotification(error, !isWarning);
-
-                        if (isWarning && this.tempCurrentGuess) {
-                            this.currentGuess = this.tempCurrentGuess;
-                            this.updateDisplay();
-                        }
-                        this.shakeCurrentRow();
-                    }
-                }
-                errorData.remove();
             }
         },
         updateDisplay() {
@@ -245,10 +217,12 @@ window.gameApp = function () {
             if (tiles.length !== this.WORD_LENGTH) return;
             tiles.forEach((tile, index) => {
                 tile.style.setProperty('--tile-index', index);
-                setTimeout(
-                    () => tile.classList.add('flip'),
-                    index * this.ANIMATION_DELAY
-                );
+                setTimeout(() => {
+                    tile.classList.add('flip');
+                    setTimeout(() => {
+                        tile.classList.add('flip-revealed');
+                    }, 300);
+                }, index * this.ANIMATION_DELAY);
             });
             row.classList.add('animated');
             row.classList.remove('submitting');

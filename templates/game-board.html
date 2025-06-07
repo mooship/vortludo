@@ -15,9 +15,7 @@
     {{end}}
 </div>
 
-{{if .error}}
-<div id="error-data" data-error="{{.error}}" style="display: none"></div>
-{{end}} {{if .game.GameOver}}
+{{if .game.GameOver}}
 <div
     class="mt-3 p-3 bg-body-secondary rounded shadow-sm"
     style="max-width: 350px"
@@ -61,4 +59,4 @@
     </div>
     {{end}}
 </div>
-{{end}} {{end}}
+{{end}}{{end}}

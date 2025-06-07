@@ -47,7 +47,7 @@ const (
 	ErrorGameOver      = "game is over"
 	ErrorInvalidLength = "word must be 5 letters"
 	ErrorNoMoreGuesses = "no more guesses allowed"
-	ErrorNotInWordList = "not in word list"
+	ErrorNotInWordList = "word not recognized"
 )
 
 // Global application state variables.
@@ -335,7 +335,7 @@ func guessHandler(c *gin.Context) {
 func validateGameState(c *gin.Context, game *GameState) error {
 	if game.GameOver {
 		log.Print("session attempted guess on completed game")
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": ErrorGameOver})
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 		return errors.New(ErrorGameOver)
 	}
 	return nil
@@ -352,13 +352,13 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 
 	if len(guess) != WordLength {
 		log.Printf("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": ErrorInvalidLength})
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 		return errors.New(ErrorInvalidLength)
 	}
 
 	if game.CurrentRow >= MaxGuesses {
 		log.Printf("session %s attempted guess after max guesses reached", sessionID)
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": ErrorNoMoreGuesses})
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 		return errors.New(ErrorNoMoreGuesses)
 	}
 
@@ -369,7 +369,7 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 	saveGameState(sessionID, game)
 
 	if isInvalid {
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "error": ErrorNotInWordList})
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 	} else {
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 	}
