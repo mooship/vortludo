@@ -11,30 +11,30 @@ import (
 	"github.com/google/uuid"
 )
 
-// Test constants for persistence tests
+// Test constants for persistence layer validation.
 const (
-	// File extensions and paths
+	// File system constants.
 	JSONExtension = ".json"
 	DataDir       = "data"
 	SessionsDir   = "sessions"
 
-	// Test session words
+	// Test session words for validation.
 	TestSessionWordLoaded    = "LOADED"
 	TestSessionWordBadStruct = "BADSTRUCT"
 	TestSessionWordTests     = "TESTS"
 
-	// Test content
+	// Test content for file operations.
 	CorruptJSONContent = "this is not json"
 
-	// Error messages
+	// Error messages for validation.
 	ErrInvalidSessionFormat = "invalid session ID format"
 	ErrPathEscapes          = "session file path escapes sessions directory"
 
-	// Test file permissions
+	// File permission constants.
 	TestDirPerm  = 0755
 	TestFilePerm = 0644
 
-	// Path traversal test strings
+	// Path traversal attack patterns.
 	UnixPathTraversal    = "../../../etc/passwd"
 	WindowsPathTraversal = "..\\..\\windows\\system32\\drivers\\etc\\hosts"
 	AbsoluteUnixPath     = "/etc/passwd"
@@ -43,20 +43,21 @@ const (
 	ShortSessionID       = "short"
 	InvalidHexSessionID  = "12345678-1234-5678-9ABC-123456789XYZ"
 
-	// Session ID patterns for path traversal tests
+	// Additional path traversal patterns.
 	DirectoryTraversalUp = "../session"
 	MultipleTraversal    = "../../session"
 	WindowsTraversal     = "..\\session"
 	MixedSeparators      = "../\\session"
 	CurrentDirectory     = "./session"
 
-	// Test session ID formats
+	// Session ID format validation patterns.
 	ValidUppercaseUUID = "12345678-1234-5678-9ABC-123456789DEF"
 	PathTraversalUUID  = "12345678-1234-5678-9ABC-123456789../"
 	SlashUUID          = "12345678/1234/5678/9ABC/123456789DEF"
 	BackslashUUID      = "12345678\\1234\\5678\\9ABC\\123456789DEF"
 )
 
+// TestLoadGameSessionFromFile validates session loading from disk with various file conditions.
 func TestLoadGameSessionFromFile(t *testing.T) {
 	tempDir := t.TempDir()
 	defer func() {
@@ -68,7 +69,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 		t.Fatalf("Failed to create temp session dir: %v", err)
 	}
 
-	// Helper to create test session files
+	// Helper to create test session files.
 	createTestSessionFile := func(sID string, game *GameState, modTime *time.Time) string {
 		filePath := filepath.Join(sessionBaseDir, sID+JSONExtension)
 		data, _ := json.Marshal(game)
@@ -79,7 +80,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 		return filePath
 	}
 
-	// Change working directory to use temp structure
+	// Change working directory to use temp structure.
 	originalWD, _ := os.Getwd()
 	if err := os.Chdir(tempDir); err != nil {
 		t.Fatalf("Failed to change WD to tempDir: %v", err)
@@ -90,7 +91,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 		t.Fatalf("Failed to create data/sessions in tempDir: %v", err)
 	}
 
-	// Test 1: Valid session file - use proper UUID format
+	// Test 1: Valid session file - use proper UUID format.
 	sessionIDValid := uuid.NewString()
 	validGame := &GameState{
 		SessionWord: TestSessionWordLoaded,
@@ -112,7 +113,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 		t.Error("loadGameSessionFromFile did not set LastAccessTime for valid session")
 	}
 
-	// Test 2: Old file (should be removed) - use proper UUID format
+	// Test 2: Old file (should be removed) - use proper UUID format.
 	sessionIDOld := uuid.NewString()
 	oldTime := time.Now().Add(-(SessionTimeout + time.Hour))
 	oldGamePath := createTestSessionFile(sessionIDOld, validGame, &oldTime)
@@ -125,7 +126,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 		t.Errorf("loadGameSessionFromFile did not remove old session file: %s", oldGamePath)
 	}
 
-	// Test 3: Corrupted file (should be removed) - use proper UUID format
+	// Test 3: Corrupted file (should be removed) - use proper UUID format.
 	sessionIDCorrupt := uuid.NewString()
 	corruptFilePath := filepath.Join(DataDir, SessionsDir, sessionIDCorrupt+JSONExtension)
 	_ = os.WriteFile(corruptFilePath, []byte(CorruptJSONContent), TestFilePerm)
@@ -138,7 +139,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 		t.Errorf("loadGameSessionFromFile did not remove corrupt session file: %s", corruptFilePath)
 	}
 
-	// Test 4: Invalid structure (should be removed) - use proper UUID format
+	// Test 4: Invalid structure (should be removed) - use proper UUID format.
 	sessionIDInvalidStruct := uuid.NewString()
 	invalidStructGame := &GameState{
 		SessionWord: TestSessionWordBadStruct,
@@ -154,7 +155,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 		t.Errorf("loadGameSessionFromFile did not remove invalid structure session file: %s", invalidStructPath)
 	}
 
-	// Test 5: Invalid session ID format (should be rejected)
+	// Test 5: Invalid session ID format (should be rejected).
 	invalidSessionID := InvalidSessionFormat
 	_, err = loadGameSessionFromFile(invalidSessionID)
 	if err == nil || !os.IsNotExist(err) {
@@ -162,6 +163,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 	}
 }
 
+// TestGetSecureSessionPath validates secure path generation and path traversal prevention.
 func TestGetSecureSessionPath(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -247,13 +249,13 @@ func TestGetSecureSessionPath(t *testing.T) {
 					return
 				}
 
-				// Validate the returned path is safe
+				// Validate the returned path is safe.
 				expectedPath := filepath.Join(DataDir, SessionsDir, tt.sessionID+JSONExtension)
 				if got != expectedPath {
 					t.Errorf("getSecureSessionPath() = %v, want %v", got, expectedPath)
 				}
 
-				// Ensure path is within sessions directory
+				// Ensure path is within sessions directory.
 				absSessionDir, _ := filepath.Abs(filepath.Join(DataDir, SessionsDir))
 				absResult, _ := filepath.Abs(got)
 				absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
@@ -265,8 +267,9 @@ func TestGetSecureSessionPath(t *testing.T) {
 	}
 }
 
+// TestSecureFileOperations validates that file operations reject malicious session IDs.
 func TestSecureFileOperations(t *testing.T) {
-	// Test that file operations properly reject invalid session IDs
+	// Test that file operations properly reject invalid session IDs.
 	maliciousSessionIDs := []string{
 		UnixPathTraversal,
 		AbsoluteUnixPath,
@@ -277,7 +280,7 @@ func TestSecureFileOperations(t *testing.T) {
 		InvalidHexSessionID, // Invalid hex
 	}
 
-	// Store original functions to restore after test
+	// Store original functions to restore after test.
 	originalSaveFunc := saveGameSessionToFile
 	originalLoadFunc := loadGameSessionFromFile
 	defer func() {
@@ -295,7 +298,7 @@ func TestSecureFileOperations(t *testing.T) {
 
 	for _, maliciousID := range maliciousSessionIDs {
 		t.Run("SaveOperation_"+maliciousID, func(t *testing.T) {
-			// This should not panic and should handle the invalid ID gracefully
+			// This should not panic and should handle the invalid ID gracefully.
 			saveGameState(maliciousID, testGame)
 			// The save operation should either succeed with validation or fail gracefully
 			// We don't expect the system to crash or access unintended files
@@ -312,6 +315,7 @@ func TestSecureFileOperations(t *testing.T) {
 	}
 }
 
+// TestPathTraversalPrevention validates protection against various path traversal attacks.
 func TestPathTraversalPrevention(t *testing.T) {
 	// Test specific path traversal scenarios
 	testCases := []struct {

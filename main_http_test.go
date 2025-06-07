@@ -23,7 +23,7 @@ func setupTestRouter() *gin.Engine {
 	return router
 }
 
-// TestHomeHandler checks that the home page ("/") returns HTTP 200.
+// TestHomeHandler validates that the home page returns HTTP 200.
 func TestHomeHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -34,7 +34,7 @@ func TestHomeHandler(t *testing.T) {
 	}
 }
 
-// TestNewGameHandler checks that GET /new-game redirects (303 or 302).
+// TestNewGameHandler validates that GET /new-game redirects properly.
 func TestNewGameHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/new-game", nil)
@@ -45,7 +45,7 @@ func TestNewGameHandler(t *testing.T) {
 	}
 }
 
-// TestGameStateHandler checks that GET /game-state returns HTTP 200.
+// TestGameStateHandler validates that GET /game-state returns HTTP 200.
 func TestGameStateHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/game-state", nil)
@@ -56,7 +56,7 @@ func TestGameStateHandler(t *testing.T) {
 	}
 }
 
-// TestGuessHandler_InvalidMethod checks that GET /guess is not allowed (405 or 404).
+// TestGuessHandler_InvalidMethod validates that GET /guess is not allowed.
 func TestGuessHandler_InvalidMethod(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/guess", nil)
@@ -67,7 +67,7 @@ func TestGuessHandler_InvalidMethod(t *testing.T) {
 	}
 }
 
-// TestRetryWordHandler checks that POST /retry-word redirects (303 or 302).
+// TestRetryWordHandler validates that POST /retry-word redirects properly.
 func TestRetryWordHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("POST", "/retry-word", nil)
@@ -78,7 +78,7 @@ func TestRetryWordHandler(t *testing.T) {
 	}
 }
 
-// TestRateLimitMiddleware checks that the rate limiter blocks requests after the burst limit.
+// TestRateLimitMiddleware validates that the rate limiter blocks excessive requests.
 func TestRateLimitMiddleware(t *testing.T) {
 	// Setup a router with rate limiting and a dummy endpoint.
 	gin.SetMode(gin.TestMode)
@@ -109,7 +109,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 	}
 }
 
-// TestMain sets up a minimal word list and word set for all HTTP tests.
+// TestMain sets up minimal test data for all HTTP tests.
 func TestMain(m *testing.M) {
 	wordList = []WordEntry{{Word: "APPLE", Hint: "fruit"}}
 	wordSet = map[string]struct{}{"APPLE": {}}

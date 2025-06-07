@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// lastSaveTimes tracks the last save time for each session for rate limiting.
+// Global variables for session save rate limiting.
 var (
 	lastSaveTimes  = make(map[string]time.Time)
 	lastSaveTimesM sync.Mutex
@@ -21,16 +21,16 @@ var (
 // Constants for persistence operations.
 const (
 	SessionsDirectory     = "data/sessions"
-	SessionsDirPerm       = 0750 // Owner: read/write/execute, group: read/execute.
-	SessionFilePerm       = 0600 // Owner: read/write only.
+	SessionsDirPerm       = 0750 // Owner: read/write/execute, group: read/execute
+	SessionFilePerm       = 0600 // Owner: read/write only
 	JSONMarshalPrefix     = ""
 	JSONMarshalIndent     = "  "
 	SaveRateLimitInterval = time.Second
 )
 
-// saveGameSessionToFile persists a game session to disk (rate-limited).
+// saveGameSessionToFile persists a game session to disk with rate limiting.
 var saveGameSessionToFile = func(sessionID string, game *GameState) error {
-	// Rate-limit disk writes.
+	// Rate-limit disk writes to prevent excessive I/O.
 	lastSaveTimesM.Lock()
 	last, ok := lastSaveTimes[sessionID]
 	now := time.Now()
@@ -62,7 +62,7 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 		return err
 	}
 
-	// Write with restrictive permissions (owner read/write only).
+	// Write session data with restrictive file permissions.
 	err = os.WriteFile(sessionFile, data, SessionFilePerm)
 	if err != nil {
 		log.Printf("Failed to write session file %s: %v", sessionFile, err)
@@ -73,8 +73,9 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	return err
 }
 
-// loadGameSessionFromFile loads a game session from disk.
+// loadGameSessionFromFile loads a game session from disk with validation.
 var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
+	// Validate session ID format and get secure path.
 	sessionFile, err := getSecureSessionPath(sessionID)
 	if err != nil {
 		log.Printf("Invalid session ID for loading: %s, error: %v", sessionID, err)
@@ -83,7 +84,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 
 	log.Printf("Attempting to load session from file: %s", sessionFile)
 
-	// Check if file exists and age.
+	// Check if file exists and validate age.
 	info, err := os.Stat(sessionFile)
 	if err != nil {
 		log.Printf("Session file not found: %s", sessionFile)
@@ -114,6 +115,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 		return nil, errors.New("session file path escapes sessions directory")
 	}
 
+	// Read and unmarshal session data.
 	data, err := os.ReadFile(sessionFile)
 	if err != nil {
 		log.Printf("Failed to read session file %s: %v", sessionFile, err)
@@ -131,7 +133,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 
 	game.LastAccessTime = time.Now()
 
-	// Validate game state structure.
+	// Validate game state structure before returning.
 	if len(game.Guesses) != MaxGuesses || game.SessionWord == "" {
 		log.Printf("Session file %s has invalid structure (guesses: %d, word: '%s'), removing", sessionFile, len(game.Guesses), game.SessionWord)
 		if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {

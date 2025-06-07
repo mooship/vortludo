@@ -9,9 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Test constants.
+// Test constants for game logic validation.
 const (
-	// Test words.
+	// Test words for game validation.
 	TestWordApple  = "APPLE"
 	TestWordBanjo  = "BANJO"
 	TestWordPeach  = "PEACH"
@@ -26,12 +26,12 @@ const (
 	TestWordAlpha  = "ALPHA"
 	TestWordLoaded = "LOADED"
 
-	// Test hints.
+	// Test hints for word validation.
 	TestHintFruit     = "A fruit"
 	TestHintFurniture = "Furniture"
 	TestHintTesting   = "For testing"
 
-	// Test session ID patterns.
+	// Test session ID patterns for validation.
 	TestSessionCreateNew = "test-session-createnewgame"
 	TestSessionGetState  = "test-session-getstatecache"
 	TestSessionSaveGame  = "test-session-savegame"
@@ -40,24 +40,25 @@ const (
 	TestSessionExpired2  = "expired-session-2"
 	TestSessionNoTime    = "no-time-session"
 
-	// Test file operations.
+	// Test file operation constants.
 	TestFileName    = "f.txt"
 	TestFileContent = "x"
 
-	// Guess status constants.
+	// Guess status validation constants.
 	StatusCorrect = "correct"
 	StatusPresent = "present"
 	StatusAbsent  = "absent"
 
-	// Test comments.
+	// Test result comments for validation.
 	CommentAllCorrect = "All correct."
 	CommentMixed      = "Mix of correct, present, absent."
 	CommentAllAbsent  = "All absent."
 
-	// Test validation constants.
+	// Test validation error constants.
 	InvalidSessionFormat = "invalid-session-format"
 )
 
+// TestCheckGuess validates the core guess checking algorithm.
 func TestCheckGuess(t *testing.T) {
 	target := TestWordApple
 	tests := []struct {
@@ -110,6 +111,7 @@ func TestCheckGuess(t *testing.T) {
 	}
 }
 
+// TestIsValidWord validates word existence checking in the word set.
 func TestIsValidWord(t *testing.T) {
 	wordSet = map[string]struct{}{
 		TestWordApple: {},
@@ -132,6 +134,7 @@ func TestIsValidWord(t *testing.T) {
 	}
 }
 
+// TestNormalizeGuess validates input normalization functionality.
 func TestNormalizeGuess(t *testing.T) {
 	tests := []struct {
 		input string
@@ -150,6 +153,7 @@ func TestNormalizeGuess(t *testing.T) {
 	}
 }
 
+// TestGetHintForWord validates hint retrieval for game words.
 func TestGetHintForWord(t *testing.T) {
 	// Setup test data
 	originalWordList := wordList
@@ -177,6 +181,7 @@ func TestGetHintForWord(t *testing.T) {
 	}
 }
 
+// TestCreateNewGame_SetsLastAccessTime validates that new games set access time correctly.
 func TestCreateNewGame_SetsLastAccessTime(t *testing.T) {
 	// Setup test data
 	originalWordList := wordList
@@ -197,6 +202,7 @@ func TestCreateNewGame_SetsLastAccessTime(t *testing.T) {
 	sessionMutex.Unlock()
 }
 
+// TestGetGameState_UpdatesLastAccessTimeFromCache validates access time updates from cache.
 func TestGetGameState_UpdatesLastAccessTimeFromCache(t *testing.T) {
 	sessionID := TestSessionGetState
 	initialTime := time.Now().Add(-1 * time.Hour)
@@ -226,6 +232,7 @@ func TestGetGameState_UpdatesLastAccessTimeFromCache(t *testing.T) {
 	}
 }
 
+// TestSaveGameState_UpdatesLastAccessTime validates access time updates during save operations.
 func TestSaveGameState_UpdatesLastAccessTime(t *testing.T) {
 	sessionID := TestSessionSaveGame
 	initialTime := time.Now().Add(-1 * time.Hour)
@@ -264,6 +271,7 @@ func TestSaveGameState_UpdatesLastAccessTime(t *testing.T) {
 	sessionMutex.Unlock()
 }
 
+// TestSessionCleanupScheduler_InMemory validates in-memory session cleanup logic.
 func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	// Test in-memory cleanup logic without the ticker
 	originalGameSessions := gameSessions
@@ -313,6 +321,7 @@ func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	}
 }
 
+// TestIsValidSessionID validates session ID format checking.
 func TestIsValidSessionID(t *testing.T) {
 	valid := uuid.NewString()
 	if !isValidSessionID(valid) {
@@ -329,6 +338,7 @@ func TestIsValidSessionID(t *testing.T) {
 	}
 }
 
+// TestUpdateGameState validates game state updates for win/loss conditions.
 func TestUpdateGameState(t *testing.T) {
 	// Base game state
 	base := &GameState{
@@ -363,6 +373,7 @@ func TestUpdateGameState(t *testing.T) {
 	}
 }
 
+// TestGetTargetWord validates target word selection and assignment.
 func TestGetTargetWord(t *testing.T) {
 	orig := wordList
 	wordList = []WordEntry{{Word: TestWordAlpha, Hint: ""}}
@@ -375,6 +386,7 @@ func TestGetTargetWord(t *testing.T) {
 	}
 }
 
+// TestDirExists validates directory existence checking functionality.
 func TestDirExists(t *testing.T) {
 	tmp := t.TempDir()
 	file := filepath.Join(tmp, TestFileName)
