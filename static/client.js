@@ -174,15 +174,16 @@ window.gameApp = function() {
             this.checkForWin();
         },
         submitGuess() {
-            if (this.currentGuess.length === 5 && !this.submittingGuess) {
-                this.submittingGuess = true;
-                const rows = document.querySelectorAll('.guess-row');
-                if (rows[this.currentRow]) {
-                    rows[this.currentRow].classList.add('submitting');
-                }
-                document.getElementById('guess-input').value = this.currentGuess;
-                document.getElementById('guess-form').dispatchEvent(new Event('submit'));
+            if (this.submittingGuess || this.gameOver || this.currentGuess.length !== this.WORD_LENGTH) {
+                this.shakeCurrentRow();
+                return;
             }
+
+            this.submittingGuess = true;
+            const guessInput = document.getElementById('guess-input');
+            guessInput.value = this.currentGuess;
+
+            htmx.trigger('#guess-form', 'submit');
         },
         updateKeyboardColors() {
             const tiles = document.querySelectorAll('.tile.filled');
