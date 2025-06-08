@@ -51,13 +51,14 @@ window.gameApp = function () {
             document.body.addEventListener('htmx:afterSwap', (evt) => {
                 this.submittingGuess = false;
                 this.restoreUserInput();
-                this.updateGameState();
                 if (document.getElementById('not-accepted-flag')) {
                     this.showToastNotification(
                         'Word not in accepted list. Try another word.',
                         'info'
                     );
                     this.shakeCurrentRow();
+                } else {
+                    this.updateGameState();
                 }
 
                 if (evt.target.id === 'game-board-container') {

@@ -5,8 +5,11 @@ go 1.24
 require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/google/uuid v1.6.0
+	github.com/tdewolff/minify/v2 v2.23.8
 	go.eigsys.de/gin-cachecontrol/v2 v2.3.0
 )
+
+require github.com/tdewolff/parse/v2 v2.8.1 // indirect
 
 require (
 	github.com/bytedance/sonic v1.13.3 // indirect
