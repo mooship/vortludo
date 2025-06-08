@@ -195,6 +195,7 @@ window.gameApp = function () {
                     'Word is already 5 letters! Press Enter to submit! ⌨️',
                     'warning'
                 );
+                this.shakeCurrentRow();
             }
         },
         deleteLetter() {
@@ -246,13 +247,14 @@ window.gameApp = function () {
                         'Word must be 5 letters long! ✏️',
                         'warning'
                     );
+                    this.shakeCurrentRow();
                 } else if (this.gameOver) {
                     this.showToastNotification(
                         'Game is already over! Start a new game! 🎮',
                         'warning'
                     );
+                    this.shakeCurrentRow();
                 }
-                this.shakeCurrentRow();
                 return;
             }
 
