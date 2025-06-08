@@ -36,19 +36,13 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
     go mod tidy && go mod download
     ```
 
-3. **Create required directories**
-
-    ```bash
-    mkdir -p data
-    ```
-
-4. **Start development server**
+3. **Start development server**
 
     ```bash
     go run .
     ```
 
-5. **Open your browser**
+4. **Open your browser**
    Navigate to `http://localhost:8080`
 
 ## Building and Running
@@ -92,7 +86,8 @@ vortludo/
 │   └── sessions/              # Game session files (auto-generated)
 ├── static/                # CSS, JS, favicon assets
 │   ├── style.css
-│   └── client.js
+│   ├── client.js
+│   └── favicons/              # Favicon images (ico, png, apple-touch, etc)
 ├── templates/
 │   ├── index.html             # Main HTML template
 │   └── game-board.html        # Game board partial template
