@@ -167,9 +167,27 @@ This approach is:
 
 ### Environment Variables
 
-- `PORT` - Server port (default: 8080)
-- `GIN_MODE` - Set to "release" for production optimizations
-- `ENV` - Set to "production" for production static file serving
+Vortludo is configurable via environment variables. You can set these in a `.env` file (see `.env.example` for a template) or via your deployment environment.
+
+| Variable           | Default | Description                                       |
+| ------------------ | ------- | ------------------------------------------------- |
+| `PORT`             | 8080    | Server port                                       |
+| `GIN_MODE`         |         | Set to `release` for production optimizations     |
+| `ENV`              |         | Set to `production` for production static serving |
+| `SESSION_TIMEOUT`  | 2h      | How long a session is valid (e.g. 30m, 2h, 24h)   |
+| `COOKIE_MAX_AGE`   | 2h      | How long the session cookie is valid              |
+| `STATIC_CACHE_AGE` | 5m      | How long static assets are cached by browsers     |
+| `RATE_LIMIT_RPS`   | 5       | Requests per second per client IP                 |
+| `RATE_LIMIT_BURST` | 10      | Maximum burst of requests per client IP           |
+
+You can copy `.env.example` to `.env` and adjust as needed:
+
+```bash
+cp .env.example .env
+# Edit .env to customize your settings
+```
+
+If a variable is not set, the default value (shown above) will be used.
 
 ### Cache Control
 
@@ -194,6 +212,8 @@ This approach is:
 Alternatively, you can use the included `render.yaml` file for automatic configuration by connecting your repo and Render will detect it automatically.
 
 Your app will be available at `https://your-app-name.onrender.com`
+
+You can also use the included `.env.example` file as a starting point for your environment configuration.
 
 ### Local Production Testing
 

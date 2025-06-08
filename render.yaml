@@ -1,7 +1,7 @@
 services:
     - type: web
       name: vortludo
-      env: go
+      runtime: go
       buildCommand: go build -tags netgo -ldflags '-s -w' -o vortludo
       startCommand: ./vortludo
       envVars:
@@ -11,3 +11,13 @@ services:
             value: production
           - key: PORT
             value: 10000
+          - key: SESSION_TIMEOUT
+            value: 1h
+          - key: COOKIE_MAX_AGE
+            value: 1h
+          - key: STATIC_CACHE_AGE
+            value: 5m
+          - key: RATE_LIMIT_RPS
+            value: 5
+          - key: RATE_LIMIT_BURST
+            value: 10

@@ -33,13 +33,15 @@ import (
 	"github.com/tdewolff/minify/v2/js"
 )
 
-// Game configuration
-const (
+// Game configuration (defaults, can be overridden by env)
+var (
 	MaxGuesses     = 6
 	WordLength     = 5
-	SessionTimeout = 2 * time.Hour
-	CookieMaxAge   = 2 * time.Hour
-	StaticCacheAge = 5 * time.Minute
+	SessionTimeout = getEnvDuration("SESSION_TIMEOUT", 2*time.Hour)
+	CookieMaxAge   = getEnvDuration("COOKIE_MAX_AGE", 2*time.Hour)
+	StaticCacheAge = getEnvDuration("STATIC_CACHE_AGE", 5*time.Minute)
+	RateLimitRPS   = getEnvInt("RATE_LIMIT_RPS", 5) // requests per second
+	RateLimitBurst = getEnvInt("RATE_LIMIT_BURST", 10)
 )
 
 // Route and error constants
@@ -852,8 +854,8 @@ func getLimiter(key string) *rate.Limiter {
 	if lim, ok := limiterMap[key]; ok {
 		return lim
 	}
-	// Allow 5 requests/sec with burst of 10.
-	lim := rate.NewLimiter(rate.Every(time.Second/5), 10)
+	// Use env-configurable rate and burst.
+	lim := rate.NewLimiter(rate.Every(time.Second/time.Duration(RateLimitRPS)), RateLimitBurst)
 	limiterMap[key] = lim
 	return lim
 }
@@ -916,4 +918,31 @@ func plural(n int) string {
 		return ""
 	}
 	return "s"
+}
+
+func getEnvDuration(key string, fallback time.Duration) time.Duration {
+	val := os.Getenv(key)
+	if val == "" {
+		return fallback
+	}
+	d, err := time.ParseDuration(val)
+	if err != nil {
+		log.Printf("Invalid duration for %s: %v, using default %v", key, err, fallback)
+		return fallback
+	}
+	return d
+}
+
+func getEnvInt(key string, fallback int) int {
+	val := os.Getenv(key)
+	if val == "" {
+		return fallback
+	}
+	var i int
+	_, err := fmt.Sscanf(val, "%d", &i)
+	if err != nil {
+		log.Printf("Invalid int for %s: %v, using default %d", key, err, fallback)
+		return fallback
+	}
+	return i
 }
