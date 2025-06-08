@@ -16,10 +16,10 @@ func setupTestRouter() *gin.Engine {
 	router.LoadHTMLGlob("templates/*.html")
 	router.GET("/", homeHandler)
 	router.GET("/new-game", newGameHandler)
-	router.POST("/new-game", newGameHandler)
-	router.POST("/guess", guessHandler)
+	router.POST("/new-game", rateLimitMiddleware(), newGameHandler)
+	router.POST("/guess", rateLimitMiddleware(), guessHandler)
 	router.GET("/game-state", gameStateHandler)
-	router.POST("/retry-word", retryWordHandler)
+	router.POST("/retry-word", rateLimitMiddleware(), retryWordHandler)
 	return router
 }
 
@@ -91,7 +91,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 	req.RemoteAddr = "127.0.0.1:12345"
 
 	// First 10 requests should succeed
-	for i := range 10 {
+	for i := 0; i < 10; i++ {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 		if w.Code != http.StatusOK {

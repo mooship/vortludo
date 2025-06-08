@@ -411,57 +411,11 @@ func minifiedStaticHandler(root string) gin.HandlerFunc {
 	}
 }
 
-// getTemplateEngine retrieves the *template.Template from Gin's HTMLRender
-func getTemplateEngine(c *gin.Context) *template.Template {
-	// Gin does not export Engine(), but stores the engine in the context under this key.
-	engineAny, exists := c.Get("gin-gonic/gin/context/engine")
-	if !exists {
-		return nil
-	}
-	engine, ok := engineAny.(*gin.Engine)
-	if !ok {
-		return nil
-	}
-	// Try HTMLProduction (used by LoadHTMLGlob)
-	if htmlProd, ok := engine.HTMLRender.(interface{ Template() *template.Template }); ok {
-		return htmlProd.Template()
-	}
-	// Try HTMLDebug (used by LoadHTMLFiles)
-	if htmlDebug, ok := engine.HTMLRender.(interface{ Template() *template.Template }); ok {
-		return htmlDebug.Template()
-	}
-	return nil
-}
-
 // homeHandler serves the main page
 func homeHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 	hint := getHintForWord(game.SessionWord)
-
-	// Minify HTML output in production
-	if isProduction && minifier != nil {
-		var buf strings.Builder
-		tmpl := getTemplateEngine(c)
-		if tmpl == nil {
-			c.String(http.StatusInternalServerError, "Template error")
-			return
-		}
-		if err := tmpl.ExecuteTemplate(&buf, "index.html", gin.H{
-			"title":   "Vortludo - A Libre Wordle Clone",
-			"message": "Guess the 5-letter word!",
-			"hint":    hint,
-			"game":    game,
-		}); err != nil {
-			c.String(http.StatusInternalServerError, "Template error")
-			return
-		}
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		if err := minifier.Minify("text/html", c.Writer, strings.NewReader(buf.String())); err != nil {
-			c.String(http.StatusInternalServerError, "Minify error")
-		}
-		return
-	}
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"title":   "Vortludo - A Libre Wordle Clone",
@@ -517,26 +471,6 @@ func guessHandler(c *gin.Context) {
 	// Check if guess is in accepted list.
 	if !isAcceptedWord(guess) {
 		// Return board with notAccepted flag for toast.
-		if isProduction && minifier != nil {
-			var buf strings.Builder
-			tmpl := getTemplateEngine(c)
-			if tmpl == nil {
-				c.String(http.StatusInternalServerError, "Template error")
-				return
-			}
-			if err := tmpl.ExecuteTemplate(&buf, "game-board", gin.H{
-				"game":        game,
-				"notAccepted": true,
-			}); err != nil {
-				c.String(http.StatusInternalServerError, "Template error")
-				return
-			}
-			c.Header("Content-Type", "text/html; charset=utf-8")
-			if err := minifier.Minify("text/html", c.Writer, strings.NewReader(buf.String())); err != nil {
-				c.String(http.StatusInternalServerError, "Minify error")
-			}
-			return
-		}
 		c.HTML(http.StatusOK, "game-board", gin.H{
 			"game":        game,
 			"notAccepted": true,
@@ -569,46 +503,12 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 
 	if len(guess) != WordLength {
 		log.Printf("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
-		if isProduction && minifier != nil {
-			var buf strings.Builder
-			tmpl := getTemplateEngine(c)
-			if tmpl == nil {
-				c.String(http.StatusInternalServerError, "Template error")
-				return fmt.Errorf("template error")
-			}
-			if err := tmpl.ExecuteTemplate(&buf, "game-board", gin.H{"game": game}); err != nil {
-				c.String(http.StatusInternalServerError, "Template error")
-				return err
-			}
-			c.Header("Content-Type", "text/html; charset=utf-8")
-			if err := minifier.Minify("text/html", c.Writer, strings.NewReader(buf.String())); err != nil {
-				c.String(http.StatusInternalServerError, "Minify error")
-			}
-			return errors.New(ErrorInvalidLength)
-		}
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 		return errors.New(ErrorInvalidLength)
 	}
 
 	if game.CurrentRow >= MaxGuesses {
 		log.Printf("session %s attempted guess after max guesses reached", sessionID)
-		if isProduction && minifier != nil {
-			var buf strings.Builder
-			tmpl := getTemplateEngine(c)
-			if tmpl == nil {
-				c.String(http.StatusInternalServerError, "Template error")
-				return fmt.Errorf("template error")
-			}
-			if err := tmpl.ExecuteTemplate(&buf, "game-board", gin.H{"game": game}); err != nil {
-				c.String(http.StatusInternalServerError, "Template error")
-				return err
-			}
-			c.Header("Content-Type", "text/html; charset=utf-8")
-			if err := minifier.Minify("text/html", c.Writer, strings.NewReader(buf.String())); err != nil {
-				c.String(http.StatusInternalServerError, "Minify error")
-			}
-			return errors.New(ErrorNoMoreGuesses)
-		}
 		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 		return errors.New(ErrorNoMoreGuesses)
 	}
@@ -618,24 +518,6 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 	result := checkGuess(guess, targetWord)
 	updateGameState(game, guess, targetWord, result, isInvalid)
 	saveGameState(sessionID, game)
-
-	if isProduction && minifier != nil {
-		var buf strings.Builder
-		tmpl := getTemplateEngine(c)
-		if tmpl == nil {
-			c.String(http.StatusInternalServerError, "Template error")
-			return fmt.Errorf("template error")
-		}
-		if err := tmpl.ExecuteTemplate(&buf, "game-board", gin.H{"game": game}); err != nil {
-			c.String(http.StatusInternalServerError, "Template error")
-			return err
-		}
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		if err := minifier.Minify("text/html", c.Writer, strings.NewReader(buf.String())); err != nil {
-			c.String(http.StatusInternalServerError, "Minify error")
-		}
-		return nil
-	}
 
 	c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
 	return nil
@@ -684,28 +566,6 @@ func gameStateHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
 	hint := getHintForWord(game.SessionWord)
-
-	// Minify HTML fragment in production
-	if isProduction && minifier != nil {
-		var buf strings.Builder
-		tmpl := getTemplateEngine(c)
-		if tmpl == nil {
-			c.String(http.StatusInternalServerError, "Template error")
-			return
-		}
-		if err := tmpl.ExecuteTemplate(&buf, "game-board", gin.H{
-			"game": game,
-			"hint": hint,
-		}); err != nil {
-			c.String(http.StatusInternalServerError, "Template error")
-			return
-		}
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		if err := minifier.Minify("text/html", c.Writer, strings.NewReader(buf.String())); err != nil {
-			c.String(http.StatusInternalServerError, "Minify error")
-		}
-		return
-	}
 
 	c.HTML(http.StatusOK, "game-board", gin.H{
 		"game": game,
@@ -925,7 +785,7 @@ func getSecureSessionPath(sessionID string) (string, error) {
 
 	// Ensure file path remains within sessions directory.
 	absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
-	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir) {
+	if !strings.HasPrefix(absSessionFile, absSessionDir) {
 		return "", errors.New("session path would escape sessions directory")
 	}
 

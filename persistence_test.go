@@ -147,7 +147,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 	}
 
 	// Test invalid session ID format (should be rejected)
-	invalidSessionID := InvalidSessionFormat
+	invalidSessionID := ShortSessionID
 	_, err = loadGameSessionFromFile(invalidSessionID)
 	if err == nil || !os.IsNotExist(err) {
 		t.Errorf("loadGameSessionFromFile should reject invalid session ID format, got: %v", err)

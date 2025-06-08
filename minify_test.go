@@ -73,7 +73,7 @@ func TestJSMinification(t *testing.T) {
 			return a + b;
 		}
 	`
-	expected := `function add(e,t){return e+t}`
+	expected := `function add(e,t){return e+t}` // The minifier outputs this format
 
 	var b strings.Builder
 	err := m.Minify("application/javascript", &b, strings.NewReader(input))
