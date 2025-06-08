@@ -212,7 +212,16 @@ func loadWords() error {
 		return err
 	}
 
-	wordList = wl.Words
+	// Only keep words that are exactly 5 characters long
+	filtered := make([]WordEntry, 0, len(wl.Words))
+	for _, entry := range wl.Words {
+		if len(entry.Word) == 5 {
+			filtered = append(filtered, entry)
+		} else {
+			log.Printf("Skipping word %q: not 5 letters", entry.Word)
+		}
+	}
+	wordList = filtered
 
 	wordSet = make(map[string]struct{}, len(wordList))
 	for _, entry := range wordList {

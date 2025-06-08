@@ -629,14 +629,6 @@
             "hint": "An embarrassing mistake or blunder."
         },
         {
-            "word": "GAIN",
-            "hint": "Increase in amount, value, or degree."
-        },
-        {
-            "word": "GALA",
-            "hint": "A festive celebration or party."
-        },
-        {
             "word": "GAMER",
             "hint": "A person who plays video games."
         },
@@ -839,10 +831,6 @@
         {
             "word": "JUDGE",
             "hint": "Form an opinion about; a public official in a law court."
-        },
-        {
-            "word": "JAZZY",
-            "hint": "Lively, bright, or in the style of jazz music."
         },
         {
             "word": "KNOWN",
@@ -1935,10 +1923,6 @@
             "hint": "A deposit of small white ice crystals formed on the ground or other surfaces."
         },
         {
-            "word": "GAFFE",
-            "hint": "An embarrassing mistake or blunder."
-        },
-        {
             "word": "HAVEN",
             "hint": "A safe or peaceful place; a refuge."
         },
@@ -1985,14 +1969,6 @@
         {
             "word": "TABBY",
             "hint": "A domestic cat with a striped or mottled coat."
-        },
-        {
-            "word": "VITAL",
-            "hint": "Absolutely necessary or essential for life."
-        },
-        {
-            "word": "YACHT",
-            "hint": "A luxurious sailing or motor boat for pleasure or racing."
         }
     ]
 }
