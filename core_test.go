@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -380,5 +381,54 @@ func TestDirExists(t *testing.T) {
 	}
 	if !dirExists(tmp) {
 		t.Errorf("dirExists(%q) = false, want true", tmp)
+	}
+}
+
+func TestAcceptedWords_NoDuplicatesAndFiveLetters(t *testing.T) {
+	data, err := os.ReadFile("data/accepted_words.json")
+	if err != nil {
+		t.Fatalf("Failed to read accepted_words.json: %v", err)
+	}
+	var words []string
+	if err := json.Unmarshal(data, &words); err != nil {
+		t.Fatalf("Failed to unmarshal accepted_words.json: %v", err)
+	}
+	seen := make(map[string]struct{})
+	for i, w := range words {
+		if len(w) != 5 {
+			t.Errorf("accepted_words.json: word %q at index %d is not 5 letters", w, i)
+		}
+		upper := w
+		if _, exists := seen[upper]; exists {
+			t.Errorf("accepted_words.json: duplicate word found: %q", upper)
+		}
+		seen[upper] = struct{}{}
+	}
+}
+
+func TestWordsJson_NoDuplicatesAndFiveLetters(t *testing.T) {
+	data, err := os.ReadFile("data/words.json")
+	if err != nil {
+		t.Fatalf("Failed to read words.json: %v", err)
+	}
+	var wl struct {
+		Words []struct {
+			Word string `json:"word"`
+			Hint string `json:"hint"`
+		} `json:"words"`
+	}
+	if err := json.Unmarshal(data, &wl); err != nil {
+		t.Fatalf("Failed to unmarshal words.json: %v", err)
+	}
+	seen := make(map[string]struct{})
+	for i, entry := range wl.Words {
+		if len(entry.Word) != 5 {
+			t.Errorf("words.json: word %q at index %d is not 5 letters", entry.Word, i)
+		}
+		upper := entry.Word
+		if _, exists := seen[upper]; exists {
+			t.Errorf("words.json: duplicate word found: %q", upper)
+		}
+		seen[upper] = struct{}{}
 	}
 }
