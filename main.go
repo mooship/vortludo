@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"log"
 	"math/big"
 	"net/http"
@@ -27,10 +26,6 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
-	"github.com/tdewolff/minify/v2"
-	"github.com/tdewolff/minify/v2/css"
-	"github.com/tdewolff/minify/v2/html"
-	"github.com/tdewolff/minify/v2/js"
 )
 
 // Game configuration (defaults, can be overridden by env)
@@ -69,7 +64,6 @@ var (
 	limiterMap      = make(map[string]*rate.Limiter)
 	limiterMutex    sync.Mutex
 	startTime       = time.Now()
-	minifier        *minify.M
 )
 
 func main() {
@@ -117,21 +111,11 @@ func main() {
 		})
 	}
 
-	// Setup minifier for production
-	if isProduction {
-		minifier = minify.New()
-		minifier.AddFunc("text/html", html.Minify)
-		minifier.AddFunc("text/css", css.Minify)
-		minifier.AddFunc("application/javascript", js.Minify)
-		minifier.AddFunc("text/javascript", js.Minify)
-	}
-
 	// Serve static files with appropriate assets for environment.
 	if isProduction && dirExists("dist") {
-		log.Printf("Serving minified assets from dist/ directory")
+		log.Printf("Serving assets from dist/ directory")
 		router.LoadHTMLGlob("dist/templates/*.html")
-		// Serve minified static files (must be registered before any fallback static handler)
-		router.GET("/static/*filepath", minifiedStaticHandler("dist/static"))
+		router.Static("/static", "./dist/static")
 	} else {
 		log.Printf("Serving development assets from source directories")
 		router.LoadHTMLGlob("templates/*.html")
@@ -313,107 +297,6 @@ func getHintForWord(wordValue string) string {
 	}
 	log.Printf("Warning: Hint not found for word: %s", wordValue)
 	return ""
-}
-
-// minifiedStaticHandler serves minified CSS/JS in production
-func minifiedStaticHandler(root string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Validate and sanitize the filepath parameter
-		requestedPath := c.Param("filepath")
-		if requestedPath == "" {
-			c.Status(http.StatusNotFound)
-			return
-		}
-
-		// Remove leading slash if present (Gin's Param includes it)
-		if strings.HasPrefix(requestedPath, "/") || strings.HasPrefix(requestedPath, "\\") {
-			requestedPath = requestedPath[1:]
-		}
-
-		// Remove any path traversal attempts and normalize
-		cleanPath := filepath.Clean(requestedPath)
-
-		// Ensure the path doesn't contain directory traversal
-		if strings.Contains(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") || strings.HasPrefix(cleanPath, "\\") {
-			log.Printf("Rejected potentially malicious file path: %s", requestedPath)
-			c.Status(http.StatusForbidden)
-			return
-		}
-
-		// Construct the full file path
-		fp := filepath.Join(root, cleanPath)
-
-		// Validate that the resolved path is within the root directory
-		absRoot, err := filepath.Abs(root)
-		if err != nil {
-			log.Printf("Failed to resolve root path %s: %v", root, err)
-			c.Status(http.StatusInternalServerError)
-			return
-		}
-
-		absFilePath, err := filepath.Abs(fp)
-		if err != nil {
-			log.Printf("Failed to resolve file path %s: %v", fp, err)
-			c.Status(http.StatusNotFound)
-			return
-		}
-
-		// Ensure the file path is within the allowed root directory
-		if !strings.HasPrefix(absFilePath+string(filepath.Separator), absRoot+string(filepath.Separator)) {
-			log.Printf("File path %s escapes root directory %s", absFilePath, absRoot)
-			c.Status(http.StatusForbidden)
-			return
-		}
-
-		ext := strings.ToLower(filepath.Ext(fp))
-		var mediatype string
-		switch ext {
-		case ".css":
-			mediatype = "text/css"
-		case ".js":
-			mediatype = "application/javascript"
-		default:
-			// Serve as-is for other types (e.g. images, fonts)
-			c.File(fp)
-			return
-		}
-
-		f, err := os.Open(fp)
-		if err != nil {
-			if os.IsNotExist(err) {
-				c.Status(http.StatusNotFound)
-			} else {
-				log.Printf("Error opening file %s: %v", fp, err)
-				c.Status(http.StatusInternalServerError)
-			}
-			return
-		}
-		defer func() {
-			if closeErr := f.Close(); closeErr != nil {
-				log.Printf("Error closing file %s: %v", fp, closeErr)
-			}
-		}()
-
-		c.Header("Content-Type", mediatype)
-		if minifier != nil {
-			if err := minifier.Minify(mediatype, c.Writer, f); err != nil {
-				log.Printf("Minify error for %s: %v", fp, err)
-				// Seek back to beginning and serve unminified
-				if _, seekErr := f.Seek(0, 0); seekErr != nil {
-					log.Printf("Error seeking file %s: %v", fp, seekErr)
-					c.Status(http.StatusInternalServerError)
-					return
-				}
-				if _, copyErr := io.Copy(c.Writer, f); copyErr != nil {
-					log.Printf("Error serving file %s: %v", fp, copyErr)
-				}
-			}
-		} else {
-			if _, err := io.Copy(c.Writer, f); err != nil {
-				log.Printf("Error serving file %s: %v", fp, err)
-			}
-		}
-	}
 }
 
 // homeHandler serves the main page

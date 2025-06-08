@@ -99,7 +99,6 @@ vortludo/
 ├── core_test.go           # Unit tests for core game logic and helpers
 ├── main_http_test.go      # HTTP handler and middleware tests
 ├── persistence_test.go    # Security and persistence tests (path traversal, etc)
-├── minify_test.go         # Tests for minification logic
 ├── data/
 │   ├── words.json             # Dictionary of valid words with hints
 │   ├── accepted_words.json    # List of accepted guess words
@@ -130,7 +129,7 @@ vortludo/
 - **main.go**: Entry point, HTTP server, routing, and game logic orchestration
 - **types.go**: Game state, word entry, and guess result types
 - **persistence.go**: Secure session file storage, loading, and cleanup
-- **core_test.go**, **main_http_test.go**, **persistence_test.go**, **minify_test.go**: Comprehensive tests for logic, HTTP, security, and minification
+- **core_test.go**, **main_http_test.go**, **persistence_test.go**: Comprehensive tests for logic, HTTP, and security
 
 ## How It Works
 
