@@ -79,18 +79,43 @@ Tests are automatically discovered and run by the GitHub Actions workflow in `.g
 
 ```
 vortludo/
-├── main.go              # Main application and HTTP handlers
-├── types.go             # Data structures and types
-├── persistence.go       # File-based game session storage
-├── core_test.go         # Unit tests for core game logic
+├── main.go                # Main application, HTTP handlers, and routing
+├── types.go               # Data structures and types for game/session
+├── persistence.go         # File-based session storage and cleanup logic
+├── core_test.go           # Unit tests for core game logic and helpers
+├── main_http_test.go      # HTTP handler and middleware tests
+├── persistence_test.go    # Security and persistence tests (path traversal, etc)
+├── minify_test.go         # Tests for minification logic
 ├── data/
-│   ├── words.json       # Dictionary of valid words with hints
-│   └── sessions/        # Game session files (auto-generated)
-├── templates/           # HTML templates
-├── static/              # CSS, JS, and favicon assets
-├── render.yaml          # Render.com deployment configuration
-└── .github/workflows/   # GitHub Actions CI/CD
+│   ├── words.json             # Dictionary of valid words with hints
+│   ├── accepted_words.json    # List of accepted guess words
+│   └── sessions/              # Game session files (auto-generated)
+├── static/                # CSS, JS, favicon assets
+│   ├── style.css
+│   └── client.js
+├── templates/
+│   ├── index.html             # Main HTML template
+│   └── game-board.html        # Game board partial template
+├── .github/
+│   └── workflows/             # GitHub Actions CI/CD workflows
+│       ├── go.yml
+│       ├── codeql.yml
+│       └── gosec.yml
+├── .gitignore
+├── .gitattributes
+├── .prettierrc.json
+├── go.mod
+├── go.sum
+├── LICENSE
+├── SECURITY.md
+├── render.yaml               # Render.com deployment configuration
+└── README.md
 ```
+
+- **main.go**: Entry point, HTTP server, routing, and game logic orchestration
+- **types.go**: Game state, word entry, and guess result types
+- **persistence.go**: Secure session file storage, loading, and cleanup
+- **core_test.go**, **main_http_test.go**, **persistence_test.go**, **minify_test.go**: Comprehensive tests for logic, HTTP, security, and minification
 
 ## How It Works
 
