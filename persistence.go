@@ -69,7 +69,7 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	// Ensure the file path is within the sessions directory
 	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir+string(filepath.Separator)) {
 		log.Printf("Session file path escapes sessions directory: %s", absSessionFile)
-		return errors.New("session file path escapes sessions directory")
+		return errors.New("session path would escape sessions directory")
 	}
 
 	// Create sessions directory with restrictive permissions.
@@ -131,7 +131,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 
 	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir+string(filepath.Separator)) {
 		log.Printf("Session file path escapes sessions directory: %s", absSessionFile)
-		return nil, errors.New("session file path escapes sessions directory")
+		return nil, errors.New("session path would escape sessions directory")
 	}
 
 	// Check if file exists and validate age.

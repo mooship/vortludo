@@ -24,7 +24,7 @@ const (
 	CorruptJSONContent = "this is not json"
 
 	ErrInvalidSessionFormat = "invalid session ID format"
-	ErrPathEscapes          = "session file path escapes sessions directory"
+	ErrPathEscapes          = "session path would escape sessions directory"
 
 	TestDirPerm  = 0755
 	TestFilePerm = 0644

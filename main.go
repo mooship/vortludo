@@ -925,7 +925,7 @@ func getSecureSessionPath(sessionID string) (string, error) {
 
 	// Ensure file path remains within sessions directory.
 	absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
-	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir+string(filepath.Separator)) {
+	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir) {
 		return "", errors.New("session path would escape sessions directory")
 	}
 
