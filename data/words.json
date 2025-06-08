@@ -625,12 +625,48 @@
             "hint": "Having a fluffy or blurred texture; indistinct."
         },
         {
-            "word": "GIANT",
-            "hint": "An imaginary being of superhuman size; extremely large."
+            "word": "GAFFE",
+            "hint": "An embarrassing mistake or blunder."
         },
         {
-            "word": "GIVEN",
-            "hint": "Provided or specified; inclined or disposed to."
+            "word": "GAIN",
+            "hint": "Increase in amount, value, or degree."
+        },
+        {
+            "word": "GALA",
+            "hint": "A festive celebration or party."
+        },
+        {
+            "word": "GAMER",
+            "hint": "A person who plays video games."
+        },
+        {
+            "word": "GAMMA",
+            "hint": "The third letter of the Greek alphabet; a type of radiation."
+        },
+        {
+            "word": "GANGS",
+            "hint": "Groups of criminals or hoodlums."
+        },
+        {
+            "word": "GAPED",
+            "hint": "Stared with the mouth open in amazement."
+        },
+        {
+            "word": "GAVEL",
+            "hint": "A small mallet used by a judge or an auctioneer."
+        },
+        {
+            "word": "GAYLY",
+            "hint": "In a cheerful or light-hearted manner."
+        },
+        {
+            "word": "GEARS",
+            "hint": "Mechanical devices that transmit motion and torque."
+        },
+        {
+            "word": "GHOST",
+            "hint": "An apparition of a dead person, often believed to haunt."
         },
         {
             "word": "GLASS",
@@ -803,6 +839,10 @@
         {
             "word": "JUDGE",
             "hint": "Form an opinion about; a public official in a law court."
+        },
+        {
+            "word": "JAZZY",
+            "hint": "Lively, bright, or in the style of jazz music."
         },
         {
             "word": "KNOWN",
@@ -1895,20 +1935,64 @@
             "hint": "A deposit of small white ice crystals formed on the ground or other surfaces."
         },
         {
-            "word": "GHOST",
-            "hint": "An apparition of a dead person, often believed to haunt."
+            "word": "GAFFE",
+            "hint": "An embarrassing mistake or blunder."
         },
         {
-            "word": "HONOR",
-            "hint": "High respect; great esteem; adherence to what is right."
+            "word": "HAVEN",
+            "hint": "A safe or peaceful place; a refuge."
         },
         {
-            "word": "IVORY",
-            "hint": "Hard creamy-white substance from tusks of elephants."
+            "word": "ICING",
+            "hint": "Sweet topping for cakes; frozen water on a surface."
         },
         {
-            "word": "JOKER",
-            "hint": "A person who is fond of telling amusing stories or playing pranks."
+            "word": "JAZZY",
+            "hint": "Lively, bright, or in the style of jazz music."
+        },
+        {
+            "word": "LEMMA",
+            "hint": "A subsidiary or intermediate theorem in an argument."
+        },
+        {
+            "word": "MIRTH",
+            "hint": "Great joy, amusement, or happiness."
+        },
+        {
+            "word": "NINJA",
+            "hint": "A skilled Japanese martial artist or covert agent."
+        },
+        {
+            "word": "OPERA",
+            "hint": "A dramatic work set to music and sung."
+        },
+        {
+            "word": "PIXEL",
+            "hint": "The smallest unit of a digital image or display."
+        },
+        {
+            "word": "QUACK",
+            "hint": "The sound a duck makes; a fraudulent doctor."
+        },
+        {
+            "word": "RAVEN",
+            "hint": "A large, black bird known for its intelligence."
+        },
+        {
+            "word": "SWAMP",
+            "hint": "Wetland area with standing water and vegetation."
+        },
+        {
+            "word": "TABBY",
+            "hint": "A domestic cat with a striped or mottled coat."
+        },
+        {
+            "word": "VITAL",
+            "hint": "Absolutely necessary or essential for life."
+        },
+        {
+            "word": "YACHT",
+            "hint": "A luxurious sailing or motor boat for pleasure or racing."
         }
     ]
 }
