@@ -320,6 +320,11 @@ func minifiedStaticHandler(root string) gin.HandlerFunc {
 			return
 		}
 
+		// Remove leading slash if present (Gin's Param includes it)
+		if strings.HasPrefix(requestedPath, "/") || strings.HasPrefix(requestedPath, "\\") {
+			requestedPath = requestedPath[1:]
+		}
+
 		// Remove any path traversal attempts and normalize
 		cleanPath := filepath.Clean(requestedPath)
 
@@ -920,7 +925,7 @@ func getSecureSessionPath(sessionID string) (string, error) {
 
 	// Ensure file path remains within sessions directory.
 	absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
-	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir) {
+	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir+string(filepath.Separator)) {
 		return "", errors.New("session path would escape sessions directory")
 	}
 
