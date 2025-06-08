@@ -66,11 +66,11 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 		return fmt.Errorf("failed to resolve sessions directory: %w", err)
 	}
 
-	// Ensure the file path is within the sessions directory
-	absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
-	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir) {
-		log.Printf("Session file path escapes sessions directory: %s", absSessionFile)
-		return errors.New("session path would escape sessions directory")
+	// Ensure the file path is within the sessions directory and is a direct child
+	relPath, err := filepath.Rel(absSessionDir, absSessionFile)
+	if err != nil || strings.Contains(relPath, "..") || strings.ContainsRune(relPath, os.PathSeparator) {
+		log.Printf("Session file path escapes sessions directory or is not a direct child: %s", absSessionFile)
+		return errors.New("session path would escape sessions directory or is not a direct child")
 	}
 
 	// Ensure filename matches expected pattern
@@ -125,7 +125,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 
 	log.Printf("Attempting to load session from file: %s", sessionFile)
 
-	// Additional validation: ensure file is in sessions directory.
+	// Additional validation: ensure file is in sessions directory and is a direct child
 	absSessionFile, err := filepath.Abs(sessionFile)
 	if err != nil {
 		log.Printf("Failed to resolve session file path for loading: %v", err)
@@ -138,10 +138,10 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 		return nil, fmt.Errorf("failed to resolve sessions directory: %w", err)
 	}
 
-	absSessionDir = filepath.Clean(absSessionDir) + string(filepath.Separator)
-	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir) {
-		log.Printf("Session file path escapes sessions directory: %s", absSessionFile)
-		return nil, errors.New("session path would escape sessions directory")
+	relPath, err := filepath.Rel(absSessionDir, absSessionFile)
+	if err != nil || strings.Contains(relPath, "..") || strings.ContainsRune(relPath, os.PathSeparator) {
+		log.Printf("Session file path escapes sessions directory or is not a direct child: %s", absSessionFile)
+		return nil, errors.New("session path would escape sessions directory or is not a direct child")
 	}
 
 	// Ensure filename matches expected pattern
