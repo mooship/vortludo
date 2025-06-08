@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 	cachecontrol "go.eigsys.de/gin-cachecontrol/v2"
 
 	"golang.org/x/time/rate"
@@ -70,6 +71,8 @@ var (
 )
 
 func main() {
+	_ = godotenv.Load()
+
 	// Determine environment.
 	isProduction = os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
 	log.Printf("Starting Vortludo in %s mode", map[bool]string{true: "production", false: "development"}[isProduction])
@@ -125,7 +128,7 @@ func main() {
 	if isProduction && dirExists("dist") {
 		log.Printf("Serving minified assets from dist/ directory")
 		router.LoadHTMLGlob("dist/templates/*.html")
-		// Serve minified static files
+		// Serve minified static files (must be registered before any fallback static handler)
 		router.GET("/static/*filepath", minifiedStaticHandler("dist/static"))
 	} else {
 		log.Printf("Serving development assets from source directories")

@@ -6,20 +6,20 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
 
 ## Features
 
--   🎮 **Classic Wordle gameplay** - Guess the 5-letter word in 6 tries
--   🔀 **Random words** - Each new game picks a different word from the dictionary
--   💡 **Helpful hints** - Each word comes with a hint to guide you
--   📱 **Responsive design** - Works on desktop and mobile
--   💾 **Session persistence** - Games are saved across browser sessions
--   🌙 **Automatic cleanup** - Old game sessions are cleaned up automatically
--   🚀 **Zero database** - Simple file-based storage
--   🔒 **Session security** - HTTPOnly cookies and session validation
+- 🎮 **Classic Wordle gameplay** - Guess the 5-letter word in 6 tries
+- 🔀 **Random words** - Each new game picks a different word from the dictionary
+- 💡 **Helpful hints** - Each word comes with a hint to guide you
+- 📱 **Responsive design** - Works on desktop and mobile
+- 💾 **Session persistence** - Games are saved across browser sessions
+- 🌙 **Automatic cleanup** - Old game sessions are cleaned up automatically
+- 🚀 **Zero database** - Simple file-based storage
+- 🔒 **Session security** - HTTPOnly cookies and session validation
 
 ## Quick Start
 
 ### Prerequisites
 
--   Go 1.24 or higher
+- Go 1.24 or higher
 
 ### Installation
 
@@ -127,10 +127,10 @@ vortludo/
 └── README.md
 ```
 
--   **main.go**: Entry point, HTTP server, routing, and game logic orchestration
--   **types.go**: Game state, word entry, and guess result types
--   **persistence.go**: Secure session file storage, loading, and cleanup
--   **core_test.go**, **main_http_test.go**, **persistence_test.go**, **minify_test.go**: Comprehensive tests for logic, HTTP, security, and minification
+- **main.go**: Entry point, HTTP server, routing, and game logic orchestration
+- **types.go**: Game state, word entry, and guess result types
+- **persistence.go**: Secure session file storage, loading, and cleanup
+- **core_test.go**, **main_http_test.go**, **persistence_test.go**, **minify_test.go**: Comprehensive tests for logic, HTTP, security, and minification
 
 ## How It Works
 
@@ -145,16 +145,16 @@ vortludo/
 
 Instead of a database, Vortludo uses simple JSON files:
 
--   **Game sessions**: `data/sessions/{sessionId}.json`
--   **Word dictionary**: `data/words.json` (static)
+- **Game sessions**: `data/sessions/{sessionId}.json`
+- **Word dictionary**: `data/words.json` (static)
 
 This approach is:
 
--   ✅ Simple and lightweight
--   ✅ Easy to backup and restore
--   ✅ No database setup required
--   ✅ Perfect for single-server deployments
--   ✅ Automatic cleanup prevents disk bloat
+- ✅ Simple and lightweight
+- ✅ Easy to backup and restore
+- ✅ No database setup required
+- ✅ Perfect for single-server deployments
+- ✅ Automatic cleanup prevents disk bloat
 
 ### Session Lifecycle
 
@@ -167,14 +167,14 @@ This approach is:
 
 ### Environment Variables
 
--   `PORT` - Server port (default: 8080)
--   `GIN_MODE` - Set to "release" for production optimizations
--   `ENV` - Set to "production" for production static file serving
+- `PORT` - Server port (default: 8080)
+- `GIN_MODE` - Set to "release" for production optimizations
+- `ENV` - Set to "production" for production static file serving
 
 ### Cache Control
 
--   **Development**: All caching disabled for live reloading
--   **Production**: Static assets cached for 24 hours, HTML/API not cached
+- **Development**: All caching disabled for live reloading
+- **Production**: Static assets cached for 24 hours, HTML/API not cached
 
 ## Deployment
 
@@ -209,20 +209,20 @@ GIN_MODE=release PORT=8080 ENV=production ./vortludo
 
 The application can be deployed to any platform that supports Go:
 
--   Heroku
--   Railway
--   Fly.io
--   DigitalOcean App Platform
--   Traditional VPS with systemd
+- Heroku
+- Railway
+- Fly.io
+- DigitalOcean App Platform
+- Traditional VPS with systemd
 
 ## API Endpoints
 
--   `GET /` - Main game page
--   `GET /new-game` - Start a new game (redirects)
--   `POST /new-game` - Start a new game (form submission)
--   `POST /guess` - Submit a word guess (returns HTMX partial)
--   `GET /game-state` - Get current game state (HTMX partial)
--   `GET /static/*` - Static assets (CSS, JS, images)
+- `GET /` - Main game page
+- `GET /new-game` - Start a new game (redirects)
+- `POST /new-game` - Start a new game (form submission)
+- `POST /guess` - Submit a word guess (returns HTMX partial)
+- `GET /game-state` - Get current game state (HTMX partial)
+- `GET /static/*` - Static assets (CSS, JS, images)
 
 ## Contributing
 
@@ -234,23 +234,23 @@ The application can be deployed to any platform that supports Go:
 
 ### Development Guidelines
 
--   Follow Go best practices and formatting (`go fmt`)
--   Add tests for new functionality
--   Update documentation as needed
--   Test on both development and production modes
--   Ensure proper error handling and logging
+- Follow Go best practices and formatting (`go fmt`)
+- Add tests for new functionality
+- Update documentation as needed
+- Test on both development and production modes
+- Ensure proper error handling and logging
 
 ## Technology Stack
 
--   **Backend**: Go 1.24+ with Gin web framework
--   **Frontend**: HTML5, CSS3, vanilla JavaScript
--   **UI Framework**: [Bootstrap 5](https://getbootstrap.com/) (CDN)
--   **Reactive UI**: [Alpine.js](https://alpinejs.dev/) (CDN)
--   **AJAX/Partial Updates**: [HTMX](https://htmx.org/) (CDN)
--   **Storage**: JSON files (no database required)
--   **Templating**: Go's html/template
--   **Build Tools**: Go modules
--   **Deployment**: Render.com with GitHub Actions
+- **Backend**: Go 1.24+ with Gin web framework
+- **Frontend**: HTML5, CSS3, vanilla JavaScript
+- **UI Framework**: [Bootstrap 5](https://getbootstrap.com/) (CDN)
+- **Reactive UI**: [Alpine.js](https://alpinejs.dev/) (CDN)
+- **AJAX/Partial Updates**: [HTMX](https://htmx.org/) (CDN)
+- **Storage**: JSON files (no database required)
+- **Templating**: Go's html/template
+- **Build Tools**: Go modules
+- **Deployment**: Render.com with GitHub Actions
 
 ## License
 
@@ -260,10 +260,10 @@ See [LICENSE](./LICENSE) for details.
 
 ## Acknowledgments
 
--   Inspired by the original Wordle game by Josh Wardle
--   Built as a libre (free and open source) alternative
--   Word list curated for family-friendly gameplay
--   Community contributions welcome
+- Inspired by the original Wordle game by Josh Wardle
+- Built as a libre (free and open source) alternative
+- Word list curated for family-friendly gameplay
+- Community contributions welcome
 
 ---
 
