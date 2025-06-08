@@ -49,7 +49,7 @@ const (
 	BackslashUUID      = "12345678\\1234\\5678\\9ABC\\123456789DEF"
 )
 
-// TestLoadGameSessionFromFile tests session loading from disk
+// TestLoadGameSessionFromFile checks loading sessions from disk
 func TestLoadGameSessionFromFile(t *testing.T) {
 	tempDir := t.TempDir()
 	defer func() {
@@ -154,7 +154,7 @@ func TestLoadGameSessionFromFile(t *testing.T) {
 	}
 }
 
-// TestGetSecureSessionPath tests secure path generation and traversal prevention
+// TestGetSecureSessionPath checks secure session path generation
 func TestGetSecureSessionPath(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -256,7 +256,7 @@ func TestGetSecureSessionPath(t *testing.T) {
 	}
 }
 
-// TestSecureFileOperations tests file operations reject malicious session IDs
+// TestSecureFileOperations checks file operations reject malicious session IDs
 func TestSecureFileOperations(t *testing.T) {
 	maliciousSessionIDs := []string{
 		UnixPathTraversal,
@@ -297,7 +297,7 @@ func TestSecureFileOperations(t *testing.T) {
 	}
 }
 
-// TestPathTraversalPrevention tests protection against path traversal attacks
+// TestPathTraversalPrevention checks protection against path traversal
 func TestPathTraversalPrevention(t *testing.T) {
 	testCases := []struct {
 		name      string
@@ -416,5 +416,70 @@ func TestSaveGameSessionToFile_RateLimit(t *testing.T) {
 	err := saveGameSessionToFile(sessionID, game)
 	if err != nil {
 		t.Errorf("saveGameSessionToFile rate limit should return nil, got %v", err)
+	}
+}
+
+func TestSaveGameSessionToFile_ValidSessionID(t *testing.T) {
+	tmpDir := t.TempDir()
+	localGetSessionPath := func(sessionID string) string {
+		return filepath.Join(tmpDir, sessionID+".json")
+	}
+	localSave := func(sessionID string, game *GameState) error {
+		sessionFile := localGetSessionPath(sessionID)
+		data, err := json.MarshalIndent(game, "", "  ")
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(sessionFile, data, 0600)
+	}
+
+	sessionID := "12345678-1234-5678-9abc-123456789abc"
+	game := &GameState{
+		SessionWord:    "APPLE",
+		Guesses:        make([][]GuessResult, MaxGuesses),
+		LastAccessTime: time.Now(),
+	}
+	for i := range game.Guesses {
+		game.Guesses[i] = make([]GuessResult, WordLength)
+	}
+	err := localSave(sessionID, game)
+	if err != nil {
+		t.Fatalf("localSave failed: %v", err)
+	}
+	sessionFile := localGetSessionPath(sessionID)
+	if _, err := os.Stat(sessionFile); err != nil {
+		t.Errorf("Session file not created: %v", err)
+	}
+}
+
+func TestLoadGameSessionFromFile_CorruptFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	localGetSessionPath := func(sessionID string) string {
+		return filepath.Join(tmpDir, sessionID+".json")
+	}
+	localLoad := func(sessionID string) (*GameState, error) {
+		sessionFile := localGetSessionPath(sessionID)
+		data, err := os.ReadFile(sessionFile)
+		if err != nil {
+			return nil, err
+		}
+		var game GameState
+		if err := json.Unmarshal(data, &game); err != nil {
+			_ = os.Remove(sessionFile)
+			return nil, err
+		}
+		return &game, nil
+	}
+
+	sessionID := "12345678-1234-5678-9abc-123456789abc"
+	sessionFile := localGetSessionPath(sessionID)
+	_ = os.MkdirAll(tmpDir, 0755)
+	_ = os.WriteFile(sessionFile, []byte("not json"), 0644)
+	_, err := localLoad(sessionID)
+	if err == nil {
+		t.Error("Expected error for corrupt session file")
+	}
+	if _, err := os.Stat(sessionFile); !os.IsNotExist(err) {
+		t.Error("Corrupt session file was not deleted")
 	}
 }

@@ -2,7 +2,7 @@ package main
 
 import "time"
 
-// WordEntry is a word and its hint
+// WordEntry represents a word and its hint
 type WordEntry struct {
 	Word string `json:"word"`
 	Hint string `json:"hint"`
@@ -13,20 +13,20 @@ type WordList struct {
 	Words []WordEntry `json:"words"`
 }
 
-// GameState is a player's game session
+// GameState represents a player's game session
 type GameState struct {
-	Guesses        [][]GuessResult
-	CurrentRow     int
-	GameOver       bool
-	Won            bool
-	TargetWord     string
-	SessionWord    string
-	GuessHistory   []string
-	LastAccessTime time.Time `json:"lastAccessTime"`
+	Guesses        [][]GuessResult `json:"guesses"`
+	CurrentRow     int             `json:"currentRow"`
+	GameOver       bool            `json:"gameOver"`
+	Won            bool            `json:"won"`
+	TargetWord     string          `json:"targetWord"`
+	SessionWord    string          `json:"sessionWord"`
+	GuessHistory   []string        `json:"guessHistory"`
+	LastAccessTime time.Time       `json:"lastAccessTime"`
 }
 
-// GuessResult is a letter's evaluation
+// GuessResult represents a letter's evaluation in a guess
 type GuessResult struct {
-	Letter string
-	Status string // "correct", "present", "absent", or "invalid"
+	Letter string `json:"letter"`
+	Status string `json:"status"` // "correct", "present", "absent", or "invalid"
 }

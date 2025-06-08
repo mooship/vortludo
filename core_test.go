@@ -52,7 +52,7 @@ const (
 	InvalidSessionFormat = "invalid-session-format"
 )
 
-// TestCheckGuess tests guess checking algorithm
+// TestCheckGuess checks the guess evaluation algorithm
 func TestCheckGuess(t *testing.T) {
 	target := TestWordApple
 	tests := []struct {
@@ -105,7 +105,7 @@ func TestCheckGuess(t *testing.T) {
 	}
 }
 
-// TestIsValidWord tests word validation
+// TestIsValidWord checks word validation logic
 func TestIsValidWord(t *testing.T) {
 	wordSet = map[string]struct{}{
 		TestWordApple: {},
@@ -128,7 +128,7 @@ func TestIsValidWord(t *testing.T) {
 	}
 }
 
-// TestNormalizeGuess tests input normalization
+// TestNormalizeGuess checks guess normalization
 func TestNormalizeGuess(t *testing.T) {
 	tests := []struct {
 		input string
@@ -147,7 +147,7 @@ func TestNormalizeGuess(t *testing.T) {
 	}
 }
 
-// TestGetHintForWord tests hint retrieval
+// TestGetHintForWord checks hint retrieval for words
 func TestGetHintForWord(t *testing.T) {
 	originalWordList := wordList
 	wordList = []WordEntry{
@@ -174,7 +174,7 @@ func TestGetHintForWord(t *testing.T) {
 	}
 }
 
-// TestCreateNewGame_SetsLastAccessTime tests new game access time
+// TestCreateNewGame_SetsLastAccessTime checks new game access time
 func TestCreateNewGame_SetsLastAccessTime(t *testing.T) {
 	originalWordList := wordList
 	wordList = []WordEntry{{Word: TestWordTests, Hint: TestHintTesting}}
@@ -194,7 +194,7 @@ func TestCreateNewGame_SetsLastAccessTime(t *testing.T) {
 	sessionMutex.Unlock()
 }
 
-// TestGetGameState_UpdatesLastAccessTimeFromCache tests cache access time update
+// TestGetGameState_UpdatesLastAccessTimeFromCache checks cache access time update
 func TestGetGameState_UpdatesLastAccessTimeFromCache(t *testing.T) {
 	sessionID := TestSessionGetState
 	initialTime := time.Now().Add(-1 * time.Hour)
@@ -223,7 +223,7 @@ func TestGetGameState_UpdatesLastAccessTimeFromCache(t *testing.T) {
 	}
 }
 
-// TestSaveGameState_UpdatesLastAccessTime tests save access time update
+// TestSaveGameState_UpdatesLastAccessTime checks save access time update
 func TestSaveGameState_UpdatesLastAccessTime(t *testing.T) {
 	sessionID := TestSessionSaveGame
 	initialTime := time.Now().Add(-1 * time.Hour)
@@ -261,7 +261,7 @@ func TestSaveGameState_UpdatesLastAccessTime(t *testing.T) {
 	sessionMutex.Unlock()
 }
 
-// TestSessionCleanupScheduler_InMemory tests in-memory session cleanup
+// TestSessionCleanupScheduler_InMemory checks in-memory session cleanup
 func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	originalGameSessions := gameSessions
 	gameSessions = make(map[string]*GameState)
@@ -308,7 +308,7 @@ func TestSessionCleanupScheduler_InMemory(t *testing.T) {
 	}
 }
 
-// TestIsValidSessionID tests session ID validation
+// TestIsValidSessionID checks session ID validation
 func TestIsValidSessionID(t *testing.T) {
 	valid := uuid.NewString()
 	if !isValidSessionID(valid) {
@@ -325,7 +325,14 @@ func TestIsValidSessionID(t *testing.T) {
 	}
 }
 
-// TestUpdateGameState tests game state updates
+func TestIsValidSessionID_Uppercase(t *testing.T) {
+	valid := "12345678-1234-5678-9ABC-123456789DEF"
+	if !isValidSessionID(valid) {
+		t.Errorf("isValidSessionID(%q) = false, want true", valid)
+	}
+}
+
+// TestUpdateGameState checks game state updates after guesses
 func TestUpdateGameState(t *testing.T) {
 	base := &GameState{
 		Guesses:        make([][]GuessResult, MaxGuesses),
@@ -357,7 +364,7 @@ func TestUpdateGameState(t *testing.T) {
 	}
 }
 
-// TestGetTargetWord tests target word assignment
+// TestGetTargetWord checks target word assignment
 func TestGetTargetWord(t *testing.T) {
 	orig := wordList
 	wordList = []WordEntry{{Word: TestWordAlpha, Hint: ""}}
@@ -370,7 +377,7 @@ func TestGetTargetWord(t *testing.T) {
 	}
 }
 
-// TestDirExists tests directory existence check
+// TestDirExists checks directory existence utility
 func TestDirExists(t *testing.T) {
 	tmp := t.TempDir()
 	file := filepath.Join(tmp, TestFileName)
@@ -433,6 +440,7 @@ func TestWordsJson_NoDuplicatesAndFiveLetters(t *testing.T) {
 	}
 }
 
+// TestCheckGuess_EmptyGuess checks panic on empty guess
 func TestCheckGuess_EmptyGuess(t *testing.T) {
 	target := TestWordApple
 	guess := ""
@@ -444,6 +452,7 @@ func TestCheckGuess_EmptyGuess(t *testing.T) {
 	_ = checkGuess(guess, target)
 }
 
+// TestUpdateGameState_InvalidGuess checks update on invalid guess
 func TestUpdateGameState_InvalidGuess(t *testing.T) {
 	game := &GameState{
 		Guesses:      make([][]GuessResult, MaxGuesses),
@@ -461,6 +470,7 @@ func TestUpdateGameState_InvalidGuess(t *testing.T) {
 	}
 }
 
+// TestIsAcceptedWord checks accepted word logic
 func TestIsAcceptedWord(t *testing.T) {
 	acceptedWordSet = map[string]struct{}{
 		"APPLE": {},
@@ -483,6 +493,7 @@ func TestIsAcceptedWord(t *testing.T) {
 	}
 }
 
+// TestPlural checks plural utility
 func TestPlural(t *testing.T) {
 	if plural(1) != "" {
 		t.Errorf("plural(1) = %q, want \"\"", plural(1))
@@ -492,6 +503,7 @@ func TestPlural(t *testing.T) {
 	}
 }
 
+// TestGetEnvDuration_Invalid checks fallback for invalid duration
 func TestGetEnvDuration_Invalid(t *testing.T) {
 	os.Setenv("TEST_DURATION", "notaduration")
 	defer os.Unsetenv("TEST_DURATION")
@@ -501,11 +513,81 @@ func TestGetEnvDuration_Invalid(t *testing.T) {
 	}
 }
 
+// TestGetEnvInt_Invalid checks fallback for invalid int
 func TestGetEnvInt_Invalid(t *testing.T) {
 	os.Setenv("TEST_INT", "notanint")
 	defer os.Unsetenv("TEST_INT")
 	got := getEnvInt("TEST_INT", 7)
 	if got != 7 {
 		t.Errorf("getEnvInt fallback failed, got %v", got)
+	}
+}
+
+// TestGetSecureSessionPath_Traversal checks secure path logic
+func TestGetSecureSessionPath_Traversal(t *testing.T) {
+	ids := []string{
+		"../../etc/passwd",
+		"..\\..\\windows\\system32",
+		"short",
+		"",
+		"12345678-1234-5678-9ABC-123456789XYZ",
+	}
+	for _, id := range ids {
+		if _, err := getSecureSessionPath(id); err == nil {
+			t.Errorf("getSecureSessionPath(%q) should fail for traversal/invalid", id)
+		}
+	}
+}
+
+// TestSessionFileRoundtrip checks session file save/load roundtrip
+func TestSessionFileRoundtrip(t *testing.T) {
+	tmpDir := t.TempDir()
+	origSave := saveGameSessionToFile
+	origLoad := loadGameSessionFromFile
+	defer func() {
+		saveGameSessionToFile = origSave
+		loadGameSessionFromFile = origLoad
+	}()
+
+	saveGameSessionToFile = func(sessionID string, game *GameState) error {
+		sessionFile := filepath.Join(tmpDir, sessionID+".json")
+		data, err := json.MarshalIndent(game, "", "  ")
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(sessionFile, data, 0600)
+	}
+	loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
+		sessionFile := filepath.Join(tmpDir, sessionID+".json")
+		data, err := os.ReadFile(sessionFile)
+		if err != nil {
+			return nil, err
+		}
+		var game GameState
+		if err := json.Unmarshal(data, &game); err != nil {
+			return nil, err
+		}
+		return &game, nil
+	}
+
+	sessionID := "12345678-1234-5678-9abc-123456789abc"
+	game := &GameState{
+		SessionWord:    "APPLE",
+		Guesses:        make([][]GuessResult, MaxGuesses),
+		LastAccessTime: time.Now(),
+	}
+	for i := range game.Guesses {
+		game.Guesses[i] = make([]GuessResult, WordLength)
+	}
+	err := saveGameSessionToFile(sessionID, game)
+	if err != nil {
+		t.Fatalf("saveGameSessionToFile failed: %v", err)
+	}
+	loaded, err := loadGameSessionFromFile(sessionID)
+	if err != nil {
+		t.Fatalf("loadGameSessionFromFile failed: %v", err)
+	}
+	if loaded.SessionWord != game.SessionWord {
+		t.Errorf("loaded.SessionWord = %q, want %q", loaded.SessionWord, game.SessionWord)
 	}
 }

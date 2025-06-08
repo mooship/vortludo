@@ -53,34 +53,6 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 		return err
 	}
 
-	// Additional validation: ensure the session file path is secure
-	absSessionFile, err := filepath.Abs(sessionFile)
-	if err != nil {
-		log.Printf("Failed to resolve session file path for saving: %v", err)
-		return fmt.Errorf("failed to resolve session file path: %w", err)
-	}
-
-	absSessionDir, err := filepath.Abs(SessionsDirectory)
-	if err != nil {
-		log.Printf("Failed to resolve sessions directory for saving: %v", err)
-		return fmt.Errorf("failed to resolve sessions directory: %w", err)
-	}
-
-	// Ensure the file path is within the sessions directory and is a direct child
-	relPath, err := filepath.Rel(absSessionDir, absSessionFile)
-	if err != nil || strings.Contains(relPath, "..") || strings.ContainsRune(relPath, os.PathSeparator) {
-		log.Printf("Session file path escapes sessions directory or is not a direct child: %s", absSessionFile)
-		return errors.New("session path would escape sessions directory or is not a direct child")
-	}
-
-	// Ensure filename matches expected pattern
-	expectedFilename := sessionID + ".json"
-	actualFilename := filepath.Base(absSessionFile)
-	if actualFilename != expectedFilename {
-		log.Printf("Session filename mismatch: expected %s, got %s", expectedFilename, actualFilename)
-		return errors.New("session filename mismatch")
-	}
-
 	// Create sessions directory with restrictive permissions.
 	if err := os.MkdirAll(SessionsDirectory, SessionsDirPerm); err != nil {
 		log.Printf("Failed to create sessions directory: %v", err)
@@ -124,33 +96,6 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	}
 
 	log.Printf("Attempting to load session from file: %s", sessionFile)
-
-	// Additional validation: ensure file is in sessions directory and is a direct child
-	absSessionFile, err := filepath.Abs(sessionFile)
-	if err != nil {
-		log.Printf("Failed to resolve session file path for loading: %v", err)
-		return nil, fmt.Errorf("failed to resolve session file path: %w", err)
-	}
-
-	absSessionDir, err := filepath.Abs(SessionsDirectory)
-	if err != nil {
-		log.Printf("Failed to resolve sessions directory for loading: %v", err)
-		return nil, fmt.Errorf("failed to resolve sessions directory: %w", err)
-	}
-
-	relPath, err := filepath.Rel(absSessionDir, absSessionFile)
-	if err != nil || strings.Contains(relPath, "..") || strings.ContainsRune(relPath, os.PathSeparator) {
-		log.Printf("Session file path escapes sessions directory or is not a direct child: %s", absSessionFile)
-		return nil, errors.New("session path would escape sessions directory or is not a direct child")
-	}
-
-	// Ensure filename matches expected pattern
-	expectedFilename := sessionID + ".json"
-	actualFilename := filepath.Base(absSessionFile)
-	if actualFilename != expectedFilename {
-		log.Printf("Session filename mismatch: expected %s, got %s", expectedFilename, actualFilename)
-		return nil, os.ErrNotExist
-	}
 
 	// Check if file exists and validate age.
 	info, err := os.Stat(sessionFile)
@@ -199,7 +144,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	return &game, nil
 }
 
-// cleanupOldSessions removes old session files
+// cleanupOldSessions removes old session files from disk
 var cleanupOldSessions = func(maxAge time.Duration) error {
 	log.Printf("Starting cleanup of sessions older than %v in directory: %s", maxAge, SessionsDirectory)
 

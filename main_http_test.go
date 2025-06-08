@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// setupTestRouter creates test router with all routes
+// setupTestRouter creates a test router with all routes
 func setupTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
@@ -25,7 +25,7 @@ func setupTestRouter() *gin.Engine {
 	return router
 }
 
-// TestHomeHandler tests home page returns 200
+// TestHomeHandler checks home page returns 200
 func TestHomeHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -36,7 +36,7 @@ func TestHomeHandler(t *testing.T) {
 	}
 }
 
-// TestNewGameHandler tests new game redirects
+// TestNewGameHandler checks new game redirects
 func TestNewGameHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/new-game", nil)
@@ -47,7 +47,7 @@ func TestNewGameHandler(t *testing.T) {
 	}
 }
 
-// TestGameStateHandler tests game state returns 200
+// TestGameStateHandler checks game state returns 200
 func TestGameStateHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/game-state", nil)
@@ -58,7 +58,7 @@ func TestGameStateHandler(t *testing.T) {
 	}
 }
 
-// TestGuessHandler_InvalidMethod tests GET /guess not allowed
+// TestGuessHandler_InvalidMethod checks GET /guess is not allowed
 func TestGuessHandler_InvalidMethod(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/guess", nil)
@@ -69,7 +69,7 @@ func TestGuessHandler_InvalidMethod(t *testing.T) {
 	}
 }
 
-// TestRetryWordHandler tests retry word redirects
+// TestRetryWordHandler checks retry word redirects
 func TestRetryWordHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("POST", "/retry-word", nil)
@@ -80,7 +80,7 @@ func TestRetryWordHandler(t *testing.T) {
 	}
 }
 
-// TestRateLimitMiddleware tests rate limiting blocks excessive requests
+// TestRateLimitMiddleware checks rate limiting blocks excessive requests
 func TestRateLimitMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -109,14 +109,14 @@ func TestRateLimitMiddleware(t *testing.T) {
 	}
 }
 
-// TestMain sets up test data
+// TestMain sets up test data for all HTTP tests
 func TestMain(m *testing.M) {
 	wordList = []WordEntry{{Word: "APPLE", Hint: "fruit"}}
 	wordSet = map[string]struct{}{"APPLE": {}}
 	os.Exit(m.Run())
 }
 
-// TestHealthHandlerFields tests /health endpoint for required fields
+// TestHealthHandlerFields checks /health endpoint for required fields
 func TestHealthHandlerFields(t *testing.T) {
 	router := gin.Default()
 	router.GET("/health", healthHandler)
@@ -201,5 +201,45 @@ func TestHealthHandler_EnvField(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &resp)
 	if env, ok := resp["env"].(string); !ok || (env != "production" && env != "development") {
 		t.Errorf("healthHandler env field = %v, want 'production' or 'development'", resp["env"])
+	}
+}
+
+func TestNewGameHandler_Reset(t *testing.T) {
+	router := setupTestRouter()
+	req, _ := http.NewRequest("GET", "/new-game?reset=1", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusSeeOther && w.Code != http.StatusFound {
+		t.Errorf("GET /new-game?reset=1 returned status %d, want 303 or 302", w.Code)
+	}
+	cookies := w.Result().Cookies()
+	found := false
+	for _, c := range cookies {
+		if c.Name == "session_id" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected session_id cookie to be set on reset")
+	}
+}
+
+func TestHealthHandler_Fields(t *testing.T) {
+	router := gin.Default()
+	router.GET("/health", healthHandler)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/health", nil)
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET /health returned status %d, want 200", w.Code)
+	}
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to unmarshal /health response: %v", err)
+	}
+	for _, field := range []string{"timestamp", "uptime"} {
+		if _, ok := resp[field]; !ok {
+			t.Errorf("Expected '%s' field in /health response", field)
+		}
 	}
 }

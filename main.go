@@ -174,7 +174,7 @@ func main() {
 	log.Println("Server shutdown complete")
 }
 
-// applyCacheHeaders sets cache headers
+// applyCacheHeaders sets cache headers for static and dynamic content
 func applyCacheHeaders(c *gin.Context, production bool) {
 	if production {
 		if strings.HasPrefix(c.Request.URL.Path, "/static/") {
@@ -199,7 +199,7 @@ func applyCacheHeaders(c *gin.Context, production bool) {
 	}
 }
 
-// loadWords loads word list from JSON
+// loadWords loads the word list from JSON file
 func loadWords() error {
 	log.Printf("Loading words from data/words.json")
 	data, err := os.ReadFile("data/words.json")
@@ -232,7 +232,7 @@ func loadWords() error {
 	return nil
 }
 
-// loadAcceptedWords loads accepted words from JSON
+// loadAcceptedWords loads accepted words from JSON file
 func loadAcceptedWords() error {
 	log.Printf("Loading accepted words from data/accepted_words.json")
 	data, err := os.ReadFile("data/accepted_words.json")
@@ -250,7 +250,7 @@ func loadAcceptedWords() error {
 	return nil
 }
 
-// getRandomWordEntry returns a random word
+// getRandomWordEntry returns a random word entry from the word list
 func getRandomWordEntry() WordEntry {
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(wordList))))
 	if err != nil {
@@ -261,7 +261,7 @@ func getRandomWordEntry() WordEntry {
 	return wordList[n.Int64()]
 }
 
-// sessionCleanupScheduler cleans up sessions hourly
+// sessionCleanupScheduler periodically cleans up expired sessions
 func sessionCleanupScheduler() {
 	log.Printf("Session cleanup scheduler started")
 	ticker := time.NewTicker(time.Hour)
@@ -294,7 +294,7 @@ func sessionCleanupScheduler() {
 	}
 }
 
-// getHintForWord returns the hint for a word
+// getHintForWord returns the hint for a given word
 func getHintForWord(wordValue string) string {
 	if wordValue == "" {
 		return ""
@@ -322,7 +322,7 @@ func homeHandler(c *gin.Context) {
 	})
 }
 
-// newGameHandler starts a new game
+// newGameHandler starts a new game session
 func newGameHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	log.Printf("Creating new game for session: %s", sessionID)
@@ -355,7 +355,7 @@ func newGameHandler(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, RouteHome)
 }
 
-// guessHandler handles a guess
+// guessHandler processes a guess from the user
 func guessHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
@@ -379,7 +379,7 @@ func guessHandler(c *gin.Context) {
 	}
 }
 
-// validateGameState checks if game can accept guesses
+// validateGameState returns an error if the game is over
 func validateGameState(c *gin.Context, game *GameState) error {
 	if game.GameOver {
 		log.Print("session attempted guess on completed game")
@@ -389,12 +389,12 @@ func validateGameState(c *gin.Context, game *GameState) error {
 	return nil
 }
 
-// normalizeGuess normalizes input
+// normalizeGuess returns the guess in uppercase and trimmed
 func normalizeGuess(input string) string {
 	return strings.ToUpper(strings.TrimSpace(input))
 }
 
-// processGuess processes a guess
+// processGuess processes a guess and updates the game state
 func processGuess(c *gin.Context, sessionID string, game *GameState, guess string) error {
 	log.Printf("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
 
@@ -420,7 +420,7 @@ func processGuess(c *gin.Context, sessionID string, game *GameState, guess strin
 	return nil
 }
 
-// getTargetWord returns or assigns the target word
+// getTargetWord returns the target word for the session, assigns if missing
 func getTargetWord(game *GameState) string {
 	if game.SessionWord == "" {
 		selectedEntry := getRandomWordEntry()
@@ -430,7 +430,7 @@ func getTargetWord(game *GameState) string {
 	return game.SessionWord
 }
 
-// updateGameState updates the game state
+// updateGameState updates the game state after a guess
 func updateGameState(game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
 	if game.CurrentRow >= MaxGuesses {
 		return // Prevent out-of-bounds write
@@ -458,7 +458,7 @@ func updateGameState(game *GameState, guess, targetWord string, result []GuessRe
 	}
 }
 
-// gameStateHandler returns current game state
+// gameStateHandler returns the current game state
 func gameStateHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	game := getGameState(sessionID)
@@ -470,7 +470,7 @@ func gameStateHandler(c *gin.Context) {
 	})
 }
 
-// checkGuess compares guess to target
+// checkGuess compares guess to target and returns the result for each letter
 func checkGuess(guess, target string) []GuessResult {
 	result := make([]GuessResult, WordLength)
 	targetCopy := []rune(target)
@@ -484,7 +484,7 @@ func checkGuess(guess, target string) []GuessResult {
 	}
 
 	// Second pass: mark present letters in wrong positions.
-	for i := range WordLength {
+	for i := 0; i < WordLength; i++ {
 		if result[i].Status == "" {
 			letter := string(guess[i])
 			result[i].Letter = letter
@@ -508,13 +508,13 @@ func checkGuess(guess, target string) []GuessResult {
 	return result
 }
 
-// isValidWord checks if a word exists in the word set.
+// isValidWord returns true if the word exists in the word set
 func isValidWord(word string) bool {
 	_, ok := wordSet[word]
 	return ok
 }
 
-// isAcceptedWord checks if a word is in the accepted word set.
+// isAcceptedWord returns true if the word is in the accepted word set
 func isAcceptedWord(word string) bool {
 	_, ok := acceptedWordSet[word]
 	return ok
@@ -532,17 +532,17 @@ func getOrCreateSession(c *gin.Context) string {
 	return sessionID
 }
 
-// getGameState gets or creates a game state
+// getGameState gets or creates a game state for the session
 func getGameState(sessionID string) *GameState {
 	sessionMutex.RLock()
 	game, exists := gameSessions[sessionID]
-	if exists {
-		game.LastAccessTime = time.Now()
-		log.Printf("Retrieved cached game state for session: %s, updated last access time.", sessionID)
-	}
 	sessionMutex.RUnlock()
-
 	if exists {
+		// Lock for writing LastAccessTime to avoid race
+		sessionMutex.Lock()
+		game.LastAccessTime = time.Now()
+		sessionMutex.Unlock()
+		log.Printf("Retrieved cached game state for session: %s, updated last access time.", sessionID)
 		return game
 	}
 
@@ -574,7 +574,7 @@ func getGameState(sessionID string) *GameState {
 	return createNewGame(sessionID)
 }
 
-// createNewGame creates a new game state
+// createNewGame creates a new game state for the session
 func createNewGame(sessionID string) *GameState {
 	selectedEntry := getRandomWordEntry()
 
@@ -603,7 +603,7 @@ func createNewGame(sessionID string) *GameState {
 	return game
 }
 
-// saveGameState saves game state
+// saveGameState saves the game state in memory and to disk
 func saveGameState(sessionID string, game *GameState) {
 	sessionMutex.Lock()
 	gameSessions[sessionID] = game
@@ -623,7 +623,7 @@ func saveGameState(sessionID string, game *GameState) {
 	}
 }
 
-// dirExists checks if a directory exists
+// dirExists returns true if the directory exists
 func dirExists(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -636,14 +636,14 @@ func dirExists(path string) bool {
 	return info.IsDir()
 }
 
-// isValidSessionID validates session ID format
+// isValidSessionID validates the session ID format (UUID)
 func isValidSessionID(sessionID string) bool {
 	if len(sessionID) != 36 {
 		return false
 	}
 	for i, c := range sessionID {
 		switch {
-		case (i == 8 || i == 13 || i == 18 || i == 23):
+		case i == 8 || i == 13 || i == 18 || i == 23:
 			if c != '-' {
 				return false
 			}
@@ -656,7 +656,7 @@ func isValidSessionID(sessionID string) bool {
 	return true
 }
 
-// getSecureSessionPath returns a safe session file path
+// getSecureSessionPath returns a safe session file path for the session ID
 func getSecureSessionPath(sessionID string) (string, error) {
 	if !isValidSessionID(sessionID) {
 		return "", errors.New("invalid session ID format")
@@ -696,7 +696,7 @@ func getSecureSessionPath(sessionID string) (string, error) {
 	return sessionFile, nil
 }
 
-// retryWordHandler resets guesses but keeps the word
+// retryWordHandler resets guesses but keeps the word for the session
 func retryWordHandler(c *gin.Context) {
 	sessionID := getOrCreateSession(c)
 	sessionMutex.Lock()
@@ -739,7 +739,7 @@ func retryWordHandler(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
-// getLimiter returns a rate limiter for a key
+// getLimiter returns a rate limiter for the given key (IP)
 func getLimiter(key string) *rate.Limiter {
 	limiterMutex.Lock()
 	defer limiterMutex.Unlock()
@@ -752,7 +752,7 @@ func getLimiter(key string) *rate.Limiter {
 	return lim
 }
 
-// rateLimitMiddleware applies rate limiting
+// rateLimitMiddleware applies rate limiting to requests
 func rateLimitMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := c.ClientIP()
@@ -768,7 +768,7 @@ func rateLimitMiddleware() gin.HandlerFunc {
 	}
 }
 
-// healthHandler returns health status
+// healthHandler returns health and status information
 func healthHandler(c *gin.Context) {
 	sessionMutex.RLock()
 	sessionCount := len(gameSessions)
