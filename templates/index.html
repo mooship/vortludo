@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
     <head>
         <meta charset="UTF-8" />
@@ -97,7 +97,12 @@
             <div
                 id="notification-toast"
                 class="toast"
-                :class="'text-bg-' + toastType"
+                :class="{
+                    'text-bg-success': toastType === 'success',
+                    'text-bg-danger': toastType === 'error',
+                    'text-bg-warning': toastType === 'warning',
+                    'text-bg-info': toastType === 'info'
+                }"
                 role="alert"
                 aria-live="assertive"
                 aria-atomic="true"

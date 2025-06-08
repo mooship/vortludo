@@ -189,10 +189,7 @@
     font-weight: 600;
     border-radius: 0.4rem;
     border-width: 2px;
-    transition:
-        background 0.15s,
-        color 0.15s,
-        border 0.15s;
+    transition: background 0.15s, color 0.15s, border 0.15s;
 }
 
 [data-bs-theme='light'] .key-button,
@@ -378,6 +375,27 @@
 
 .toast .toast-body {
     padding: 0.75rem 1rem;
+}
+
+/* Toast color customizations for sepia theme */
+[data-bs-theme='light'] .toast.text-bg-warning {
+    background-color: #b8860b !important;
+    color: #faf8f3 !important;
+}
+
+[data-bs-theme='light'] .toast.text-bg-info {
+    background-color: #6b8e23 !important;
+    color: #faf8f3 !important;
+}
+
+[data-bs-theme='dark'] .toast.text-bg-warning {
+    background-color: #b08a2e !important;
+    color: #f4f1e8 !important;
+}
+
+[data-bs-theme='dark'] .toast.text-bg-info {
+    background-color: #7e9c4b !important;
+    color: #f4f1e8 !important;
 }
 
 @keyframes pulse {
@@ -613,11 +631,9 @@ body {
 }
 
 .winner .tile {
-    animation:
-        bounce 0.5s ease-out,
-        sparkle 2s ease-in-out infinite;
-    animation-delay:
-        calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 0.5s);
+    animation: bounce 0.5s ease-out, sparkle 2s ease-in-out infinite;
+    animation-delay: calc(var(--tile-index) * 0.1s),
+        calc(var(--tile-index) * 0.1s + 0.5s);
 }
 
 @keyframes rainbow-shimmer {
@@ -639,9 +655,7 @@ body {
 }
 
 .winner .tile-correct {
-    animation:
-        bounce 0.5s ease-out,
-        rainbow-shimmer 2s ease-in-out infinite;
-    animation-delay:
-        calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 1s);
+    animation: bounce 0.5s ease-out, rainbow-shimmer 2s ease-in-out infinite;
+    animation-delay: calc(var(--tile-index) * 0.1s),
+        calc(var(--tile-index) * 0.1s + 1s);
 }

@@ -15,7 +15,13 @@
     {{end}}
 </div>
 
-{{if .game.GameOver}}
+{{if .notAccepted}}
+<span id="not-accepted-flag" style="display: none"></span>
+{{end}} {{if .newGame}}
+<span id="new-game-flag" style="display: none"></span>
+{{end}} {{if .retryGame}}
+<span id="retry-game-flag" style="display: none"></span>
+{{end}} {{if .game.GameOver}}
 <div
     class="mt-3 p-3 bg-body-secondary rounded shadow-sm"
     style="max-width: 350px"

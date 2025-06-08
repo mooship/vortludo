@@ -52,12 +52,58 @@ window.gameApp = function () {
                 this.submittingGuess = false;
                 this.restoreUserInput();
                 this.updateGameState();
+                if (document.getElementById('not-accepted-flag')) {
+                    this.showToastNotification(
+                        'Word not in accepted list. Try another word.',
+                        'info'
+                    );
+                    this.shakeCurrentRow();
+                }
+
+                if (evt.target.id === 'game-board-container') {
+                    const allTilesEmpty =
+                        document.querySelectorAll('.tile.filled').length === 0;
+                    if (allTilesEmpty && this.currentRow === 0) {
+                        this.showToastNotification(
+                            'New game started! Good luck! 🎯'
+                        );
+                    }
+                }
             });
+
             document.body.addEventListener('htmx:beforeSwap', (evt) => {
                 if (this.currentGuess) {
                     this.tempCurrentGuess = this.currentGuess;
                     this.tempCurrentRow = this.currentRow;
                 }
+            });
+
+            document.body.addEventListener('htmx:responseError', (evt) => {
+                if (evt.detail.xhr.status === 429) {
+                    this.showToastNotification(
+                        'Too many requests. Please slow down! ⏰',
+                        'error'
+                    );
+                } else {
+                    this.showToastNotification(
+                        'Connection error. Please try again! 🔄',
+                        'error'
+                    );
+                }
+            });
+
+            document.body.addEventListener('htmx:sendError', (evt) => {
+                this.showToastNotification(
+                    'Network error. Check your connection! 📡',
+                    'error'
+                );
+            });
+
+            document.body.addEventListener('htmx:timeout', (evt) => {
+                this.showToastNotification(
+                    'Request timed out. Please try again! ⏱️',
+                    'error'
+                );
             });
         },
         restoreUserInput() {
@@ -103,14 +149,32 @@ window.gameApp = function () {
             }
         },
         handleKeyPress(e) {
-            if (this.gameOver) return;
+            if (this.gameOver) {
+                if (
+                    e.key === 'Enter' ||
+                    /^[a-zA-Z]$/.test(e.key) ||
+                    e.key === 'Backspace'
+                ) {
+                    this.showToastNotification(
+                        'Game is over! Start a new game to continue! 🎮',
+                        'warning'
+                    );
+                }
+                return;
+            }
             if (e.key === 'Enter') this.submitGuess();
             else if (e.key === 'Backspace') this.deleteLetter();
             else if (/^[a-zA-Z]$/.test(e.key))
                 this.addLetter(e.key.toUpperCase());
         },
         handleVirtualKey(key) {
-            if (this.gameOver) return;
+            if (this.gameOver) {
+                this.showToastNotification(
+                    'Game is over! Start a new game to continue! 🎮',
+                    'warning'
+                );
+                return;
+            }
             const active = event?.target;
             if (active && active.disabled !== undefined) {
                 active.disabled = true;
@@ -126,6 +190,11 @@ window.gameApp = function () {
             if (this.currentGuess.length < 5) {
                 this.currentGuess += letter;
                 this.updateDisplay();
+            } else {
+                this.showToastNotification(
+                    'Word is already 5 letters! Press Enter to submit! ⌨️',
+                    'warning'
+                );
             }
         },
         deleteLetter() {
@@ -172,6 +241,17 @@ window.gameApp = function () {
                 this.gameOver ||
                 this.currentGuess.length !== this.WORD_LENGTH
             ) {
+                if (this.currentGuess.length < this.WORD_LENGTH) {
+                    this.showToastNotification(
+                        'Word must be 5 letters long! ✏️',
+                        'warning'
+                    );
+                } else if (this.gameOver) {
+                    this.showToastNotification(
+                        'Game is already over! Start a new game! 🎮',
+                        'warning'
+                    );
+                }
                 this.shakeCurrentRow();
                 return;
             }
@@ -190,10 +270,10 @@ window.gameApp = function () {
                 const status = tile.classList.contains('tile-correct')
                     ? 'correct'
                     : tile.classList.contains('tile-present')
-                      ? 'present'
-                      : tile.classList.contains('tile-absent')
-                        ? 'absent'
-                        : '';
+                    ? 'present'
+                    : tile.classList.contains('tile-absent')
+                    ? 'absent'
+                    : '';
                 if (letter && status) {
                     if (
                         !this.keyStatus[letter] ||
@@ -239,12 +319,39 @@ window.gameApp = function () {
                         tiles.forEach((tile, index) => {
                             tile.style.setProperty('--tile-index', index);
                         });
+                        setTimeout(() => {
+                            this.showToastNotification(
+                                '🎉 Congratulations! You won! 🎉'
+                            );
+                        }, 1500);
                     }
                 }
             });
             if (hasWinner) {
                 this.gameOver = true;
                 this.launchConfetti();
+            } else {
+                const completedRows = Array.from(rows).filter((row) => {
+                    const tiles = row.querySelectorAll('.tile.filled');
+                    return (
+                        tiles.length === 5 &&
+                        Array.from(tiles).some(
+                            (tile) =>
+                                tile.classList.contains('tile-correct') ||
+                                tile.classList.contains('tile-present') ||
+                                tile.classList.contains('tile-absent')
+                        )
+                    );
+                });
+
+                if (completedRows.length === 6 && !hasWinner) {
+                    setTimeout(() => {
+                        this.showToastNotification(
+                            'Game over! Better luck next time! 🎯',
+                            'info'
+                        );
+                    }, 1000);
+                }
             }
         },
         launchConfetti() {
@@ -360,9 +467,9 @@ window.gameApp = function () {
                 textarea.focus();
             }
         },
-        showToastNotification(message, isError = false) {
+        showToastNotification(message, type = 'success') {
             this.toastMessage = message;
-            this.toastType = isError ? 'danger' : 'success';
+            this.toastType = type;
 
             this.$nextTick(() => {
                 const toastElement =
