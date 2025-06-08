@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// setupTestRouter initializes a Gin router with all main routes for testing.
+// setupTestRouter creates test router with all routes
 func setupTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
@@ -23,7 +23,7 @@ func setupTestRouter() *gin.Engine {
 	return router
 }
 
-// TestHomeHandler validates that the home page returns HTTP 200.
+// TestHomeHandler tests home page returns 200
 func TestHomeHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -34,7 +34,7 @@ func TestHomeHandler(t *testing.T) {
 	}
 }
 
-// TestNewGameHandler validates that GET /new-game redirects properly.
+// TestNewGameHandler tests new game redirects
 func TestNewGameHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/new-game", nil)
@@ -45,7 +45,7 @@ func TestNewGameHandler(t *testing.T) {
 	}
 }
 
-// TestGameStateHandler validates that GET /game-state returns HTTP 200.
+// TestGameStateHandler tests game state returns 200
 func TestGameStateHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/game-state", nil)
@@ -56,7 +56,7 @@ func TestGameStateHandler(t *testing.T) {
 	}
 }
 
-// TestGuessHandler_InvalidMethod validates that GET /guess is not allowed.
+// TestGuessHandler_InvalidMethod tests GET /guess not allowed
 func TestGuessHandler_InvalidMethod(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("GET", "/guess", nil)
@@ -67,7 +67,7 @@ func TestGuessHandler_InvalidMethod(t *testing.T) {
 	}
 }
 
-// TestRetryWordHandler validates that POST /retry-word redirects properly.
+// TestRetryWordHandler tests retry word redirects
 func TestRetryWordHandler(t *testing.T) {
 	router := setupTestRouter()
 	req, _ := http.NewRequest("POST", "/retry-word", nil)
@@ -78,9 +78,8 @@ func TestRetryWordHandler(t *testing.T) {
 	}
 }
 
-// TestRateLimitMiddleware validates that the rate limiter blocks excessive requests.
+// TestRateLimitMiddleware tests rate limiting blocks excessive requests
 func TestRateLimitMiddleware(t *testing.T) {
-	// Setup a router with rate limiting and a dummy endpoint.
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	router.Use(rateLimitMiddleware())
@@ -88,11 +87,10 @@ func TestRateLimitMiddleware(t *testing.T) {
 		c.String(http.StatusOK, "ok")
 	})
 
-	// Simulate requests from the same IP.
 	req, _ := http.NewRequest("GET", "/limited", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 
-	// The default limiter allows 10 burst requests.
+	// First 10 requests should succeed
 	for i := range 10 {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -101,7 +99,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 		}
 	}
 
-	// The 11th request should be rate limited (429).
+	// 11th request should be rate limited
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	if w.Code != http.StatusTooManyRequests {
@@ -109,7 +107,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 	}
 }
 
-// TestMain sets up minimal test data for all HTTP tests.
+// TestMain sets up test data
 func TestMain(m *testing.M) {
 	wordList = []WordEntry{{Word: "APPLE", Hint: "fruit"}}
 	wordSet = map[string]struct{}{"APPLE": {}}

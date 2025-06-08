@@ -12,13 +12,13 @@ import (
 	"time"
 )
 
-// Global variables for session save rate limiting.
+// Globals for session save rate limiting
 var (
 	lastSaveTimes  = make(map[string]time.Time)
 	lastSaveTimesM sync.Mutex
 )
 
-// Constants for persistence operations.
+// Persistence constants
 const (
 	SessionsDirectory     = "data/sessions"
 	SessionsDirPerm       = 0750 // Owner: read/write/execute, group: read/execute
@@ -28,7 +28,7 @@ const (
 	SaveRateLimitInterval = time.Second
 )
 
-// saveGameSessionToFile persists a game session to disk with rate limiting.
+// saveGameSessionToFile saves a session to disk
 var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	// Rate-limit disk writes to prevent excessive I/O.
 	lastSaveTimesM.Lock()
@@ -73,7 +73,7 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	return err
 }
 
-// loadGameSessionFromFile loads a game session from disk with validation.
+// loadGameSessionFromFile loads a session from disk
 var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	// Validate session ID format and get secure path.
 	sessionFile, err := getSecureSessionPath(sessionID)
@@ -146,7 +146,7 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	return &game, nil
 }
 
-// cleanupOldSessions removes session files older than specified duration.
+// cleanupOldSessions removes old session files
 var cleanupOldSessions = func(maxAge time.Duration) error {
 	log.Printf("Starting cleanup of sessions older than %v in directory: %s", maxAge, SessionsDirectory)
 

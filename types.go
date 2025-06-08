@@ -2,31 +2,31 @@ package main
 
 import "time"
 
-// WordEntry represents a single word with its associated hint.
+// WordEntry is a word and its hint
 type WordEntry struct {
 	Word string `json:"word"`
 	Hint string `json:"hint"`
 }
 
-// WordList represents the JSON structure for loading valid words with hints.
+// WordList is a list of WordEntry
 type WordList struct {
 	Words []WordEntry `json:"words"`
 }
 
-// GameState represents a player's current game session state.
+// GameState is a player's game session
 type GameState struct {
-	Guesses        [][]GuessResult // 6 rows of 5 letters each with status
-	CurrentRow     int             // Current row the player is on (0-5)
-	GameOver       bool            // Whether the game has ended
-	Won            bool            // Whether the player won
-	TargetWord     string          // The word for this game session (revealed only when game ends)
-	SessionWord    string          // The actual target word for this session (hidden during gameplay)
-	GuessHistory   []string        // All guesses made for accurate try counting
-	LastAccessTime time.Time       `json:"lastAccessTime"` // Tracks when the session was last accessed
+	Guesses        [][]GuessResult
+	CurrentRow     int
+	GameOver       bool
+	Won            bool
+	TargetWord     string
+	SessionWord    string
+	GuessHistory   []string
+	LastAccessTime time.Time `json:"lastAccessTime"`
 }
 
-// GuessResult represents a single letter's evaluation in a guess.
+// GuessResult is a letter's evaluation
 type GuessResult struct {
-	Letter string // The guessed letter
+	Letter string
 	Status string // "correct", "present", "absent", or "invalid"
 }
