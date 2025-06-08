@@ -313,7 +313,48 @@ func getHintForWord(wordValue string) string {
 // minifiedStaticHandler serves minified CSS/JS in production
 func minifiedStaticHandler(root string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fp := filepath.Join(root, c.Param("filepath"))
+		// Validate and sanitize the filepath parameter
+		requestedPath := c.Param("filepath")
+		if requestedPath == "" {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// Remove any path traversal attempts and normalize
+		cleanPath := filepath.Clean(requestedPath)
+
+		// Ensure the path doesn't contain directory traversal
+		if strings.Contains(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") || strings.HasPrefix(cleanPath, "\\") {
+			log.Printf("Rejected potentially malicious file path: %s", requestedPath)
+			c.Status(http.StatusForbidden)
+			return
+		}
+
+		// Construct the full file path
+		fp := filepath.Join(root, cleanPath)
+
+		// Validate that the resolved path is within the root directory
+		absRoot, err := filepath.Abs(root)
+		if err != nil {
+			log.Printf("Failed to resolve root path %s: %v", root, err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		absFilePath, err := filepath.Abs(fp)
+		if err != nil {
+			log.Printf("Failed to resolve file path %s: %v", fp, err)
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// Ensure the file path is within the allowed root directory
+		if !strings.HasPrefix(absFilePath+string(filepath.Separator), absRoot+string(filepath.Separator)) {
+			log.Printf("File path %s escapes root directory %s", absFilePath, absRoot)
+			c.Status(http.StatusForbidden)
+			return
+		}
+
 		ext := strings.ToLower(filepath.Ext(fp))
 		var mediatype string
 		switch ext {
@@ -326,21 +367,41 @@ func minifiedStaticHandler(root string) gin.HandlerFunc {
 			c.File(fp)
 			return
 		}
+
 		f, err := os.Open(fp)
 		if err != nil {
-			c.Status(http.StatusNotFound)
+			if os.IsNotExist(err) {
+				c.Status(http.StatusNotFound)
+			} else {
+				log.Printf("Error opening file %s: %v", fp, err)
+				c.Status(http.StatusInternalServerError)
+			}
 			return
 		}
-		defer f.Close()
+		defer func() {
+			if closeErr := f.Close(); closeErr != nil {
+				log.Printf("Error closing file %s: %v", fp, closeErr)
+			}
+		}()
+
 		c.Header("Content-Type", mediatype)
 		if minifier != nil {
 			if err := minifier.Minify(mediatype, c.Writer, f); err != nil {
 				log.Printf("Minify error for %s: %v", fp, err)
-				f.Seek(0, 0)
-				_, _ = io.Copy(c.Writer, f)
+				// Seek back to beginning and serve unminified
+				if _, seekErr := f.Seek(0, 0); seekErr != nil {
+					log.Printf("Error seeking file %s: %v", fp, seekErr)
+					c.Status(http.StatusInternalServerError)
+					return
+				}
+				if _, copyErr := io.Copy(c.Writer, f); copyErr != nil {
+					log.Printf("Error serving file %s: %v", fp, copyErr)
+				}
 			}
 		} else {
-			_, _ = io.Copy(c.Writer, f)
+			if _, err := io.Copy(c.Writer, f); err != nil {
+				log.Printf("Error serving file %s: %v", fp, err)
+			}
 		}
 	}
 }

@@ -30,6 +30,12 @@ const (
 
 // saveGameSessionToFile saves a session to disk
 var saveGameSessionToFile = func(sessionID string, game *GameState) error {
+	// Validate session ID format first
+	if !isValidSessionID(sessionID) {
+		log.Printf("Rejected save attempt with invalid session ID format: %s", sessionID)
+		return errors.New("invalid session ID format")
+	}
+
 	// Rate-limit disk writes to prevent excessive I/O.
 	lastSaveTimesM.Lock()
 	last, ok := lastSaveTimes[sessionID]
@@ -47,10 +53,29 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 		return err
 	}
 
+	// Additional validation: ensure the session file path is secure
+	absSessionFile, err := filepath.Abs(sessionFile)
+	if err != nil {
+		log.Printf("Failed to resolve session file path for saving: %v", err)
+		return fmt.Errorf("failed to resolve session file path: %w", err)
+	}
+
+	absSessionDir, err := filepath.Abs(SessionsDirectory)
+	if err != nil {
+		log.Printf("Failed to resolve sessions directory for saving: %v", err)
+		return fmt.Errorf("failed to resolve sessions directory: %w", err)
+	}
+
+	// Ensure the file path is within the sessions directory
+	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir+string(filepath.Separator)) {
+		log.Printf("Session file path escapes sessions directory: %s", absSessionFile)
+		return errors.New("session file path escapes sessions directory")
+	}
+
 	// Create sessions directory with restrictive permissions.
 	if err := os.MkdirAll(SessionsDirectory, SessionsDirPerm); err != nil {
 		log.Printf("Failed to create sessions directory: %v", err)
-		return err
+		return fmt.Errorf("failed to create sessions directory: %w", err)
 	}
 
 	log.Printf("Saving game session to file: %s", sessionFile)
@@ -59,22 +84,29 @@ var saveGameSessionToFile = func(sessionID string, game *GameState) error {
 	data, err := json.MarshalIndent(game, JSONMarshalPrefix, JSONMarshalIndent)
 	if err != nil {
 		log.Printf("Failed to marshal game state for session %s: %v", sessionID, err)
-		return err
+		return fmt.Errorf("failed to marshal game state: %w", err)
 	}
 
 	// Write session data with restrictive file permissions.
 	err = os.WriteFile(sessionFile, data, SessionFilePerm)
 	if err != nil {
 		log.Printf("Failed to write session file %s: %v", sessionFile, err)
+		return fmt.Errorf("failed to write session file: %w", err)
 	} else {
 		log.Printf("Successfully saved session file: %s", sessionFile)
 	}
 
-	return err
+	return nil
 }
 
 // loadGameSessionFromFile loads a session from disk
 var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
+	// Validate session ID format first
+	if !isValidSessionID(sessionID) {
+		log.Printf("Rejected load attempt with invalid session ID format: %s", sessionID)
+		return nil, os.ErrNotExist
+	}
+
 	// Validate session ID format and get secure path.
 	sessionFile, err := getSecureSessionPath(sessionID)
 	if err != nil {
@@ -83,6 +115,24 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 	}
 
 	log.Printf("Attempting to load session from file: %s", sessionFile)
+
+	// Additional validation: ensure file is in sessions directory.
+	absSessionFile, err := filepath.Abs(sessionFile)
+	if err != nil {
+		log.Printf("Failed to resolve session file path for loading: %v", err)
+		return nil, fmt.Errorf("failed to resolve session file path: %w", err)
+	}
+
+	absSessionDir, err := filepath.Abs(SessionsDirectory)
+	if err != nil {
+		log.Printf("Failed to resolve sessions directory for loading: %v", err)
+		return nil, fmt.Errorf("failed to resolve sessions directory: %w", err)
+	}
+
+	if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir+string(filepath.Separator)) {
+		log.Printf("Session file path escapes sessions directory: %s", absSessionFile)
+		return nil, errors.New("session file path escapes sessions directory")
+	}
 
 	// Check if file exists and validate age.
 	info, err := os.Stat(sessionFile)
@@ -100,26 +150,11 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 		return nil, os.ErrNotExist
 	}
 
-	// Additional validation: ensure file is in sessions directory.
-	absSessionFile, err := filepath.Abs(sessionFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve session file path: %w", err)
-	}
-
-	absSessionDir, err := filepath.Abs(SessionsDirectory)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve sessions directory: %w", err)
-	}
-
-	if !strings.HasPrefix(absSessionFile, absSessionDir+string(filepath.Separator)) {
-		return nil, errors.New("session file path escapes sessions directory")
-	}
-
 	// Read and unmarshal session data.
 	data, err := os.ReadFile(sessionFile)
 	if err != nil {
 		log.Printf("Failed to read session file %s: %v", sessionFile, err)
-		return nil, err
+		return nil, fmt.Errorf("failed to read session file: %w", err)
 	}
 
 	var game GameState
@@ -150,6 +185,13 @@ var loadGameSessionFromFile = func(sessionID string) (*GameState, error) {
 var cleanupOldSessions = func(maxAge time.Duration) error {
 	log.Printf("Starting cleanup of sessions older than %v in directory: %s", maxAge, SessionsDirectory)
 
+	// Validate sessions directory path
+	absSessionDir, err := filepath.Abs(SessionsDirectory)
+	if err != nil {
+		log.Printf("Failed to resolve sessions directory for cleanup: %v", err)
+		return fmt.Errorf("failed to resolve sessions directory: %w", err)
+	}
+
 	entries, err := os.ReadDir(SessionsDirectory)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -157,7 +199,7 @@ var cleanupOldSessions = func(maxAge time.Duration) error {
 			return nil
 		}
 		log.Printf("Failed to read sessions directory: %v", err)
-		return err
+		return fmt.Errorf("failed to read sessions directory: %w", err)
 	}
 
 	cutoff := time.Now().Add(-maxAge)
@@ -166,6 +208,12 @@ var cleanupOldSessions = func(maxAge time.Duration) error {
 
 	for _, entry := range entries {
 		if entry.IsDir() {
+			continue
+		}
+
+		// Validate filename to prevent path traversal in cleanup
+		if strings.Contains(entry.Name(), "..") || strings.Contains(entry.Name(), "/") || strings.Contains(entry.Name(), "\\") {
+			log.Printf("Skipping file with suspicious name during cleanup: %s", entry.Name())
 			continue
 		}
 
@@ -178,6 +226,20 @@ var cleanupOldSessions = func(maxAge time.Duration) error {
 
 		if info.ModTime().Before(cutoff) {
 			sessionFile := filepath.Join(SessionsDirectory, entry.Name())
+
+			// Additional safety check: ensure the file is within sessions directory
+			absSessionFile, err := filepath.Abs(sessionFile)
+			if err != nil {
+				log.Printf("Failed to resolve path for cleanup file %s: %v", sessionFile, err)
+				errorCount++
+				continue
+			}
+
+			if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir+string(filepath.Separator)) {
+				log.Printf("Skipping file outside sessions directory during cleanup: %s", absSessionFile)
+				continue
+			}
+
 			if err := os.Remove(sessionFile); err != nil {
 				log.Printf("Failed to remove old session file %s: %v", sessionFile, err)
 				errorCount++
