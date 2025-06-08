@@ -879,12 +879,41 @@ func healthHandler(c *gin.Context) {
 	sessionMutex.RLock()
 	sessionCount := len(gameSessions)
 	sessionMutex.RUnlock()
+	uptime := time.Since(startTime)
 	c.JSON(http.StatusOK, gin.H{
 		"status":         "ok",
 		"env":            map[bool]string{true: "production", false: "development"}[isProduction],
 		"words_loaded":   len(wordList),
+		"accepted_words": len(acceptedWordSet),
 		"sessions_count": sessionCount,
-		"uptime":         time.Since(startTime).String(),
+		"uptime":         formatUptime(uptime),
 		"timestamp":      time.Now().UTC().Format(time.RFC3339),
 	})
+}
+
+// formatUptime returns a human-friendly uptime string
+func formatUptime(d time.Duration) string {
+	seconds := int(d.Seconds()) % 60
+	minutes := int(d.Minutes()) % 60
+	hours := int(d.Hours())
+	switch {
+	case hours > 0:
+		return fmt.Sprintf("%d hour%s, %d minute%s, %d second%s",
+			hours, plural(hours),
+			minutes, plural(minutes),
+			seconds, plural(seconds))
+	case minutes > 0:
+		return fmt.Sprintf("%d minute%s, %d second%s",
+			minutes, plural(minutes),
+			seconds, plural(seconds))
+	default:
+		return fmt.Sprintf("%d second%s", seconds, plural(seconds))
+	}
+}
+
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }

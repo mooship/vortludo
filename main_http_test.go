@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -112,4 +113,30 @@ func TestMain(m *testing.M) {
 	wordList = []WordEntry{{Word: "APPLE", Hint: "fruit"}}
 	wordSet = map[string]struct{}{"APPLE": {}}
 	os.Exit(m.Run())
+}
+
+// TestHealthHandlerFields tests /health endpoint for required fields
+func TestHealthHandlerFields(t *testing.T) {
+	router := gin.Default()
+	router.GET("/health", healthHandler)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/health", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET /health returned status %d, want 200", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to unmarshal /health response: %v", err)
+	}
+
+	if _, ok := resp["words_loaded"]; !ok {
+		t.Error("Expected 'words_loaded' field in /health response")
+	}
+	if _, ok := resp["accepted_words"]; !ok {
+		t.Error("Expected 'accepted_words' field in /health response")
+	}
 }
