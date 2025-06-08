@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -138,5 +139,67 @@ func TestHealthHandlerFields(t *testing.T) {
 	}
 	if _, ok := resp["accepted_words"]; !ok {
 		t.Error("Expected 'accepted_words' field in /health response")
+	}
+}
+
+func TestGuessHandler_PostInvalidGuess(t *testing.T) {
+	router := setupTestRouter()
+	req, _ := http.NewRequest("POST", "/guess", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("POST /guess with no data returned status %d, want 200", w.Code)
+	}
+}
+
+func TestGuessHandler_PostNotAcceptedWord(t *testing.T) {
+	router := setupTestRouter()
+	acceptedWordSet = map[string]struct{}{"APPLE": {}}
+	form := "guess=ZZZZZ"
+	req, _ := http.NewRequest("POST", "/guess", strings.NewReader(form))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("POST /guess with not accepted word returned status %d, want 200", w.Code)
+	}
+}
+
+func TestGuessHandler_PostShortGuess(t *testing.T) {
+	router := setupTestRouter()
+	acceptedWordSet = map[string]struct{}{"APPLE": {}}
+	form := "guess=AB"
+	req, _ := http.NewRequest("POST", "/guess", strings.NewReader(form))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("POST /guess with short guess returned status %d, want 200", w.Code)
+	}
+}
+
+func TestGuessHandler_PostLongGuess(t *testing.T) {
+	router := setupTestRouter()
+	acceptedWordSet = map[string]struct{}{"APPLE": {}}
+	form := "guess=ABCDEFGHIJK"
+	req, _ := http.NewRequest("POST", "/guess", strings.NewReader(form))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("POST /guess with long guess returned status %d, want 200", w.Code)
+	}
+}
+
+func TestHealthHandler_EnvField(t *testing.T) {
+	router := gin.Default()
+	router.GET("/health", healthHandler)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/health", nil)
+	router.ServeHTTP(w, req)
+	var resp map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &resp)
+	if env, ok := resp["env"].(string); !ok || (env != "production" && env != "development") {
+		t.Errorf("healthHandler env field = %v, want 'production' or 'development'", resp["env"])
 	}
 }

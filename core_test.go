@@ -432,3 +432,80 @@ func TestWordsJson_NoDuplicatesAndFiveLetters(t *testing.T) {
 		seen[upper] = struct{}{}
 	}
 }
+
+func TestCheckGuess_EmptyGuess(t *testing.T) {
+	target := TestWordApple
+	guess := ""
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("checkGuess with empty guess should panic (index out of range)")
+		}
+	}()
+	_ = checkGuess(guess, target)
+}
+
+func TestUpdateGameState_InvalidGuess(t *testing.T) {
+	game := &GameState{
+		Guesses:      make([][]GuessResult, MaxGuesses),
+		CurrentRow:   0,
+		SessionWord:  TestWordHello,
+		GuessHistory: []string{},
+	}
+	for i := range game.Guesses {
+		game.Guesses[i] = make([]GuessResult, WordLength)
+	}
+	// Simulate invalid guess (not in word list)
+	updateGameState(game, "XXXXX", TestWordHello, checkGuess("XXXXX", TestWordHello), true)
+	if game.Won || game.GameOver {
+		t.Errorf("updateGameState with invalid guess should not set Won/GameOver")
+	}
+}
+
+func TestIsAcceptedWord(t *testing.T) {
+	acceptedWordSet = map[string]struct{}{
+		"APPLE": {},
+		"BANJO": {},
+	}
+	tests := []struct {
+		word string
+		want bool
+	}{
+		{"APPLE", true},
+		{"BANJO", true},
+		{"PEACH", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		got := isAcceptedWord(tt.word)
+		if got != tt.want {
+			t.Errorf("isAcceptedWord(%q) = %v, want %v", tt.word, got, tt.want)
+		}
+	}
+}
+
+func TestPlural(t *testing.T) {
+	if plural(1) != "" {
+		t.Errorf("plural(1) = %q, want \"\"", plural(1))
+	}
+	if plural(2) != "s" {
+		t.Errorf("plural(2) = %q, want \"s\"", plural(2))
+	}
+}
+
+func TestGetEnvDuration_Invalid(t *testing.T) {
+	os.Setenv("TEST_DURATION", "notaduration")
+	defer os.Unsetenv("TEST_DURATION")
+	got := getEnvDuration("TEST_DURATION", 42*time.Second)
+	if got != 42*time.Second {
+		t.Errorf("getEnvDuration fallback failed, got %v", got)
+	}
+}
+
+func TestGetEnvInt_Invalid(t *testing.T) {
+	os.Setenv("TEST_INT", "notanint")
+	defer os.Unsetenv("TEST_INT")
+	got := getEnvInt("TEST_INT", 7)
+	if got != 7 {
+		t.Errorf("getEnvInt fallback failed, got %v", got)
+	}
+}

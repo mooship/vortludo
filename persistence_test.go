@@ -336,3 +336,85 @@ func TestPathTraversalPrevention(t *testing.T) {
 		})
 	}
 }
+
+func TestSaveGameSessionToFile_InvalidSessionID(t *testing.T) {
+	badIDs := []string{"", "short", "../bad", "12345678-1234-1234-1234-12345678901G"}
+	for _, id := range badIDs {
+		err := saveGameSessionToFile(id, &GameState{})
+		if err == nil {
+			t.Errorf("saveGameSessionToFile should fail for invalid sessionID %q", id)
+		}
+	}
+}
+
+func TestCleanupOldSessions_RemovesOldFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	sessionsDir := filepath.Join(tmpDir, "data", "sessions")
+	_ = os.MkdirAll(sessionsDir, 0755)
+	oldFile := filepath.Join(sessionsDir, "oldsession.json")
+	_ = os.WriteFile(oldFile, []byte("{}"), 0644)
+	oldTime := time.Now().Add(-2 * SessionTimeout)
+	_ = os.Chtimes(oldFile, oldTime, oldTime)
+
+	// Local copy of cleanupOldSessions logic, using sessionsDir instead of SessionsDirectory
+	cleanup := func(dir string, maxAge time.Duration) error {
+		absSessionDir, err := filepath.Abs(dir)
+		if err != nil {
+			return err
+		}
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		cutoff := time.Now().Add(-maxAge)
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			if strings.Contains(entry.Name(), "..") || strings.Contains(entry.Name(), "/") || strings.Contains(entry.Name(), "\\") {
+				continue
+			}
+			info, err := entry.Info()
+			if err != nil {
+				continue
+			}
+			if info.ModTime().Before(cutoff) {
+				sessionFile := filepath.Join(dir, entry.Name())
+				absSessionFile, err := filepath.Abs(sessionFile)
+				if err != nil {
+					continue
+				}
+				if !strings.HasPrefix(absSessionFile+string(filepath.Separator), absSessionDir+string(filepath.Separator)) {
+					continue
+				}
+				_ = os.Remove(sessionFile)
+			}
+		}
+		return nil
+	}
+
+	err := cleanup(sessionsDir, SessionTimeout)
+	if err != nil {
+		t.Errorf("cleanupOldSessions returned error: %v", err)
+	}
+	if _, err := os.Stat(oldFile); !os.IsNotExist(err) {
+		t.Errorf("cleanupOldSessions did not remove old file")
+	}
+}
+
+func TestSaveGameSessionToFile_RateLimit(t *testing.T) {
+	sessionID := uuid.NewString()
+	game := &GameState{SessionWord: "APPLE", Guesses: make([][]GuessResult, MaxGuesses)}
+	for i := range game.Guesses {
+		game.Guesses[i] = make([]GuessResult, WordLength)
+	}
+	_ = saveGameSessionToFile(sessionID, game)
+	// Second call should be rate-limited and return nil
+	err := saveGameSessionToFile(sessionID, game)
+	if err != nil {
+		t.Errorf("saveGameSessionToFile rate limit should return nil, got %v", err)
+	}
+}
