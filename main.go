@@ -52,14 +52,15 @@ const (
 
 // Global application state variables.
 var (
-	wordList     []WordEntry                   // Valid words with hints for the game
-	wordSet      map[string]struct{}           // For O(1) word validation
-	gameSessions = make(map[string]*GameState) // Session-based game storage
-	sessionMutex sync.RWMutex                  // Protects gameSessions map
-	isProduction bool                          // Environment flag for static file serving
-	limiterMap   = make(map[string]*rate.Limiter)
-	limiterMutex sync.Mutex
-	startTime    = time.Now() // Track server start time for health endpoint
+	wordList        []WordEntry                   // Valid words with hints for the game
+	wordSet         map[string]struct{}           // For O(1) word validation
+	acceptedWordSet map[string]struct{}           // For O(1) accepted word validation
+	gameSessions    = make(map[string]*GameState) // Session-based game storage
+	sessionMutex    sync.RWMutex                  // Protects gameSessions map
+	isProduction    bool                          // Environment flag for static file serving
+	limiterMap      = make(map[string]*rate.Limiter)
+	limiterMutex    sync.Mutex
+	startTime       = time.Now() // Track server start time for health endpoint
 )
 
 func main() {
@@ -72,6 +73,12 @@ func main() {
 		log.Fatalf("Failed to load words: %v", err)
 	}
 	log.Printf("Loaded %d words from dictionary", len(wordList))
+
+	// Load accepted words list
+	if err := loadAcceptedWords(); err != nil {
+		log.Fatalf("Failed to load accepted words: %v", err)
+	}
+	log.Printf("Loaded %d accepted words", len(acceptedWordSet))
 
 	// Clean up expired sessions on startup.
 	log.Printf("Performing startup session cleanup")
@@ -211,6 +218,24 @@ func loadWords() error {
 	return nil
 }
 
+// loadAcceptedWords reads the accepted words list from JSON file.
+func loadAcceptedWords() error {
+	log.Printf("Loading accepted words from data/accepted_words.json")
+	data, err := os.ReadFile("data/accepted_words.json")
+	if err != nil {
+		return err
+	}
+	var accepted []string
+	if err := json.Unmarshal(data, &accepted); err != nil {
+		return err
+	}
+	acceptedWordSet = make(map[string]struct{}, len(accepted))
+	for _, w := range accepted {
+		acceptedWordSet[strings.ToUpper(w)] = struct{}{}
+	}
+	return nil
+}
+
 // getRandomWordEntry returns a random word entry using crypto/rand for security.
 func getRandomWordEntry() WordEntry {
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(wordList))))
@@ -326,6 +351,15 @@ func guessHandler(c *gin.Context) {
 	}
 
 	guess := normalizeGuess(c.PostForm("guess"))
+	// Check if guess is in accepted list.
+	if !isAcceptedWord(guess) {
+		// Return board with notAccepted flag for toast.
+		c.HTML(http.StatusOK, "game-board", gin.H{
+			"game":        game,
+			"notAccepted": true,
+		})
+		return
+	}
 	if err := processGuess(c, sessionID, game, guess); err != nil {
 		return
 	}
@@ -468,6 +502,12 @@ func checkGuess(guess, target string) []GuessResult {
 // isValidWord checks if a word exists in the word set.
 func isValidWord(word string) bool {
 	_, ok := wordSet[word]
+	return ok
+}
+
+// isAcceptedWord checks if a word is in the accepted word set.
+func isAcceptedWord(word string) bool {
+	_, ok := acceptedWordSet[word]
 	return ok
 }
 
@@ -708,6 +748,10 @@ func rateLimitMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := c.ClientIP()
 		if !getLimiter(key).Allow() {
+			// For HTMX requests, return an error response that can be handled by the client
+			if c.GetHeader("HX-Request") == "true" {
+				c.Header("HX-Trigger", "rate-limit-exceeded")
+			}
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "too many requests"})
 			return
 		}
