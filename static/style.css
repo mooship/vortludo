@@ -189,7 +189,10 @@
     font-weight: 600;
     border-radius: 0.4rem;
     border-width: 2px;
-    transition: background 0.15s, color 0.15s, border 0.15s;
+    transition:
+        background 0.15s,
+        color 0.15s,
+        border 0.15s;
 }
 
 [data-bs-theme='light'] .key-button,
@@ -631,9 +634,11 @@ body {
 }
 
 .winner .tile {
-    animation: bounce 0.5s ease-out, sparkle 2s ease-in-out infinite;
-    animation-delay: calc(var(--tile-index) * 0.1s),
-        calc(var(--tile-index) * 0.1s + 0.5s);
+    animation:
+        bounce 0.5s ease-out,
+        sparkle 2s ease-in-out infinite;
+    animation-delay:
+        calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 0.5s);
 }
 
 @keyframes rainbow-shimmer {
@@ -655,7 +660,9 @@ body {
 }
 
 .winner .tile-correct {
-    animation: bounce 0.5s ease-out, rainbow-shimmer 2s ease-in-out infinite;
-    animation-delay: calc(var(--tile-index) * 0.1s),
-        calc(var(--tile-index) * 0.1s + 1s);
+    animation:
+        bounce 0.5s ease-out,
+        rainbow-shimmer 2s ease-in-out infinite;
+    animation-delay:
+        calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 1s);
 }

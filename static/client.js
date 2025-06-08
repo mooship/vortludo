@@ -270,10 +270,10 @@ window.gameApp = function () {
                 const status = tile.classList.contains('tile-correct')
                     ? 'correct'
                     : tile.classList.contains('tile-present')
-                    ? 'present'
-                    : tile.classList.contains('tile-absent')
-                    ? 'absent'
-                    : '';
+                      ? 'present'
+                      : tile.classList.contains('tile-absent')
+                        ? 'absent'
+                        : '';
                 if (letter && status) {
                     if (
                         !this.keyStatus[letter] ||
