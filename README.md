@@ -45,6 +45,8 @@ A libre (free and open source) Wordle clone built with Go and Gin. Each game ses
 4. **Open your browser**
    Navigate to `http://localhost:8080`
 
+> **Note:** All required directories (such as `data/sessions/`) will be created automatically by the application if they do not exist. No manual directory creation is needed.
+
 ## Development with Live Reload
 
 This project supports live reloads using [Air](https://github.com/cosmtrek/air).
