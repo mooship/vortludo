@@ -21,6 +21,8 @@ import (
 	"github.com/joho/godotenv"
 	cachecontrol "go.eigsys.de/gin-cachecontrol/v2"
 
+	ginGzip "github.com/gin-contrib/gzip"
+
 	"golang.org/x/time/rate"
 
 	"errors"
@@ -96,6 +98,12 @@ func main() {
 
 	// Setup web server.
 	router := gin.Default()
+
+	// Add GZIP middleware for JS and CSS files.
+	router.Use(ginGzip.Gzip(ginGzip.DefaultCompression,
+		ginGzip.WithExcludedExtensions([]string{".svg", ".ico", ".png", ".jpg", ".jpeg", ".gif"}),
+		ginGzip.WithExcludedPaths([]string{"/static/fonts"})))
+
 	if err := router.SetTrustedProxies([]string{"127.0.0.1"}); err != nil {
 		log.Printf("Warning: Failed to set trusted proxies: %v", err)
 	}

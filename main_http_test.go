@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 
+	ginGzip "github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,6 +26,33 @@ func setupTestRouter() *gin.Engine {
 	router.POST("/guess", rateLimitMiddleware(), guessHandler)
 	router.GET("/game-state", gameStateHandler)
 	router.POST("/retry-word", rateLimitMiddleware(), retryWordHandler)
+	return router
+}
+
+func setupGzipTestRouter() *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	router := gin.Default()
+	router.Use(
+		ginGzip.Gzip(ginGzip.DefaultCompression,
+			ginGzip.WithExcludedExtensions([]string{".svg", ".ico", ".png", ".jpg", ".jpeg", ".gif"}),
+			ginGzip.WithExcludedPaths([]string{"/static/fonts"})),
+	)
+	router.GET("/static/test.js", func(c *gin.Context) {
+		c.Header("Content-Type", "application/javascript")
+		c.String(http.StatusOK, "var x = 1;")
+	})
+	router.GET("/static/test.css", func(c *gin.Context) {
+		c.Header("Content-Type", "text/css")
+		c.String(http.StatusOK, "body{}")
+	})
+	router.GET("/static/test.png", func(c *gin.Context) {
+		c.Header("Content-Type", "image/png")
+		c.String(http.StatusOK, "PNGDATA")
+	})
+	router.GET("/static/fonts/font.woff2", func(c *gin.Context) {
+		c.Header("Content-Type", "font/woff2")
+		c.String(http.StatusOK, "FONTDATA")
+	})
 	return router
 }
 
@@ -241,5 +272,77 @@ func TestHealthHandler_Fields(t *testing.T) {
 		if _, ok := resp[field]; !ok {
 			t.Errorf("Expected '%s' field in /health response", field)
 		}
+	}
+}
+
+func isGzipped(w *httptest.ResponseRecorder) bool {
+	return w.Header().Get("Content-Encoding") == "gzip"
+}
+
+func decompressGzip(data []byte) (string, error) {
+	r, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return "", err
+	}
+	defer r.Close()
+	out, err := io.ReadAll(r)
+	return string(out), err
+}
+
+func TestGzipMiddleware_CompressesJS(t *testing.T) {
+	router := setupGzipTestRouter()
+	req, _ := http.NewRequest("GET", "/static/test.js", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if !isGzipped(w) {
+		t.Errorf("Expected gzip Content-Encoding for .js file")
+	}
+	body, err := decompressGzip(w.Body.Bytes())
+	if err != nil || body != "var x = 1;" {
+		t.Errorf("Failed to decompress gzipped JS: %v, got: %q", err, body)
+	}
+}
+
+func TestGzipMiddleware_CompressesCSS(t *testing.T) {
+	router := setupGzipTestRouter()
+	req, _ := http.NewRequest("GET", "/static/test.css", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if !isGzipped(w) {
+		t.Errorf("Expected gzip Content-Encoding for .css file")
+	}
+	body, err := decompressGzip(w.Body.Bytes())
+	if err != nil || body != "body{}" {
+		t.Errorf("Failed to decompress gzipped CSS: %v, got: %q", err, body)
+	}
+}
+
+func TestGzipMiddleware_SkipsPNG(t *testing.T) {
+	router := setupGzipTestRouter()
+	req, _ := http.NewRequest("GET", "/static/test.png", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if isGzipped(w) {
+		t.Errorf("Did not expect gzip Content-Encoding for .png file")
+	}
+	if w.Body.String() != "PNGDATA" {
+		t.Errorf("Unexpected body for .png file: %q", w.Body.String())
+	}
+}
+
+func TestGzipMiddleware_SkipsFontsPath(t *testing.T) {
+	router := setupGzipTestRouter()
+	req, _ := http.NewRequest("GET", "/static/fonts/font.woff2", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if isGzipped(w) {
+		t.Errorf("Did not expect gzip Content-Encoding for /static/fonts path")
+	}
+	if w.Body.String() != "FONTDATA" {
+		t.Errorf("Unexpected body for font file: %q", w.Body.String())
 	}
 }

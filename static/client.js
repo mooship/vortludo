@@ -60,16 +60,6 @@ window.gameApp = function () {
                 } else {
                     this.updateGameState();
                 }
-
-                if (evt.target.id === 'game-board-container') {
-                    const allTilesEmpty =
-                        document.querySelectorAll('.tile.filled').length === 0;
-                    if (allTilesEmpty && this.currentRow === 0) {
-                        this.showToastNotification(
-                            'New game started! Good luck! 🎯'
-                        );
-                    }
-                }
             });
 
             document.body.addEventListener('htmx:beforeSwap', (evt) => {
