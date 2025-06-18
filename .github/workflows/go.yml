@@ -29,8 +29,8 @@ jobs:
             - name: Build application
               run: go build -v ./...
 
-            # - name: Test
-            #   run: go test -v ./...
+            - name: Test
+              run: go test -v ./...
 
             - name: Build production binary
               run: go build -tags netgo -ldflags '-s -w' -o vortludo
