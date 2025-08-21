@@ -38,4 +38,3 @@ jobs:
 
             - name: Build production binary
               run: go build -tags netgo -ldflags '-s -w' -o vortludo ./cmd/vortludo
-              working-directory: ${{ github.workspace }}
