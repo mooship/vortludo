@@ -1,4 +1,5 @@
-Vortludo 🟩🟨⬜
+
+# Vortludo 🟩🟨⬜
 
 A fun, open-source Wordle-inspired game built with Go! 🎮
 

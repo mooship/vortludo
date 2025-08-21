@@ -22,16 +22,13 @@ Thanks for wanting to make Vortludo better!
    - Fill out the PR template and explain your change.
    - Respond to feedback and iterate as needed.
 
-
 ## Code of Conduct 🤝
 
 Please be kind and constructive in all interactions. See `CODE_OF_CONDUCT.md` for details.
 
-
 ## Need help? 🆘
 
 Open an issue or contact the maintainer at timothybrits@icloud.com.
-
 
 ---
 
