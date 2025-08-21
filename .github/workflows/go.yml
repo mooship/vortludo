@@ -22,19 +22,15 @@ jobs:
 
             - name: Install dependencies
               run: go mod tidy && go mod download
-              working-directory: ${{ github.workspace }}
 
             - name: Create required directories
               run: mkdir -p data
-              working-directory: ${{ github.workspace }}
 
             - name: Build application
               run: go build -v ./...
-              working-directory: ${{ github.workspace }}
 
             - name: Test
               run: go test -v ./...
-              working-directory: ${{ github.workspace }}
 
             - name: Build production binary
-              run: go build -tags netgo -ldflags '-s -w' -o vortludo ./cmd/vortludo
+              run: go build -tags netgo -ldflags '-s -w' -o "$OUT" ./cmd/vortludo
