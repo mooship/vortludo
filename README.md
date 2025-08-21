@@ -14,7 +14,7 @@ A fun, open-source Wordle-inspired game built with Go! 🎮
 
 ### Prerequisites
 
-- Go 1.25 or newer
+- Go 1.24 or newer
 
 ### Running Locally
 

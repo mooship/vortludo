@@ -1,6 +1,6 @@
 module vortludo
 
-go 1.25
+go 1.24.6
 
 require (
 	github.com/gin-gonic/gin v1.10.1
@@ -8,7 +8,7 @@ require (
 	go.eigsys.de/gin-cachecontrol/v2 v2.3.0
 )
 
-require github.com/samber/lo v1.51.0 // indirect
+require github.com/samber/lo v1.51.0
 
 require (
 	github.com/bytedance/sonic v1.13.3 // indirect
