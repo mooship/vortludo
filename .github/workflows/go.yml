@@ -33,4 +33,4 @@ jobs:
               run: go test -v ./...
 
             - name: Build production binary
-              run: go build -tags netgo -ldflags '-s -w' -o vortludo
+              run: go build -tags netgo -ldflags '-s -w' -o vortludo ./cmd/vortludo
