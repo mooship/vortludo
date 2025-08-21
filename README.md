@@ -7,7 +7,7 @@ A fun, open-source Wordle-inspired game built with Go! 🎮
 
 - Guess the hidden word in 6 tries
 - Color-coded feedback for each guess
-- Web-based interface (no installation required)
+- Web-based interface
 - Custom word lists
 
 ## Getting Started 🚀
