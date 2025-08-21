@@ -667,3 +667,28 @@ body {
     animation-delay:
         calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 1s);
 }
+
+.hint-area {
+    min-height: 3.5em;
+    height: 3.5em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+}
+.hint-area .hint-btn-row {
+    height: 2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+.hint-area .hint-text-row {
+    height: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    transition: opacity 0.2s;
+}
