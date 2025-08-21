@@ -28,9 +28,12 @@ jobs:
 
             - name: Build application
               run: go build -v ./...
+              working-directory: ${{ github.workspace }}
 
             - name: Test
               run: go test -v ./...
+              working-directory: ${{ github.workspace }}
 
             - name: Build production binary
               run: go build -tags netgo -ldflags '-s -w' -o "$OUT" ./cmd/vortludo
+              working-directory: ${{ github.workspace }}
