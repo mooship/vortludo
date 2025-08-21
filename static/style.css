@@ -475,7 +475,6 @@
     animation-delay: calc(var(--tile-index) * 0.1s);
 }
 
-/* Hide tile status colors initially when flipping */
 .tile.flip:not(.flip-revealed) {
     background-color: var(--sepia-tile-bg) !important;
     border-color: var(--sepia-tile-border) !important;
@@ -488,7 +487,6 @@
     color: var(--sepia-dark-text) !important;
 }
 
-/* Apply colors only after flip-revealed class is added */
 .tile.flip.flip-revealed.tile-correct {
     background-color: var(--sepia-correct) !important;
     border-color: var(--sepia-correct) !important;

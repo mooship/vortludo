@@ -12,6 +12,14 @@ document.addEventListener(
     false
 );
 
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
 window.gameApp = function () {
     return {
         WORD_LENGTH: 5,
@@ -110,10 +118,11 @@ window.gameApp = function () {
             }
         },
         updateDisplay() {
-            const row =
-                document.querySelectorAll('#game-board > div')[this.currentRow];
+            const rows = document.querySelectorAll('#game-board > div');
+            const row = rows?.[this.currentRow];
             if (!row) return;
-            row.querySelectorAll('.tile').forEach((tile, i) => {
+            const tiles = row.querySelectorAll('.tile');
+            tiles?.forEach((tile, i) => {
                 tile.classList.remove(
                     'tile-correct',
                     'tile-present',
@@ -131,12 +140,10 @@ window.gameApp = function () {
         shakeCurrentRow() {
             const rows = document.querySelectorAll('.guess-row');
             const targetRow = Math.max(0, this.currentRow);
-            if (rows[targetRow]) {
-                rows[targetRow].classList.add('shake');
-                setTimeout(
-                    () => rows[targetRow].classList.remove('shake'),
-                    500
-                );
+            const row = rows?.[targetRow];
+            if (row) {
+                row.classList.add('shake');
+                setTimeout(() => row.classList.remove('shake'), 500);
             }
         },
         handleKeyPress(e) {
@@ -178,7 +185,7 @@ window.gameApp = function () {
             else this.addLetter(key);
         },
         addLetter(letter) {
-            if (this.currentGuess.length < 5) {
+            if (this.currentGuess.length < this.WORD_LENGTH) {
                 this.currentGuess += letter;
                 this.updateDisplay();
             } else {
@@ -280,15 +287,15 @@ window.gameApp = function () {
             });
         },
         getKeyClass(letter) {
-            return this.keyStatus[letter] || '';
+            return this.keyStatus[letter] ?? '';
         },
         animateNewGuess() {
             const rows = document.querySelectorAll('#game-board > div');
-            const row = rows[this.currentRow - 1];
+            const row = rows?.[this.currentRow - 1];
             if (!row || row.classList.contains('animated')) return;
             const tiles = row.querySelectorAll('.tile.filled');
             if (tiles.length !== this.WORD_LENGTH) return;
-            tiles.forEach((tile, index) => {
+            tiles?.forEach((tile, index) => {
                 tile.style.setProperty('--tile-index', index);
                 setTimeout(() => {
                     tile.classList.add('flip');
@@ -464,32 +471,19 @@ window.gameApp = function () {
             this.toastMessage = message;
             this.toastType = type;
 
-            this.$nextTick(() => {
-                const toastElement =
-                    document.getElementById('notification-toast');
-                if (toastElement) {
-                    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-                        const toast = new bootstrap.Toast(toastElement, {
-                            delay: 3000,
-                        });
-                        toast.show();
-                    } else {
-                        setTimeout(() => {
-                            if (
-                                typeof bootstrap !== 'undefined' &&
-                                bootstrap.Toast
-                            ) {
-                                const toast = new bootstrap.Toast(
-                                    toastElement,
-                                    {
-                                        delay: 3000,
-                                    }
-                                );
-                                toast.show();
-                            }
-                        }, 100);
-                    }
+            const showToast = () => {
+                const toastElement = document.getElementById('notification-toast');
+                if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+                    const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                    toast.show();
                 }
+            };
+
+            this.$nextTick(() => {
+                showToast();
+                setTimeout(() => {
+                    showToast();
+                }, 100);
             });
         },
         shouldHideKeyboard() {

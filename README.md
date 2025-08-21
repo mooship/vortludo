@@ -1,291 +1,47 @@
-# Vortludo 🎯
+Vortludo 🟩🟨⬜
 
-[![Go](https://github.com/mooship/vortludo/actions/workflows/go.yml/badge.svg)](https://github.com/mooship/vortludo/actions/workflows/go.yml)
+A fun, open-source Wordle-inspired game built with Go! 🎮
 
-A libre (free and open source) Wordle clone built with Go and Gin. Each game session uses a random word from the dictionary, making it replayable with fresh challenges!
+## Features ✨
 
-## Features
+- Guess the hidden word in 6 tries
+- Color-coded feedback for each guess
+- Web-based interface (no installation required)
+- Custom word lists
 
-- 🎮 **Classic Wordle gameplay** - Guess the 5-letter word in 6 tries
-- 🔀 **Random words** - Each new game picks a different word from the dictionary
-- 💡 **Helpful hints** - Each word comes with a hint to guide you
-- 📱 **Responsive design** - Works on desktop and mobile
-- 💾 **Session persistence** - Games are saved across browser sessions
-- 🌙 **Automatic cleanup** - Old game sessions are cleaned up automatically
-- 🚀 **Zero database** - Simple file-based storage
-- 🔒 **Session security** - HTTPOnly cookies and session validation
-
-## Quick Start
+## Getting Started 🚀
 
 ### Prerequisites
 
-- Go 1.24 or higher
+- Go 1.25 or newer
 
-### Installation
+### Running Locally
 
-1. **Clone the repository**
+```sh
+# Clone the repository
+git clone https://github.com/mooship/vortludo.git
+cd vortludo
 
-    ```bash
-    git clone https://github.com/mooship/vortludo.git
-    cd vortludo
-    ```
-
-2. **Install dependencies**
-
-    ```bash
-    go mod tidy && go mod download
-    ```
-
-3. **Start development server**
-
-    ```bash
-    go run .
-    ```
-
-4. **Open your browser**
-   Navigate to `http://localhost:8080`
-
-> **Note:** All required directories (such as `data/sessions/`) will be created automatically by the application if they do not exist. No manual directory creation is needed.
-
-## Development with Live Reload
-
-This project supports live reloads using [Air](https://github.com/cosmtrek/air).
-
-### Setup
-
-1. Install Air (one-time):
-
-    ```
-    go install github.com/cosmtrek/air@latest
-    ```
-
-2. Start the dev server with live reload:
-
-    ```
-    air
-    ```
-
-Air will watch your Go and template files and restart the server on changes.
-
-## Building and Running
-
-```bash
-# Build for your OS
-go build -o vortludo .
-
-# Run in development mode
-./vortludo
-
-# Run in production mode
-GIN_MODE=release ./vortludo
+# Run the server
+go run ./cmd/vortludo
 ```
 
-## Testing
+Then open your browser and go to [http://localhost:8080](http://localhost:8080) 🌐
 
-Unit tests for the core game logic are provided in `core_test.go`.  
-To run all tests:
+## Project Structure 🗂️
 
-```bash
-go test -v ./...
-```
+- `cmd/vortludo/` – Main application entrypoint
+- `internal/types/` – Game types and logic
+- `static/` – JS, CSS, and icons
+- `templates/` – HTML templates
+- `data/` – Word lists
 
-Tests are automatically discovered and run by the GitHub Actions workflow in `.github/workflows/go.yml`.
+## Contributing 🤝
 
-## Project Structure
+Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
-```
-vortludo/
-├── main.go                # Main application, HTTP handlers, and routing
-├── types.go               # Data structures and types for game/session
-├── persistence.go         # File-based session storage and cleanup logic
-├── core_test.go           # Unit tests for core game logic and helpers
-├── main_http_test.go      # HTTP handler and middleware tests
-├── persistence_test.go    # Security and persistence tests (path traversal, etc)
-├── data/
-│   ├── words.json             # Dictionary of valid words with hints
-│   ├── accepted_words.json    # List of accepted guess words
-│   └── sessions/              # Game session files (auto-generated)
-├── static/                # CSS, JS, favicon assets
-│   ├── style.css
-│   ├── client.js
-│   └── favicons/              # Favicon images (ico, png, apple-touch, etc)
-├── templates/
-│   ├── index.html             # Main HTML template
-│   └── game-board.html        # Game board partial template
-├── .github/
-│   └── workflows/             # GitHub Actions CI/CD workflows
-│       ├── go.yml
-│       ├── codeql.yml
-│       └── gosec.yml
-├── .gitignore
-├── .gitattributes
-├── .prettierrc.json
-├── go.mod
-├── go.sum
-├── LICENSE
-├── SECURITY.md
-├── render.yaml               # Render.com deployment configuration
-└── README.md
-```
+## License 📄
 
-- **main.go**: Entry point, HTTP server, routing, and game logic orchestration
-- **types.go**: Game state, word entry, and guess result types
-- **persistence.go**: Secure session file storage, loading, and cleanup
-- **core_test.go**, **main_http_test.go**, **persistence_test.go**: Comprehensive tests for logic, HTTP, and security
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See the [LICENSE](LICENSE) file for details.
 
-## How It Works
-
-### Game Logic
-
-1. **Word Selection**: Each new game randomly selects a word from `data/words.json`
-2. **Session Management**: Games are tied to browser sessions via HTTPOnly cookies
-3. **Persistence**: Game state is saved to JSON files in `data/sessions/`
-4. **Cleanup**: Old sessions (>2 hours) are automatically removed every hour
-
-### File-Based Storage
-
-Instead of a database, Vortludo uses simple JSON files:
-
-- **Game sessions**: `data/sessions/{sessionId}.json`
-- **Word dictionary**: `data/words.json` (static)
-
-This approach is:
-
-- ✅ Simple and lightweight
-- ✅ Easy to backup and restore
-- ✅ No database setup required
-- ✅ Perfect for single-server deployments
-- ✅ Automatic cleanup prevents disk bloat
-
-### Session Lifecycle
-
-1. **Creation**: New session gets a unique ID and random word
-2. **Gameplay**: Guesses are validated against dictionary and stored with color feedback
-3. **Persistence**: State is saved to both memory and file after each guess
-4. **Cleanup**: Sessions older than 2 hours are automatically deleted
-
-## Configuration
-
-### Environment Variables
-
-Vortludo is configurable via environment variables. You can set these in a `.env` file (see `.env.example` for a template) or via your deployment environment.
-
-| Variable           | Default | Description                                       |
-| ------------------ | ------- | ------------------------------------------------- |
-| `PORT`             | 8080    | Server port                                       |
-| `GIN_MODE`         |         | Set to `release` for production optimizations     |
-| `ENV`              |         | Set to `production` for production static serving |
-| `SESSION_TIMEOUT`  | 2h      | How long a session is valid (e.g. 30m, 2h, 24h)   |
-| `COOKIE_MAX_AGE`   | 2h      | How long the session cookie is valid              |
-| `STATIC_CACHE_AGE` | 5m      | How long static assets are cached by browsers     |
-| `RATE_LIMIT_RPS`   | 5       | Requests per second per client IP                 |
-| `RATE_LIMIT_BURST` | 10      | Maximum burst of requests per client IP           |
-
-You can copy `.env.example` to `.env` and adjust as needed:
-
-```bash
-cp .env.example .env
-# Edit .env to customize your settings
-```
-
-If a variable is not set, the default value (shown above) will be used.
-
-### Cache Control
-
-- **Development**: All caching disabled for live reloading
-- **Production**: Static assets cached for 24 hours, HTML/API not cached
-
-## Deployment
-
-### Render.com Deployment
-
-1. **Connect your GitHub repository** to Render
-2. **Create a new Web Service** with these settings:
-    - **Runtime**: `Go`
-    - **Build Command**: `go build -tags netgo -ldflags '-s -w' -o vortludo`
-    - **Start Command**: `./vortludo`
-3. **Set Environment Variables**:
-    - `GIN_MODE=release`
-    - `ENV=production`
-    - `PORT=10000`
-4. **Deploy** - Render will automatically build and deploy your app
-
-Alternatively, you can use the included `render.yaml` file for automatic configuration by connecting your repo and Render will detect it automatically.
-
-Your app will be available at `https://your-app-name.onrender.com`
-
-You can also use the included `.env.example` file as a starting point for your environment configuration.
-
-### Local Production Testing
-
-```bash
-# Build for production (same as Render)
-go build -tags netgo -ldflags '-s -w' -o vortludo
-
-# Test production build locally
-GIN_MODE=release PORT=8080 ENV=production ./vortludo
-```
-
-### Other Platforms
-
-The application can be deployed to any platform that supports Go:
-
-- Heroku
-- Railway
-- Fly.io
-- DigitalOcean App Platform
-- Traditional VPS with systemd
-
-## API Endpoints
-
-- `GET /` - Main game page
-- `GET /new-game` - Start a new game (redirects)
-- `POST /new-game` - Start a new game (form submission)
-- `POST /guess` - Submit a word guess (returns HTMX partial)
-- `GET /game-state` - Get current game state (HTMX partial)
-- `GET /static/*` - Static assets (CSS, JS, images)
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow Go best practices and formatting (`go fmt`)
-- Add tests for new functionality
-- Update documentation as needed
-- Test on both development and production modes
-- Ensure proper error handling and logging
-
-## Technology Stack
-
-- **Backend**: Go 1.24+ with Gin web framework
-- **Frontend**: HTML5, CSS3, vanilla JavaScript
-- **UI Framework**: [Bootstrap 5](https://getbootstrap.com/) (CDN)
-- **Reactive UI**: [Alpine.js](https://alpinejs.dev/) (CDN)
-- **AJAX/Partial Updates**: [HTMX](https://htmx.org/) (CDN)
-- **Storage**: JSON files (no database required)
-- **Templating**: Go's html/template
-- **Build Tools**: Go modules
-- **Deployment**: Render.com with GitHub Actions
-
-## License
-
-This project is open source and available under the GNU Affero General Public License v3.0 (AGPL-3.0).
-
-See [LICENSE](./LICENSE) for details.
-
-## Acknowledgments
-
-- Inspired by the original Wordle game by Josh Wardle
-- Built as a libre (free and open source) alternative
-- Word list curated for family-friendly gameplay
-- Community contributions welcome
-
----
-
-**Have fun playing! 🎯**
+Enjoy playing Vortludo! 🧩
