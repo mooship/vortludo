@@ -641,6 +641,13 @@ body {
     animation-delay:
         calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 0.5s);
 }
+.winner .tile-correct {
+    animation:
+        bounce 0.5s ease-out,
+        rainbow-shimmer 2s ease-in-out infinite;
+    animation-delay:
+        calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 1s);
+}
 
 @keyframes rainbow-shimmer {
     0% {
@@ -658,14 +665,6 @@ body {
     100% {
         filter: hue-rotate(360deg) brightness(1);
     }
-}
-
-.winner .tile-correct {
-    animation:
-        bounce 0.5s ease-out,
-        rainbow-shimmer 2s ease-in-out infinite;
-    animation-delay:
-        calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 1s);
 }
 
 .hint-area {
