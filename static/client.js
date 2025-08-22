@@ -216,7 +216,9 @@ window.gameApp = function () {
         updateGameState() {
             const board = document.getElementById('game-board');
             if (!board) return;
-            this.currentGuess = '';
+            if (!document.getElementById('guess-error-flag')) {
+                this.currentGuess = '';
+            }
             this.keyStatus = {};
             const gameOverContainer = board.parentElement.querySelector(
                 '.mt-3.p-3.bg-body-secondary'

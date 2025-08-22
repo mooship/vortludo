@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"sync"
 	"syscall"
@@ -384,7 +385,17 @@ func (app *App) guessHandler(c *gin.Context) {
 
 	guess := normalizeGuess(c.PostForm("guess"))
 	if !app.isAcceptedWord(guess) {
-		errMsg = "word not accepted, please try another word"
+		errMsg = "Word not accepted, please try another word"
+		if isHTMX {
+			renderBoard(errMsg)
+		} else {
+			renderFullPage(errMsg)
+		}
+		return
+	}
+
+	if slices.Contains(game.GuessHistory, guess) {
+		errMsg = "You already guessed that word"
 		if isHTMX {
 			renderBoard(errMsg)
 		} else {
