@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// loadWordListFromFile loads a list of words from a file, trims whitespace, and uppercases them.
 func loadWordListFromFile(path string) ([]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -28,6 +29,7 @@ func loadWordListFromFile(path string) ([]string, error) {
 	return words, scanner.Err()
 }
 
+// TestAcceptedWordsNoDuplicates ensures there are no duplicate words in accepted_words.txt.
 func TestAcceptedWordsNoDuplicates(t *testing.T) {
 	words, err := loadWordListFromFile("data/accepted_words.txt")
 	if err != nil {
@@ -42,6 +44,7 @@ func TestAcceptedWordsNoDuplicates(t *testing.T) {
 	}
 }
 
+// TestWordsNoDuplicates checks for duplicate words in words.json.
 func TestWordsNoDuplicates(t *testing.T) {
 	f, err := os.Open("data/words.json")
 	if err != nil {
@@ -67,6 +70,7 @@ func TestWordsNoDuplicates(t *testing.T) {
 	}
 }
 
+// TestAllWordsInAcceptedList ensures every word in words.json is present in accepted_words.txt.
 func TestAllWordsInAcceptedList(t *testing.T) {
 	accepted, err := loadWordListFromFile("data/accepted_words.txt")
 	if err != nil {
@@ -98,6 +102,7 @@ func TestAllWordsInAcceptedList(t *testing.T) {
 	}
 }
 
+// TestAllWordsHaveHints checks that every word in words.json has a non-empty hint.
 func TestAllWordsHaveHints(t *testing.T) {
 	f, err := os.Open("data/words.json")
 	if err != nil {
@@ -122,6 +127,7 @@ func TestAllWordsHaveHints(t *testing.T) {
 	}
 }
 
+// TestNormalizeGuess verifies that normalizeGuess trims and uppercases input correctly.
 func TestNormalizeGuess(t *testing.T) {
 	cases := []struct {
 		in  string
@@ -138,6 +144,7 @@ func TestNormalizeGuess(t *testing.T) {
 	}
 }
 
+// TestCheckGuess checks that checkGuess returns correct letter statuses.
 func TestCheckGuess(t *testing.T) {
 	guess := "CRANE"
 	target := "CRATE"
@@ -150,6 +157,7 @@ func TestCheckGuess(t *testing.T) {
 	}
 }
 
+// TestBuildHintMap ensures buildHintMap creates a correct word-to-hint mapping.
 func TestBuildHintMap(t *testing.T) {
 	words := []WordEntry{{Word: "APPLE", Hint: "A fruit"}, {Word: "BERRY", Hint: "Another fruit"}}
 	m := buildHintMap(words)
@@ -158,6 +166,7 @@ func TestBuildHintMap(t *testing.T) {
 	}
 }
 
+// TestIsValidWord checks isValidWord returns true for valid words and false otherwise.
 func TestIsValidWord(t *testing.T) {
 	app := &App{WordSet: map[string]struct{}{"APPLE": {}, "BERRY": {}}}
 	if !app.isValidWord("APPLE") || app.isValidWord("PEACH") {
@@ -165,6 +174,7 @@ func TestIsValidWord(t *testing.T) {
 	}
 }
 
+// TestIsAcceptedWord checks isAcceptedWord returns true for accepted words and false otherwise.
 func TestIsAcceptedWord(t *testing.T) {
 	app := &App{AcceptedWordSet: map[string]struct{}{"APPLE": {}, "BERRY": {}}}
 	if !app.isAcceptedWord("BERRY") || app.isAcceptedWord("PEACH") {
@@ -172,6 +182,7 @@ func TestIsAcceptedWord(t *testing.T) {
 	}
 }
 
+// TestFormatUptime verifies formatUptime returns human-readable durations.
 func TestFormatUptime(t *testing.T) {
 	cases := []struct {
 		d    time.Duration
@@ -189,6 +200,7 @@ func TestFormatUptime(t *testing.T) {
 	}
 }
 
+// TestValidateGameState checks validateGameState returns error if game is over.
 func TestValidateGameState(t *testing.T) {
 	app := &App{}
 	game := &GameState{GameOver: true}
@@ -203,6 +215,7 @@ func TestValidateGameState(t *testing.T) {
 	}
 }
 
+// TestGetEnvDuration checks getEnvDuration parses durations and falls back on bad input.
 func TestGetEnvDuration(t *testing.T) {
 	os.Setenv("TEST_DURATION", "3s")
 	d := getEnvDuration("TEST_DURATION", 5*time.Second)
@@ -217,6 +230,7 @@ func TestGetEnvDuration(t *testing.T) {
 	os.Unsetenv("TEST_DURATION")
 }
 
+// TestGetEnvInt checks getEnvInt parses integers and falls back on bad input.
 func TestGetEnvInt(t *testing.T) {
 	os.Setenv("TEST_INT", "42")
 	i := getEnvInt("TEST_INT", 5)
@@ -231,12 +245,14 @@ func TestGetEnvInt(t *testing.T) {
 	os.Unsetenv("TEST_INT")
 }
 
+// TestPlural checks plural returns "s" for values not equal to 1.
 func TestPlural(t *testing.T) {
 	if plural(1) != "" || plural(2) != "s" {
 		t.Errorf("plural logic error")
 	}
 }
 
+// TestCreateNewGame checks createNewGame initializes a new game session correctly.
 func TestCreateNewGame(t *testing.T) {
 	app := &App{
 		WordList:     []WordEntry{{Word: "APPLE", Hint: "A fruit"}},
@@ -253,6 +269,7 @@ func TestCreateNewGame(t *testing.T) {
 	}
 }
 
+// TestGetRandomWordEntry checks getRandomWordEntry returns a valid word from the list.
 func TestGetRandomWordEntry(t *testing.T) {
 	app := &App{WordList: []WordEntry{{Word: "APPLE", Hint: "A fruit"}, {Word: "BERRY", Hint: "Another fruit"}}}
 	ctx := context.Background()
@@ -262,6 +279,7 @@ func TestGetRandomWordEntry(t *testing.T) {
 	}
 }
 
+// TestGetHintForWord checks getHintForWord returns the correct hint or empty string.
 func TestGetHintForWord(t *testing.T) {
 	app := &App{HintMap: map[string]string{"APPLE": "A fruit"}}
 	hint := app.getHintForWord("APPLE")
@@ -274,6 +292,7 @@ func TestGetHintForWord(t *testing.T) {
 	}
 }
 
+// TestGetTargetWord checks getTargetWord returns the session word or assigns a new one.
 func TestGetTargetWord(t *testing.T) {
 	app := &App{WordList: []WordEntry{{Word: "APPLE", Hint: "A fruit"}}}
 	ctx := context.Background()
@@ -289,6 +308,7 @@ func TestGetTargetWord(t *testing.T) {
 	}
 }
 
+// TestUpdateGameStateWinLose checks updateGameState sets win/lose flags correctly.
 func TestUpdateGameStateWinLose(t *testing.T) {
 	app := &App{}
 	ctx := context.Background()
@@ -322,6 +342,7 @@ func TestUpdateGameStateWinLose(t *testing.T) {
 	}
 }
 
+// TestSaveGameStateAndGetGameState checks saving and retrieving game state works.
 func TestSaveGameStateAndGetGameState(t *testing.T) {
 	app := &App{
 		GameSessions: make(map[string]*GameState),
@@ -337,6 +358,7 @@ func TestSaveGameStateAndGetGameState(t *testing.T) {
 	}
 }
 
+// TestIsValidWordAndIsAcceptedWord checks both isValidWord and isAcceptedWord logic.
 func TestIsValidWordAndIsAcceptedWord(t *testing.T) {
 	app := &App{
 		WordSet:         map[string]struct{}{"APPLE": {}},
