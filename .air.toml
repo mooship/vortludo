@@ -4,7 +4,7 @@
 
 [build]
   # Windows-compatible build command
-  cmd = "cls && go build -o tmp/main.exe ."
+  cmd = "go build -o tmp/main.exe ."
   bin = "tmp/main.exe"
   include_ext = ["go", "tpl", "tmpl", "html"]
   exclude_dir = ["static", "templates", "data"]
