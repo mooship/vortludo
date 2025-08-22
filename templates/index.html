@@ -203,7 +203,7 @@
                                 {{if .hint}}
                                 <button
                                     class="btn btn-outline-warning btn-sm"
-                                    @click="hintVisible = !hintVisible"
+                                    @click="hintVisible = !hintVisible; $event.target.blur()"
                                     type="button"
                                 >
                                     <i class="bi bi-lightbulb"></i>
