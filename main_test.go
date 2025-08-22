@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -72,6 +73,48 @@ func TestFormatUptime(t *testing.T) {
 			t.Errorf("formatUptime(%v) = %q, want %q", c.d, got, c.want)
 		}
 	}
+}
+
+func TestValidateGameState(t *testing.T) {
+	app := &App{}
+	game := &GameState{GameOver: true}
+	err := app.validateGameState(nil, game)
+	if err == nil {
+		t.Errorf("validateGameState should return error if game is over")
+	}
+	game.GameOver = false
+	err2 := app.validateGameState(nil, game)
+	if err2 != nil {
+		t.Errorf("validateGameState should not return error if game is not over")
+	}
+}
+
+func TestGetEnvDuration(t *testing.T) {
+	os.Setenv("TEST_DURATION", "3s")
+	d := getEnvDuration("TEST_DURATION", 5*time.Second)
+	if d != 3*time.Second {
+		t.Errorf("getEnvDuration did not parse duration correctly")
+	}
+	os.Setenv("TEST_DURATION", "bad")
+	d2 := getEnvDuration("TEST_DURATION", 7*time.Second)
+	if d2 != 7*time.Second {
+		t.Errorf("getEnvDuration fallback not used on bad input")
+	}
+	os.Unsetenv("TEST_DURATION")
+}
+
+func TestGetEnvInt(t *testing.T) {
+	os.Setenv("TEST_INT", "42")
+	i := getEnvInt("TEST_INT", 5)
+	if i != 42 {
+		t.Errorf("getEnvInt did not parse int correctly")
+	}
+	os.Setenv("TEST_INT", "bad")
+	i2 := getEnvInt("TEST_INT", 7)
+	if i2 != 7 {
+		t.Errorf("getEnvInt fallback not used on bad input")
+	}
+	os.Unsetenv("TEST_INT")
 }
 
 func TestPlural(t *testing.T) {
