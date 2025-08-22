@@ -743,14 +743,6 @@ func (app *App) healthzHandler(c *gin.Context) {
 	})
 }
 
-// renderHTMXError renders an error fragment for HTMX requests.
-func (app *App) renderHTMXError(c *gin.Context, err error) {
-	logWarn("HTMX error: %v", err)
-	c.HTML(http.StatusOK, "game-board", gin.H{
-		"error": err.Error(),
-	})
-}
-
 // formatUptime returns a human-readable string for a duration.
 func formatUptime(d time.Duration) string {
 	seconds := int(d.Seconds()) % 60
