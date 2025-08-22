@@ -1,16 +1,14 @@
 # Air configuration for vortludo
 # Reference: https://github.com/air-verse/air
 
+
 [build]
-  # Cross-platform build command: outputs to tmp/main.exe on Windows, tmp/main on Mac/Linux
-  cmd = "sh -c 'ext=$([ \"$GOOS\" = \"windows\" ] && echo .exe); go build -o tmp/main$ext .'"
-  # Cross-platform binary path
-  bin = "tmp/main${GOOS:+.exe}"
-  # Watch for changes in these directories/files
+  # Windows-compatible build command
+  cmd = "cls && go build -o tmp/main.exe ."
+  bin = "tmp/main.exe"
   include_ext = ["go", "tpl", "tmpl", "html"]
   exclude_dir = ["static", "templates", "data"]
   exclude_file = ["*_test.go"]
-  # Delay before restart (ms)
   delay = 1000
 
 [color]
