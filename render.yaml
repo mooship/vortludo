@@ -2,15 +2,13 @@ services:
   - type: web
     name: vortludo
     runtime: go
-    buildCommand: go build -tags netgo -ldflags '-s -w' -o vortludo ./cmd/vortludo
+    buildCommand: go build -tags netgo -ldflags '-s -w' -o vortludo .
     startCommand: ./vortludo
     envVars:
       - key: GIN_MODE
         value: release
       - key: ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: SESSION_TIMEOUT
         value: 1h
       - key: COOKIE_MAX_AGE
