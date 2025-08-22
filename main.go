@@ -223,19 +223,20 @@ func loadWords() error {
 }
 
 func loadAcceptedWords() error {
-	log.Printf("Loading accepted words from data/accepted_words.json")
-	data, err := os.ReadFile("data/accepted_words.json")
+	log.Printf("Loading accepted words from data/accepted_words.txt")
+	data, err := os.ReadFile("data/accepted_words.txt")
 	if err != nil {
 		return err
 	}
-	var accepted []string
-	if err := json.Unmarshal(data, &accepted); err != nil {
-		return err
-	}
-	acceptedWordSet = make(map[string]struct{}, len(accepted))
-	lo.ForEach(accepted, func(w string, _ int) {
+	lines := strings.Split(string(data), "\n")
+	acceptedWordSet = make(map[string]struct{}, len(lines))
+	for _, w := range lines {
+		w = strings.TrimSpace(w)
+		if w == "" {
+			continue
+		}
 		acceptedWordSet[strings.ToUpper(w)] = struct{}{}
-	})
+	}
 	return nil
 }
 
