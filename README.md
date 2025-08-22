@@ -1,4 +1,3 @@
-
 # Vortludo 🟩🟨⬜
 
 A fun, open-source Wordle-inspired game built with Go! 🎮
@@ -24,11 +23,10 @@ git clone https://github.com/mooship/vortludo.git
 cd vortludo
 
 # Run the server
-go run ./cmd/vortludo
+go run main.go
 ```
 
 Then open your browser and go to [http://localhost:8080](http://localhost:8080) 🌐
-
 
 ### Live Reloading with Air (Windows & Cross-Platform)
 
@@ -44,6 +42,7 @@ This project includes a preconfigured [Air](https://github.com/air-verse/air) se
 	# Windows (Powershell)
 	iwr -useb https://raw.githubusercontent.com/air-verse/air/master/install.ps1 | iex
 	```
+
 2. Start the dev server with live reload:
 
 	```sh
