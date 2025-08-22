@@ -32,42 +32,49 @@ import (
 	"github.com/samber/lo"
 )
 
+// WordEntry represents a word and its associated hint.
 type WordEntry struct {
 	Word string `json:"word"`
 	Hint string `json:"hint"`
 }
 
+// WordList is a container for a list of WordEntry items, used for JSON unmarshalling.
 type WordList struct {
 	Words []WordEntry `json:"words"`
 }
 
+// GameState holds the state of a user's current game session.
 type GameState struct {
-	Guesses        [][]GuessResult `json:"guesses"`
-	CurrentRow     int             `json:"currentRow"`
-	GameOver       bool            `json:"gameOver"`
-	Won            bool            `json:"won"`
-	TargetWord     string          `json:"targetWord"`
-	SessionWord    string          `json:"sessionWord"`
-	GuessHistory   []string        `json:"guessHistory"`
-	LastAccessTime time.Time       `json:"lastAccessTime"`
+	Guesses        [][]GuessResult `json:"guesses"`        // All guesses made so far
+	CurrentRow     int             `json:"currentRow"`     // Index of the current guess
+	GameOver       bool            `json:"gameOver"`       // Whether the game is over
+	Won            bool            `json:"won"`            // Whether the player has won
+	TargetWord     string          `json:"targetWord"`     // The word to guess (revealed at end)
+	SessionWord    string          `json:"sessionWord"`    // The word assigned to this session
+	GuessHistory   []string        `json:"guessHistory"`   // List of previous guesses
+	LastAccessTime time.Time       `json:"lastAccessTime"` // Last time this session was accessed
 }
 
+// GuessResult represents the result of a single letter in a guess.
 type GuessResult struct {
 	Letter string `json:"letter"`
 	Status string `json:"status"`
 }
 
+// Game configuration constants
 const (
-	MaxGuesses = 6
-	WordLength = 5
+	MaxGuesses = 6 // Maximum number of guesses per game
+	WordLength = 5 // Length of the word to guess
 )
 
+// Guess status constants
 const (
 	GuessStatusCorrect = "correct"
 	GuessStatusPresent = "present"
 	GuessStatusAbsent  = "absent"
 )
 
+// Route and error string constants
 const (
 	SessionCookieName  = "session_id"
 	RouteHome          = "/"
@@ -81,23 +88,25 @@ const (
 	ErrorNotInWordList = "word not recognized"
 )
 
+// App is the main application struct holding all global state and configuration.
 type App struct {
-	WordList        []WordEntry
-	WordSet         map[string]struct{}
-	AcceptedWordSet map[string]struct{}
-	HintMap         map[string]string
-	GameSessions    map[string]*GameState
-	SessionMutex    sync.RWMutex
-	LimiterMap      map[string]*rate.Limiter
-	LimiterMutex    sync.Mutex
-	IsProduction    bool
-	StartTime       time.Time
-	CookieMaxAge    time.Duration
-	StaticCacheAge  time.Duration
-	RateLimitRPS    int
-	RateLimitBurst  int
+	WordList        []WordEntry              // List of all playable words
+	WordSet         map[string]struct{}      // Set for fast word lookup
+	AcceptedWordSet map[string]struct{}      // Set of all accepted guess words
+	HintMap         map[string]string        // Map from word to hint
+	GameSessions    map[string]*GameState    // Active game sessions by session ID
+	SessionMutex    sync.RWMutex             // Mutex for session map
+	LimiterMap      map[string]*rate.Limiter // Rate limiters by client IP
+	LimiterMutex    sync.Mutex               // Mutex for limiter map
+	IsProduction    bool                     // True if running in production
+	StartTime       time.Time                // Server start time
+	CookieMaxAge    time.Duration            // Max age for session cookies
+	StaticCacheAge  time.Duration            // Cache age for static assets
+	RateLimitRPS    int                      // Requests per second for rate limiting
+	RateLimitBurst  int                      // Burst size for rate limiting
 }
 
+// main is the entry point for the application. It loads configuration, sets up routes, and starts the server.
 func main() {
 	_ = godotenv.Load()
 
@@ -135,14 +144,17 @@ func main() {
 
 	router := gin.Default()
 
+	// Enable gzip compression for static assets
 	router.Use(ginGzip.Gzip(ginGzip.DefaultCompression,
 		ginGzip.WithExcludedExtensions([]string{".svg", ".ico", ".png", ".jpg", ".jpeg", ".gif"}),
 		ginGzip.WithExcludedPaths([]string{"/static/fonts"})))
 
+	// Set trusted proxy for Gin
 	if err := router.SetTrustedProxies([]string{"127.0.0.1"}); err != nil {
 		logWarn("Failed to set trusted proxies: %v", err)
 	}
 
+	// Apply cache headers depending on environment
 	if isProduction {
 		router.Use(func(c *gin.Context) {
 			app.applyCacheHeaders(c, true)
@@ -153,6 +165,7 @@ func main() {
 		})
 	}
 
+	// Serve templates and static assets from appropriate directories
 	if isProduction && dirExists("dist") {
 		logInfo("Serving assets from dist/ directory")
 		router.LoadHTMLGlob("dist/templates/*.html")
@@ -163,11 +176,13 @@ func main() {
 		router.Static("/static", "./static")
 	}
 
+	// Add template functions
 	funcMap := template.FuncMap{
 		"hasPrefix": strings.HasPrefix,
 	}
 	router.SetFuncMap(funcMap)
 
+	// Register HTTP routes
 	router.GET("/", app.homeHandler)
 	router.GET("/new-game", app.newGameHandler)
 	router.POST("/new-game", app.rateLimitMiddleware(), app.newGameHandler)
@@ -179,6 +194,7 @@ func main() {
 	app.startServer(router)
 }
 
+// startServer launches the HTTP server and handles graceful shutdown on SIGINT/SIGTERM.
 func (app *App) startServer(router *gin.Engine) {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -215,6 +231,7 @@ func (app *App) startServer(router *gin.Engine) {
 	logInfo("Server shutdown complete")
 }
 
+// applyCacheHeaders sets HTTP cache headers for static and dynamic content based on environment.
 func (app *App) applyCacheHeaders(c *gin.Context, production bool) {
 	if production {
 		if strings.HasPrefix(c.Request.URL.Path, "/static/") {
@@ -239,6 +256,7 @@ func (app *App) applyCacheHeaders(c *gin.Context, production bool) {
 	}
 }
 
+// loadWords loads the playable words from data/words.json and returns a filtered list and set.
 func loadWords() ([]WordEntry, map[string]struct{}, error) {
 	log.Printf("Loading words from data/words.json")
 	data, err := os.ReadFile("data/words.json")
@@ -264,6 +282,7 @@ func loadWords() ([]WordEntry, map[string]struct{}, error) {
 	return wordList, wordSet, nil
 }
 
+// loadAcceptedWords loads the accepted guess words from data/accepted_words.txt.
 func loadAcceptedWords() (map[string]struct{}, error) {
 	log.Printf("Loading accepted words from data/accepted_words.txt")
 	data, err := os.ReadFile("data/accepted_words.txt")
@@ -282,6 +301,7 @@ func loadAcceptedWords() (map[string]struct{}, error) {
 	return acceptedWordSet, nil
 }
 
+// getRandomWordEntry returns a random WordEntry from the loaded word list.
 func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(app.WordList))))
 	if err != nil {
@@ -291,6 +311,7 @@ func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
 	return app.WordList[n.Int64()]
 }
 
+// getHintForWord returns the hint for a given word, or an empty string if not found.
 func (app *App) getHintForWord(wordValue string) string {
 	if wordValue == "" {
 		return ""
@@ -303,12 +324,14 @@ func (app *App) getHintForWord(wordValue string) string {
 	return ""
 }
 
+// buildHintMap creates a map from word to hint for fast lookup.
 func buildHintMap(wordList []WordEntry) map[string]string {
 	return lo.Associate(wordList, func(entry WordEntry) (string, string) {
 		return entry.Word, entry.Hint
 	})
 }
 
+// homeHandler renders the main game page for the current session.
 func (app *App) homeHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	sessionID := app.getOrCreateSession(c)
@@ -323,6 +346,7 @@ func (app *App) homeHandler(c *gin.Context) {
 	})
 }
 
+// newGameHandler starts a new game session, optionally resetting the session ID.
 func (app *App) newGameHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	sessionID := app.getOrCreateSession(c)
@@ -347,6 +371,7 @@ func (app *App) newGameHandler(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, RouteHome)
 }
 
+// guessHandler processes a guess submission, validates it, and updates the game state.
 func (app *App) guessHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	sessionID := app.getOrCreateSession(c)
@@ -414,7 +439,9 @@ func (app *App) guessHandler(c *gin.Context) {
 	}
 }
 
-func (app *App) validateGameState(c *gin.Context, game *GameState) error {
+// validateGameState returns an error if the game is already over.
+// The gin.Context parameter is included for future extensibility and best practice, but is currently unused.
+func (app *App) validateGameState(_ *gin.Context, game *GameState) error {
 	if game.GameOver {
 		log.Print("session attempted guess on completed game")
 		return errors.New("game is already over, please start a new game")
@@ -422,10 +449,12 @@ func (app *App) validateGameState(c *gin.Context, game *GameState) error {
 	return nil
 }
 
+// normalizeGuess trims and uppercases a guess string for comparison.
 func normalizeGuess(input string) string {
 	return strings.ToUpper(strings.TrimSpace(input))
 }
 
+// processGuess applies a guess to the game state, updates session, and renders the result.
 func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID string, game *GameState, guess string, isHTMX bool, hint string) error {
 	log.Printf("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
 
@@ -458,6 +487,7 @@ func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID stri
 	return nil
 }
 
+// getTargetWord returns the session's target word, assigning one if missing.
 func (app *App) getTargetWord(ctx context.Context, game *GameState) string {
 	if game.SessionWord == "" {
 		selectedEntry := app.getRandomWordEntry(ctx)
@@ -467,6 +497,7 @@ func (app *App) getTargetWord(ctx context.Context, game *GameState) string {
 	return game.SessionWord
 }
 
+// updateGameState updates the game state after a guess, handling win/lose logic.
 func (app *App) updateGameState(ctx context.Context, game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
 	if game.CurrentRow >= MaxGuesses {
 		return
@@ -492,6 +523,7 @@ func (app *App) updateGameState(ctx context.Context, game *GameState, guess, tar
 	}
 }
 
+// gameStateHandler renders the current game board as an HTML fragment.
 func (app *App) gameStateHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	sessionID := app.getOrCreateSession(c)
@@ -504,6 +536,7 @@ func (app *App) gameStateHandler(c *gin.Context) {
 	})
 }
 
+// checkGuess compares a guess to the target word and returns per-letter results.
 func checkGuess(guess, target string) []GuessResult {
 	result := make([]GuessResult, WordLength)
 	targetCopy := []rune(target)
@@ -539,16 +572,19 @@ func checkGuess(guess, target string) []GuessResult {
 	return result
 }
 
+// isValidWord returns true if the word is in the playable word set.
 func (app *App) isValidWord(word string) bool {
 	_, ok := app.WordSet[word]
 	return ok
 }
 
+// isAcceptedWord returns true if the word is in the accepted guess set.
 func (app *App) isAcceptedWord(word string) bool {
 	_, ok := app.AcceptedWordSet[word]
 	return ok
 }
 
+// getOrCreateSession retrieves the session ID from the cookie or creates a new one.
 func (app *App) getOrCreateSession(c *gin.Context) string {
 	sessionID, err := c.Cookie(SessionCookieName)
 	if err != nil || len(sessionID) < 10 {
@@ -560,6 +596,7 @@ func (app *App) getOrCreateSession(c *gin.Context) string {
 	return sessionID
 }
 
+// getGameState retrieves or creates the GameState for a session.
 func (app *App) getGameState(ctx context.Context, sessionID string) *GameState {
 	app.SessionMutex.RLock()
 	game, exists := app.GameSessions[sessionID]
@@ -576,6 +613,7 @@ func (app *App) getGameState(ctx context.Context, sessionID string) *GameState {
 	return app.createNewGame(ctx, sessionID)
 }
 
+// createNewGame initializes a new GameState for a session and stores it.
 func (app *App) createNewGame(ctx context.Context, sessionID string) *GameState {
 	selectedEntry := app.getRandomWordEntry(ctx)
 
@@ -603,6 +641,7 @@ func (app *App) createNewGame(ctx context.Context, sessionID string) *GameState 
 	return game
 }
 
+// saveGameState updates the in-memory game state for a session.
 func (app *App) saveGameState(sessionID string, game *GameState) {
 	app.SessionMutex.Lock()
 	app.GameSessions[sessionID] = game
@@ -611,6 +650,7 @@ func (app *App) saveGameState(sessionID string, game *GameState) {
 	log.Printf("Updated in-memory game state for session: %s", sessionID)
 }
 
+// dirExists returns true if the given path exists and is a directory.
 func dirExists(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -623,6 +663,7 @@ func dirExists(path string) bool {
 	return info.IsDir()
 }
 
+// retryWordHandler resets the game state for the current session but keeps the same word.
 func (app *App) retryWordHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	sessionID := app.getOrCreateSession(c)
@@ -659,6 +700,7 @@ func (app *App) retryWordHandler(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
+// getLimiter returns a rate limiter for the given key (usually client IP).
 func (app *App) getLimiter(key string) *rate.Limiter {
 	app.LimiterMutex.Lock()
 	defer app.LimiterMutex.Unlock()
@@ -673,6 +715,7 @@ func (app *App) getLimiter(key string) *rate.Limiter {
 	return lim
 }
 
+// rateLimitMiddleware returns a Gin middleware that enforces per-client rate limiting.
 func (app *App) rateLimitMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := c.ClientIP()
@@ -687,6 +730,7 @@ func (app *App) rateLimitMiddleware() gin.HandlerFunc {
 	}
 }
 
+// healthzHandler returns a JSON health check with server stats.
 func (app *App) healthzHandler(c *gin.Context) {
 	uptime := time.Since(app.StartTime)
 	c.JSON(http.StatusOK, gin.H{
@@ -699,6 +743,7 @@ func (app *App) healthzHandler(c *gin.Context) {
 	})
 }
 
+// renderHTMXError renders an error fragment for HTMX requests.
 func (app *App) renderHTMXError(c *gin.Context, err error) {
 	logWarn("HTMX error: %v", err)
 	c.HTML(http.StatusOK, "game-board", gin.H{
@@ -706,6 +751,7 @@ func (app *App) renderHTMXError(c *gin.Context, err error) {
 	})
 }
 
+// formatUptime returns a human-readable string for a duration.
 func formatUptime(d time.Duration) string {
 	seconds := int(d.Seconds()) % 60
 	minutes := int(d.Minutes()) % 60
@@ -725,6 +771,7 @@ func formatUptime(d time.Duration) string {
 	}
 }
 
+// plural returns "s" if n != 1, otherwise "".
 func plural(n int) string {
 	if n == 1 {
 		return ""
@@ -732,6 +779,7 @@ func plural(n int) string {
 	return "s"
 }
 
+// getEnvDuration reads a time.Duration from the environment or returns a fallback.
 func getEnvDuration(key string, fallback time.Duration) time.Duration {
 	val := os.Getenv(key)
 	if val == "" {
@@ -745,6 +793,7 @@ func getEnvDuration(key string, fallback time.Duration) time.Duration {
 	return d
 }
 
+// getEnvInt reads an int from the environment or returns a fallback.
 func getEnvInt(key string, fallback int) int {
 	val := os.Getenv(key)
 	if val == "" {
@@ -759,12 +808,17 @@ func getEnvInt(key string, fallback int) int {
 	return i
 }
 
+// logInfo logs an info-level message.
 func logInfo(format string, v ...any) {
 	log.Printf("[INFO] "+format, v...)
 }
+
+// logWarn logs a warning-level message.
 func logWarn(format string, v ...any) {
 	log.Printf("[WARN] "+format, v...)
 }
+
+// logFatal logs a fatal error and exits.
 func logFatal(format string, v ...any) {
 	log.Fatalf("[FATAL] "+format, v...)
 }
