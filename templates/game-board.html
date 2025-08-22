@@ -1,5 +1,8 @@
 {{define "game-board"}}
 <div id="game-board" class="mx-auto" style="max-width: 350px">
+    {{if .error}}
+    <span id="guess-error-flag" data-message="{{.error}}" style="display:none"></span>
+    {{end}}
     {{range $row, $guesses := .game.Guesses}}
     <div class="guess-row d-flex justify-content-center mb-1">
         {{range $col, $guess := $guesses}}

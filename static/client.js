@@ -56,10 +56,15 @@ window.gameApp = function () {
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
         },
         setupHTMXHandlers() {
-            document.body.addEventListener('htmx:afterSwap', (evt) => {
+            document.body.addEventListener('htmx:afterSwap', () => {
                 this.submittingGuess = false;
                 this.restoreUserInput();
-                if (document.getElementById('not-accepted-flag')) {
+                const errorFlag = document.getElementById('guess-error-flag');
+                if (errorFlag) {
+                    const msg = errorFlag.getAttribute('data-message') || 'Word not accepted. Try another word.';
+                    this.showToastNotification(msg, 'info');
+                    this.shakeCurrentRow();
+                } else if (document.getElementById('not-accepted-flag')) {
                     this.showToastNotification(
                         'Word not in accepted list. Try another word.',
                         'info'
@@ -70,7 +75,7 @@ window.gameApp = function () {
                 }
             });
 
-            document.body.addEventListener('htmx:beforeSwap', (evt) => {
+            document.body.addEventListener('htmx:beforeSwap', () => {
                 if (this.currentGuess) {
                     this.tempCurrentGuess = this.currentGuess;
                     this.tempCurrentRow = this.currentRow;
@@ -91,14 +96,14 @@ window.gameApp = function () {
                 }
             });
 
-            document.body.addEventListener('htmx:sendError', (evt) => {
+            document.body.addEventListener('htmx:sendError', () => {
                 this.showToastNotification(
                     'Network error. Check your connection! 📡',
                     'error'
                 );
             });
 
-            document.body.addEventListener('htmx:timeout', (evt) => {
+            document.body.addEventListener('htmx:timeout', () => {
                 this.showToastNotification(
                     'Request timed out. Please try again! ⏱️',
                     'error'

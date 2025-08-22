@@ -56,14 +56,9 @@ type GuessResult struct {
 	Status string `json:"status"`
 }
 
-var (
-	MaxGuesses     = 6
-	WordLength     = 5
-	SessionTimeout = getEnvDuration("SESSION_TIMEOUT", 2*time.Hour)
-	CookieMaxAge   = getEnvDuration("COOKIE_MAX_AGE", 2*time.Hour)
-	StaticCacheAge = getEnvDuration("STATIC_CACHE_AGE", 5*time.Minute)
-	RateLimitRPS   = getEnvInt("RATE_LIMIT_RPS", 5)
-	RateLimitBurst = getEnvInt("RATE_LIMIT_BURST", 10)
+const (
+	MaxGuesses = 6
+	WordLength = 5
 )
 
 const (
@@ -85,36 +80,57 @@ const (
 	ErrorNotInWordList = "word not recognized"
 )
 
-var (
-	wordList        []WordEntry
-	wordSet         map[string]struct{}
-	acceptedWordSet map[string]struct{}
-	hintMap         map[string]string
-	gameSessions    = make(map[string]*GameState)
-	sessionMutex    sync.RWMutex
-	isProduction    bool
-	limiterMap      = make(map[string]*rate.Limiter)
-	limiterMutex    sync.Mutex
-	startTime       = time.Now()
-)
+type App struct {
+	WordList        []WordEntry
+	WordSet         map[string]struct{}
+	AcceptedWordSet map[string]struct{}
+	HintMap         map[string]string
+	GameSessions    map[string]*GameState
+	SessionMutex    sync.RWMutex
+	LimiterMap      map[string]*rate.Limiter
+	LimiterMutex    sync.Mutex
+	IsProduction    bool
+	StartTime       time.Time
+	CookieMaxAge    time.Duration
+	StaticCacheAge  time.Duration
+	RateLimitRPS    int
+	RateLimitBurst  int
+}
 
 func main() {
 	_ = godotenv.Load()
 
-	isProduction = os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
+	isProduction := os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
 	logInfo("Starting Vortludo in %s mode", map[bool]string{true: "production", false: "development"}[isProduction])
 
-	if err := loadWords(); err != nil {
+	wordList, wordSet, err := loadWords()
+	if err != nil {
 		logFatal("Failed to load words: %v", err)
 	}
 	logInfo("Loaded %d words from dictionary", len(wordList))
 
-	if err := loadAcceptedWords(); err != nil {
+	acceptedWordSet, err := loadAcceptedWords()
+	if err != nil {
 		logFatal("Failed to load accepted words: %v", err)
 	}
 	logInfo("Loaded %d accepted words", len(acceptedWordSet))
 
-	buildHintMap()
+	hintMap := buildHintMap(wordList)
+
+	app := &App{
+		WordList:        wordList,
+		WordSet:         wordSet,
+		AcceptedWordSet: acceptedWordSet,
+		HintMap:         hintMap,
+		GameSessions:    make(map[string]*GameState),
+		IsProduction:    isProduction,
+		StartTime:       time.Now(),
+		CookieMaxAge:    getEnvDuration("COOKIE_MAX_AGE", 2*time.Hour),
+		StaticCacheAge:  getEnvDuration("STATIC_CACHE_AGE", 5*time.Minute),
+		RateLimitRPS:    getEnvInt("RATE_LIMIT_RPS", 5),
+		RateLimitBurst:  getEnvInt("RATE_LIMIT_BURST", 10),
+		LimiterMap:      make(map[string]*rate.Limiter),
+	}
 
 	router := gin.Default()
 
@@ -128,11 +144,11 @@ func main() {
 
 	if isProduction {
 		router.Use(func(c *gin.Context) {
-			applyCacheHeaders(c, true)
+			app.applyCacheHeaders(c, true)
 		})
 	} else {
 		router.Use(func(c *gin.Context) {
-			applyCacheHeaders(c, false)
+			app.applyCacheHeaders(c, false)
 		})
 	}
 
@@ -151,18 +167,18 @@ func main() {
 	}
 	router.SetFuncMap(funcMap)
 
-	router.GET("/", homeHandler)
-	router.GET("/new-game", newGameHandler)
-	router.POST("/new-game", rateLimitMiddleware(), newGameHandler)
-	router.POST("/guess", rateLimitMiddleware(), guessHandler)
-	router.GET("/game-state", gameStateHandler)
-	router.POST("/retry-word", rateLimitMiddleware(), retryWordHandler)
-	router.GET("/healthz", healthHandler)
+	router.GET("/", app.homeHandler)
+	router.GET("/new-game", app.newGameHandler)
+	router.POST("/new-game", app.rateLimitMiddleware(), app.newGameHandler)
+	router.POST("/guess", app.rateLimitMiddleware(), app.guessHandler)
+	router.GET("/game-state", app.gameStateHandler)
+	router.POST("/retry-word", app.rateLimitMiddleware(), app.retryWordHandler)
+	router.GET("/healthz", app.healthzHandler)
 
-	startServer(router)
+	app.startServer(router)
 }
 
-func startServer(router *gin.Engine) {
+func (app *App) startServer(router *gin.Engine) {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -198,12 +214,12 @@ func startServer(router *gin.Engine) {
 	logInfo("Server shutdown complete")
 }
 
-func applyCacheHeaders(c *gin.Context, production bool) {
+func (app *App) applyCacheHeaders(c *gin.Context, production bool) {
 	if production {
 		if strings.HasPrefix(c.Request.URL.Path, "/static/") {
 			cachecontrol.New(cachecontrol.Config{
 				Public: true,
-				MaxAge: cachecontrol.Duration(StaticCacheAge),
+				MaxAge: cachecontrol.Duration(app.StaticCacheAge),
 			})(c)
 			c.Header("Vary", "Accept-Encoding")
 		} else {
@@ -222,39 +238,39 @@ func applyCacheHeaders(c *gin.Context, production bool) {
 	}
 }
 
-func loadWords() error {
+func loadWords() ([]WordEntry, map[string]struct{}, error) {
 	log.Printf("Loading words from data/words.json")
 	data, err := os.ReadFile("data/words.json")
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	var wl WordList
 	if err := json.Unmarshal(data, &wl); err != nil {
-		return err
+		return nil, nil, err
 	}
-	wordList = lo.Filter(wl.Words, func(entry WordEntry, _ int) bool {
+	wordList := lo.Filter(wl.Words, func(entry WordEntry, _ int) bool {
 		if len(entry.Word) != 5 {
 			log.Printf("Skipping word %q: not 5 letters", entry.Word)
 			return false
 		}
 		return true
 	})
-	wordSet = make(map[string]struct{}, len(wordList))
+	wordSet := make(map[string]struct{}, len(wordList))
 	lo.ForEach(wordList, func(entry WordEntry, _ int) {
 		wordSet[entry.Word] = struct{}{}
 	})
 	log.Printf("Successfully loaded %d words", len(wordList))
-	return nil
+	return wordList, wordSet, nil
 }
 
-func loadAcceptedWords() error {
+func loadAcceptedWords() (map[string]struct{}, error) {
 	log.Printf("Loading accepted words from data/accepted_words.txt")
 	data, err := os.ReadFile("data/accepted_words.txt")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	lines := strings.Split(string(data), "\n")
-	acceptedWordSet = make(map[string]struct{}, len(lines))
+	acceptedWordSet := make(map[string]struct{}, len(lines))
 	for _, w := range lines {
 		w = strings.TrimSpace(w)
 		if w == "" {
@@ -262,23 +278,23 @@ func loadAcceptedWords() error {
 		}
 		acceptedWordSet[strings.ToUpper(w)] = struct{}{}
 	}
-	return nil
+	return acceptedWordSet, nil
 }
 
-func getRandomWordEntry() WordEntry {
-	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(wordList))))
+func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
+	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(app.WordList))))
 	if err != nil {
 		log.Printf("Error generating random number: %v, using fallback", err)
-		return wordList[0]
+		return app.WordList[0]
 	}
-	return wordList[n.Int64()]
+	return app.WordList[n.Int64()]
 }
 
-func getHintForWord(wordValue string) string {
+func (app *App) getHintForWord(wordValue string) string {
 	if wordValue == "" {
 		return ""
 	}
-	hint, ok := hintMap[wordValue]
+	hint, ok := app.HintMap[wordValue]
 	if ok {
 		return hint
 	}
@@ -286,16 +302,17 @@ func getHintForWord(wordValue string) string {
 	return ""
 }
 
-func buildHintMap() {
-	hintMap = lo.Associate(wordList, func(entry WordEntry) (string, string) {
+func buildHintMap(wordList []WordEntry) map[string]string {
+	return lo.Associate(wordList, func(entry WordEntry) (string, string) {
 		return entry.Word, entry.Hint
 	})
 }
 
-func homeHandler(c *gin.Context) {
-	sessionID := getOrCreateSession(c)
-	game := getGameState(sessionID)
-	hint := getHintForWord(game.SessionWord)
+func (app *App) homeHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	game := app.getGameState(ctx, sessionID)
+	hint := app.getHintForWord(game.SessionWord)
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"title":   "Vortludo - A Libre Wordle Clone",
@@ -305,13 +322,14 @@ func homeHandler(c *gin.Context) {
 	})
 }
 
-func newGameHandler(c *gin.Context) {
-	sessionID := getOrCreateSession(c)
+func (app *App) newGameHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
 	log.Printf("Creating new game for session: %s", sessionID)
 
-	sessionMutex.Lock()
-	delete(gameSessions, sessionID)
-	sessionMutex.Unlock()
+	app.SessionMutex.Lock()
+	delete(app.GameSessions, sessionID)
+	app.SessionMutex.Unlock()
 	log.Printf("Cleared old session data for: %s", sessionID)
 
 	if c.Query("reset") == "1" {
@@ -319,41 +337,76 @@ func newGameHandler(c *gin.Context) {
 		c.SetCookie(SessionCookieName, "", -1, "/", "", false, true)
 		newSessionID := uuid.NewString()
 		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie(SessionCookieName, newSessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
+		c.SetCookie(SessionCookieName, newSessionID, int(app.CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session ID: %s", newSessionID)
-		createNewGame(newSessionID)
+		app.createNewGame(ctx, newSessionID)
 	} else {
-		createNewGame(sessionID)
+		app.createNewGame(ctx, sessionID)
 	}
 	c.Redirect(http.StatusSeeOther, RouteHome)
 }
 
-func guessHandler(c *gin.Context) {
-	sessionID := getOrCreateSession(c)
-	game := getGameState(sessionID)
+func (app *App) guessHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	game := app.getGameState(ctx, sessionID)
+	hint := app.getHintForWord(game.SessionWord)
 
-	if err := validateGameState(c, game); err != nil {
+	renderBoard := func(errMsg string) {
+		c.HTML(http.StatusOK, "game-board", gin.H{
+			"game":  game,
+			"hint":  hint,
+			"error": errMsg,
+		})
+	}
+
+	renderFullPage := func(errMsg string) {
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"title":   "Vortludo - A Libre Wordle Clone",
+			"message": "Guess the 5-letter word!",
+			"hint":    hint,
+			"game":    game,
+			"error":   errMsg,
+		})
+	}
+
+	isHTMX := c.GetHeader("HX-Request") == "true"
+	var errMsg string
+	if err := app.validateGameState(c, game); err != nil {
+		errMsg = err.Error()
+		if isHTMX {
+			renderBoard(errMsg)
+		} else {
+			renderFullPage(errMsg)
+		}
 		return
 	}
 
 	guess := normalizeGuess(c.PostForm("guess"))
-	if !isAcceptedWord(guess) {
-		c.HTML(http.StatusOK, "game-board", gin.H{
-			"game":        game,
-			"notAccepted": true,
-		})
+	if !app.isAcceptedWord(guess) {
+		errMsg = "word not accepted, please try another word"
+		if isHTMX {
+			renderBoard(errMsg)
+		} else {
+			renderFullPage(errMsg)
+		}
 		return
 	}
-	if err := processGuess(c, sessionID, game, guess); err != nil {
+	if err := app.processGuess(ctx, c, sessionID, game, guess, isHTMX, hint); err != nil {
+		errMsg = err.Error()
+		if isHTMX {
+			renderBoard(errMsg)
+		} else {
+			renderFullPage(errMsg)
+		}
 		return
 	}
 }
 
-func validateGameState(c *gin.Context, game *GameState) error {
+func (app *App) validateGameState(c *gin.Context, game *GameState) error {
 	if game.GameOver {
 		log.Print("session attempted guess on completed game")
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
-		return errors.New(ErrorGameOver)
+		return errors.New("game is already over, please start a new game")
 	}
 	return nil
 }
@@ -362,41 +415,48 @@ func normalizeGuess(input string) string {
 	return strings.ToUpper(strings.TrimSpace(input))
 }
 
-func processGuess(c *gin.Context, sessionID string, game *GameState, guess string) error {
+func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID string, game *GameState, guess string, isHTMX bool, hint string) error {
 	log.Printf("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
 
 	if len(guess) != WordLength {
 		log.Printf("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
-		return errors.New(ErrorInvalidLength)
+		return errors.New("word must be 5 letters")
 	}
 
 	if game.CurrentRow >= MaxGuesses {
 		log.Printf("session %s attempted guess after max guesses reached", sessionID)
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
-		return errors.New(ErrorNoMoreGuesses)
+		return errors.New("no more guesses allowed")
 	}
 
-	targetWord := getTargetWord(game)
-	isInvalid := !isValidWord(guess)
+	targetWord := app.getTargetWord(ctx, game)
+	isInvalid := !app.isValidWord(guess)
 	result := checkGuess(guess, targetWord)
-	updateGameState(game, guess, targetWord, result, isInvalid)
-	saveGameState(sessionID, game)
+	app.updateGameState(ctx, game, guess, targetWord, result, isInvalid)
+	app.saveGameState(sessionID, game)
 
-	c.HTML(http.StatusOK, "game-board", gin.H{"game": game})
+	if isHTMX {
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "hint": hint})
+	} else {
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"title":   "Vortludo - A Libre Wordle Clone",
+			"message": "Guess the 5-letter word!",
+			"hint":    hint,
+			"game":    game,
+		})
+	}
 	return nil
 }
 
-func getTargetWord(game *GameState) string {
+func (app *App) getTargetWord(ctx context.Context, game *GameState) string {
 	if game.SessionWord == "" {
-		selectedEntry := getRandomWordEntry()
+		selectedEntry := app.getRandomWordEntry(ctx)
 		game.SessionWord = selectedEntry.Word
 		log.Printf("Warning: SessionWord was empty, assigned random word: %s", selectedEntry.Word)
 	}
 	return game.SessionWord
 }
 
-func updateGameState(game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
+func (app *App) updateGameState(ctx context.Context, game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
 	if game.CurrentRow >= MaxGuesses {
 		return
 	}
@@ -421,10 +481,11 @@ func updateGameState(game *GameState, guess, targetWord string, result []GuessRe
 	}
 }
 
-func gameStateHandler(c *gin.Context) {
-	sessionID := getOrCreateSession(c)
-	game := getGameState(sessionID)
-	hint := getHintForWord(game.SessionWord)
+func (app *App) gameStateHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	game := app.getGameState(ctx, sessionID)
+	hint := app.getHintForWord(game.SessionWord)
 
 	c.HTML(http.StatusOK, "game-board", gin.H{
 		"game": game,
@@ -467,43 +528,45 @@ func checkGuess(guess, target string) []GuessResult {
 	return result
 }
 
-func isValidWord(word string) bool {
-	return lo.Contains(lo.Keys(wordSet), word)
+func (app *App) isValidWord(word string) bool {
+	_, ok := app.WordSet[word]
+	return ok
 }
 
-func isAcceptedWord(word string) bool {
-	return lo.Contains(lo.Keys(acceptedWordSet), word)
+func (app *App) isAcceptedWord(word string) bool {
+	_, ok := app.AcceptedWordSet[word]
+	return ok
 }
 
-func getOrCreateSession(c *gin.Context) string {
+func (app *App) getOrCreateSession(c *gin.Context) string {
 	sessionID, err := c.Cookie(SessionCookieName)
 	if err != nil || len(sessionID) < 10 {
 		sessionID = uuid.NewString()
 		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie(SessionCookieName, sessionID, int(CookieMaxAge.Seconds()), "/", "", false, true)
+		c.SetCookie(SessionCookieName, sessionID, int(app.CookieMaxAge.Seconds()), "/", "", false, true)
 		log.Printf("Created new session: %s", sessionID)
 	}
 	return sessionID
 }
 
-func getGameState(sessionID string) *GameState {
-	sessionMutex.RLock()
-	game, exists := gameSessions[sessionID]
-	sessionMutex.RUnlock()
+func (app *App) getGameState(ctx context.Context, sessionID string) *GameState {
+	app.SessionMutex.RLock()
+	game, exists := app.GameSessions[sessionID]
+	app.SessionMutex.RUnlock()
 	if exists {
-		sessionMutex.Lock()
+		app.SessionMutex.Lock()
 		game.LastAccessTime = time.Now()
-		sessionMutex.Unlock()
+		app.SessionMutex.Unlock()
 		log.Printf("Retrieved cached game state for session: %s, updated last access time.", sessionID)
 		return game
 	}
 
 	log.Printf("Creating new game for session: %s", sessionID)
-	return createNewGame(sessionID)
+	return app.createNewGame(ctx, sessionID)
 }
 
-func createNewGame(sessionID string) *GameState {
-	selectedEntry := getRandomWordEntry()
+func (app *App) createNewGame(ctx context.Context, sessionID string) *GameState {
+	selectedEntry := app.getRandomWordEntry(ctx)
 
 	log.Printf("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
 
@@ -522,18 +585,18 @@ func createNewGame(sessionID string) *GameState {
 		LastAccessTime: time.Now(),
 	}
 
-	sessionMutex.Lock()
-	gameSessions[sessionID] = game
-	sessionMutex.Unlock()
+	app.SessionMutex.Lock()
+	app.GameSessions[sessionID] = game
+	app.SessionMutex.Unlock()
 
 	return game
 }
 
-func saveGameState(sessionID string, game *GameState) {
-	sessionMutex.Lock()
-	gameSessions[sessionID] = game
+func (app *App) saveGameState(sessionID string, game *GameState) {
+	app.SessionMutex.Lock()
+	app.GameSessions[sessionID] = game
 	game.LastAccessTime = time.Now()
-	sessionMutex.Unlock()
+	app.SessionMutex.Unlock()
 	log.Printf("Updated in-memory game state for session: %s", sessionID)
 }
 
@@ -549,18 +612,19 @@ func dirExists(path string) bool {
 	return info.IsDir()
 }
 
-func retryWordHandler(c *gin.Context) {
-	sessionID := getOrCreateSession(c)
-	sessionMutex.Lock()
-	game, exists := gameSessions[sessionID]
+func (app *App) retryWordHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	app.SessionMutex.Lock()
+	game, exists := app.GameSessions[sessionID]
 	if !exists {
-		sessionMutex.Unlock()
-		createNewGame(sessionID)
+		app.SessionMutex.Unlock()
+		app.createNewGame(ctx, sessionID)
 		c.Redirect(http.StatusSeeOther, "/")
 		return
 	}
 	sessionWord := game.SessionWord
-	sessionMutex.Unlock()
+	app.SessionMutex.Unlock()
 
 	guesses := lo.Times(MaxGuesses, func(_ int) []GuessResult {
 		return lo.Times(WordLength, func(_ int) GuessResult { return GuessResult{} })
@@ -577,50 +641,57 @@ func retryWordHandler(c *gin.Context) {
 		LastAccessTime: time.Now(),
 	}
 
-	sessionMutex.Lock()
-	gameSessions[sessionID] = newGame
-	sessionMutex.Unlock()
+	app.SessionMutex.Lock()
+	app.GameSessions[sessionID] = newGame
+	app.SessionMutex.Unlock()
 
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
-func getLimiter(key string) *rate.Limiter {
-	limiterMutex.Lock()
-	defer limiterMutex.Unlock()
-	if lim, ok := limiterMap[key]; ok {
+func (app *App) getLimiter(key string) *rate.Limiter {
+	app.LimiterMutex.Lock()
+	defer app.LimiterMutex.Unlock()
+	if lim, ok := app.LimiterMap[key]; ok {
 		return lim
 	}
 	if key == "" || key == "::1" {
 		logWarn("Rate limiter key is empty or loopback: %q", key)
 	}
-	lim := rate.NewLimiter(rate.Every(time.Second/time.Duration(RateLimitRPS)), RateLimitBurst)
-	limiterMap[key] = lim
+	lim := rate.NewLimiter(rate.Every(time.Second/time.Duration(app.RateLimitRPS)), app.RateLimitBurst)
+	app.LimiterMap[key] = lim
 	return lim
 }
 
-func rateLimitMiddleware() gin.HandlerFunc {
+func (app *App) rateLimitMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := c.ClientIP()
-		if !getLimiter(key).Allow() {
+		if !app.getLimiter(key).Allow() {
 			if c.GetHeader("HX-Request") == "true" {
 				c.Header("HX-Trigger", "rate-limit-exceeded")
 			}
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "too many requests"})
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests. Please slow down."})
 			return
 		}
 		c.Next()
 	}
 }
 
-func healthHandler(c *gin.Context) {
-	uptime := time.Since(startTime)
+func (app *App) healthzHandler(c *gin.Context) {
+	uptime := time.Since(app.StartTime)
 	c.JSON(http.StatusOK, gin.H{
 		"status":         "ok",
-		"env":            map[bool]string{true: "production", false: "development"}[isProduction],
-		"words_loaded":   len(wordList),
-		"accepted_words": len(acceptedWordSet),
+		"env":            map[bool]string{true: "production", false: "development"}[app.IsProduction],
+		"words_loaded":   len(app.WordList),
+		"accepted_words": len(app.AcceptedWordSet),
 		"uptime":         formatUptime(uptime),
 		"timestamp":      time.Now().UTC().Format(time.RFC3339),
+	})
+}
+
+func (app *App) renderHTMXError(c *gin.Context, err error) {
+	logWarn("HTMX error: %v", err)
+	c.HTML(http.StatusOK, "game-board", gin.H{
+		"error": err.Error(),
 	})
 }
 
