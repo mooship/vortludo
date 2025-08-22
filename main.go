@@ -32,6 +32,9 @@ import (
 	"github.com/samber/lo"
 )
 
+// contextKey is a type for context keys defined in this package.
+type contextKey string
+
 // WordEntry represents a word and its associated hint.
 type WordEntry struct {
 	Word string `json:"word"`
@@ -143,6 +146,9 @@ func main() {
 	}
 
 	router := gin.Default()
+
+	// Inject request ID into context for each request
+	router.Use(requestIDMiddleware())
 
 	// Enable gzip compression for static assets
 	router.Use(ginGzip.Gzip(ginGzip.DefaultCompression,
@@ -303,10 +309,28 @@ func loadAcceptedWords() (map[string]struct{}, error) {
 
 // getRandomWordEntry returns a random WordEntry from the loaded word list.
 func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
+	reqID, _ := ctx.Value(requestIDKey).(string)
+	select {
+	case <-ctx.Done():
+		if reqID != "" {
+			log.Printf("[request_id=%v] getRandomWordEntry cancelled: %v", reqID, ctx.Err())
+		} else {
+			log.Printf("getRandomWordEntry cancelled: %v", ctx.Err())
+		}
+		return app.WordList[0]
+	default:
+	}
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(app.WordList))))
 	if err != nil {
-		log.Printf("Error generating random number: %v, using fallback", err)
+		if reqID != "" {
+			log.Printf("[request_id=%v] Error generating random number: %v, using fallback", reqID, err)
+		} else {
+			log.Printf("Error generating random number: %v, using fallback", err)
+		}
 		return app.WordList[0]
+	}
+	if reqID != "" {
+		log.Printf("[request_id=%v] Selected random word index: %d", reqID, n.Int64())
 	}
 	return app.WordList[n.Int64()]
 }
@@ -499,6 +523,7 @@ func (app *App) getTargetWord(ctx context.Context, game *GameState) string {
 
 // updateGameState updates the game state after a guess, handling win/lose logic.
 func (app *App) updateGameState(ctx context.Context, game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
+	reqID, _ := ctx.Value(requestIDKey).(string)
 	if game.CurrentRow >= MaxGuesses {
 		return
 	}
@@ -509,12 +534,20 @@ func (app *App) updateGameState(ctx context.Context, game *GameState, guess, tar
 	if !isInvalid && guess == targetWord {
 		game.Won = true
 		game.GameOver = true
-		log.Printf("Player won! Target word was: %s", targetWord)
+		if reqID != "" {
+			log.Printf("[request_id=%v] Player won! Target word was: %s", reqID, targetWord)
+		} else {
+			log.Printf("Player won! Target word was: %s", targetWord)
+		}
 	} else {
 		game.CurrentRow++
 		if game.CurrentRow >= MaxGuesses {
 			game.GameOver = true
-			log.Printf("Player lost. Target word was: %s", targetWord)
+			if reqID != "" {
+				log.Printf("[request_id=%v] Player lost. Target word was: %s", reqID, targetWord)
+			} else {
+				log.Printf("Player lost. Target word was: %s", targetWord)
+			}
 		}
 	}
 
@@ -798,6 +831,22 @@ func getEnvInt(key string, fallback int) int {
 		return fallback
 	}
 	return i
+}
+
+const requestIDKey contextKey = "request_id"
+
+// requestIDMiddleware injects a request ID into the context for each request.
+func requestIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reqID := c.Request.Header.Get("X-Request-Id")
+		if reqID == "" {
+			reqID = uuid.NewString()
+		}
+		ctx := context.WithValue(c.Request.Context(), requestIDKey, reqID)
+		c.Request = c.Request.WithContext(ctx)
+		c.Header("X-Request-Id", reqID)
+		c.Next()
+	}
 }
 
 // logInfo logs an info-level message.
