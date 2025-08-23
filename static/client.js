@@ -25,7 +25,7 @@ window.gameApp = function () {
         WORD_LENGTH: 5,
         MAX_GUESSES: 6,
         ANIMATION_DELAY: 100,
-        TOAST_DURATION: 3000,
+        TOAST_DURATION: 2000,
         currentGuess: '',
         currentRow: 0,
         gameOver: false,
