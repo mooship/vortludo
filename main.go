@@ -264,7 +264,7 @@ func (app *App) applyCacheHeaders(c *gin.Context, production bool) {
 
 // loadWords loads the playable words from data/words.json and returns a filtered list and set.
 func loadWords() ([]WordEntry, map[string]struct{}, error) {
-	log.Printf("Loading words from data/words.json")
+	logInfo("Loading words from data/words.json")
 	data, err := os.ReadFile("data/words.json")
 	if err != nil {
 		return nil, nil, err
@@ -275,7 +275,7 @@ func loadWords() ([]WordEntry, map[string]struct{}, error) {
 	}
 	wordList := lo.Filter(wl.Words, func(entry WordEntry, _ int) bool {
 		if len(entry.Word) != 5 {
-			log.Printf("Skipping word %q: not 5 letters", entry.Word)
+			logWarn("Skipping word %q: not 5 letters", entry.Word)
 			return false
 		}
 		return true
@@ -284,13 +284,13 @@ func loadWords() ([]WordEntry, map[string]struct{}, error) {
 	lo.ForEach(wordList, func(entry WordEntry, _ int) {
 		wordSet[entry.Word] = struct{}{}
 	})
-	log.Printf("Successfully loaded %d words", len(wordList))
+	logInfo("Successfully loaded %d words", len(wordList))
 	return wordList, wordSet, nil
 }
 
 // loadAcceptedWords loads the accepted guess words from data/accepted_words.txt.
 func loadAcceptedWords() (map[string]struct{}, error) {
-	log.Printf("Loading accepted words from data/accepted_words.txt")
+	logInfo("Loading accepted words from data/accepted_words.txt")
 	data, err := os.ReadFile("data/accepted_words.txt")
 	if err != nil {
 		return nil, err
@@ -313,9 +313,9 @@ func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
 	select {
 	case <-ctx.Done():
 		if reqID != "" {
-			log.Printf("[request_id=%v] getRandomWordEntry cancelled: %v", reqID, ctx.Err())
+			logWarn("[request_id=%v] getRandomWordEntry cancelled: %v", reqID, ctx.Err())
 		} else {
-			log.Printf("getRandomWordEntry cancelled: %v", ctx.Err())
+			logWarn("getRandomWordEntry cancelled: %v", ctx.Err())
 		}
 		return app.WordList[0]
 	default:
@@ -323,14 +323,14 @@ func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(app.WordList))))
 	if err != nil {
 		if reqID != "" {
-			log.Printf("[request_id=%v] Error generating random number: %v, using fallback", reqID, err)
+			logWarn("[request_id=%v] Error generating random number: %v, using fallback", reqID, err)
 		} else {
-			log.Printf("Error generating random number: %v, using fallback", err)
+			logWarn("Error generating random number: %v, using fallback", err)
 		}
 		return app.WordList[0]
 	}
 	if reqID != "" {
-		log.Printf("[request_id=%v] Selected random word index: %d", reqID, n.Int64())
+		logInfo("[request_id=%v] Selected random word index: %d", reqID, n.Int64())
 	}
 	return app.WordList[n.Int64()]
 }
@@ -374,12 +374,12 @@ func (app *App) homeHandler(c *gin.Context) {
 func (app *App) newGameHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	sessionID := app.getOrCreateSession(c)
-	log.Printf("Creating new game for session: %s", sessionID)
+	logInfo("Creating new game for session: %s", sessionID)
 
 	app.SessionMutex.Lock()
 	delete(app.GameSessions, sessionID)
 	app.SessionMutex.Unlock()
-	log.Printf("Cleared old session data for: %s", sessionID)
+	logInfo("Cleared old session data for: %s", sessionID)
 
 	if c.Query("reset") == "1" {
 		c.SetSameSite(http.SameSiteStrictMode)
@@ -387,7 +387,7 @@ func (app *App) newGameHandler(c *gin.Context) {
 		newSessionID := uuid.NewString()
 		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie(SessionCookieName, newSessionID, int(app.CookieMaxAge.Seconds()), "/", "", false, true)
-		log.Printf("Created new session ID: %s", newSessionID)
+		logInfo("Created new session ID: %s", newSessionID)
 		app.createNewGame(ctx, newSessionID)
 	} else {
 		app.createNewGame(ctx, sessionID)
@@ -467,7 +467,7 @@ func (app *App) guessHandler(c *gin.Context) {
 // The gin.Context parameter is included for future extensibility and best practice, but is currently unused.
 func (app *App) validateGameState(_ *gin.Context, game *GameState) error {
 	if game.GameOver {
-		log.Print("session attempted guess on completed game")
+		logWarn("session attempted guess on completed game")
 		return errors.New("game is already over, please start a new game")
 	}
 	return nil
@@ -480,15 +480,15 @@ func normalizeGuess(input string) string {
 
 // processGuess applies a guess to the game state, updates session, and renders the result.
 func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID string, game *GameState, guess string, isHTMX bool, hint string) error {
-	log.Printf("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
+	logInfo("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
 
 	if len(guess) != WordLength {
-		log.Printf("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
+		logWarn("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
 		return errors.New("word must be 5 letters")
 	}
 
 	if game.CurrentRow >= MaxGuesses {
-		log.Printf("session %s attempted guess after max guesses reached", sessionID)
+		logWarn("session %s attempted guess after max guesses reached", sessionID)
 		return errors.New("no more guesses allowed")
 	}
 
@@ -516,7 +516,7 @@ func (app *App) getTargetWord(ctx context.Context, game *GameState) string {
 	if game.SessionWord == "" {
 		selectedEntry := app.getRandomWordEntry(ctx)
 		game.SessionWord = selectedEntry.Word
-		log.Printf("Warning: SessionWord was empty, assigned random word: %s", selectedEntry.Word)
+		logWarn("SessionWord was empty, assigned random word: %s", selectedEntry.Word)
 	}
 	return game.SessionWord
 }
@@ -535,18 +535,18 @@ func (app *App) updateGameState(ctx context.Context, game *GameState, guess, tar
 		game.Won = true
 		game.GameOver = true
 		if reqID != "" {
-			log.Printf("[request_id=%v] Player won! Target word was: %s", reqID, targetWord)
+			logInfo("[request_id=%v] Player won! Target word was: %s", reqID, targetWord)
 		} else {
-			log.Printf("Player won! Target word was: %s", targetWord)
+			logInfo("Player won! Target word was: %s", targetWord)
 		}
 	} else {
 		game.CurrentRow++
 		if game.CurrentRow >= MaxGuesses {
 			game.GameOver = true
 			if reqID != "" {
-				log.Printf("[request_id=%v] Player lost. Target word was: %s", reqID, targetWord)
+				logInfo("[request_id=%v] Player lost. Target word was: %s", reqID, targetWord)
 			} else {
-				log.Printf("Player lost. Target word was: %s", targetWord)
+				logInfo("Player lost. Target word was: %s", targetWord)
 			}
 		}
 	}
@@ -624,7 +624,7 @@ func (app *App) getOrCreateSession(c *gin.Context) string {
 		sessionID = uuid.NewString()
 		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie(SessionCookieName, sessionID, int(app.CookieMaxAge.Seconds()), "/", "", false, true)
-		log.Printf("Created new session: %s", sessionID)
+		logInfo("Created new session: %s", sessionID)
 	}
 	return sessionID
 }
@@ -638,11 +638,11 @@ func (app *App) getGameState(ctx context.Context, sessionID string) *GameState {
 		app.SessionMutex.Lock()
 		game.LastAccessTime = time.Now()
 		app.SessionMutex.Unlock()
-		log.Printf("Retrieved cached game state for session: %s, updated last access time.", sessionID)
+		logInfo("Retrieved cached game state for session: %s, updated last access time.", sessionID)
 		return game
 	}
 
-	log.Printf("Creating new game for session: %s", sessionID)
+	logInfo("Creating new game for session: %s", sessionID)
 	return app.createNewGame(ctx, sessionID)
 }
 
@@ -650,7 +650,7 @@ func (app *App) getGameState(ctx context.Context, sessionID string) *GameState {
 func (app *App) createNewGame(ctx context.Context, sessionID string) *GameState {
 	selectedEntry := app.getRandomWordEntry(ctx)
 
-	log.Printf("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
+	logInfo("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
 
 	guesses := lo.Times(MaxGuesses, func(_ int) []GuessResult {
 		return lo.Times(WordLength, func(_ int) GuessResult { return GuessResult{} })
@@ -680,7 +680,7 @@ func (app *App) saveGameState(sessionID string, game *GameState) {
 	app.GameSessions[sessionID] = game
 	game.LastAccessTime = time.Now()
 	app.SessionMutex.Unlock()
-	log.Printf("Updated in-memory game state for session: %s", sessionID)
+	logInfo("Updated in-memory game state for session: %s", sessionID)
 }
 
 // dirExists returns true if the given path exists and is a directory.
@@ -690,7 +690,7 @@ func dirExists(path string) bool {
 		if os.IsNotExist(err) {
 			return false
 		}
-		log.Printf("Error checking directory existence: %v", err)
+		logWarn("Error checking directory existence: %v", err)
 		return false
 	}
 	return info.IsDir()
