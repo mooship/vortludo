@@ -4,11 +4,16 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 )
 
 // loadWordListFromFile loads a list of words from a file, trims whitespace, and uppercases them.
@@ -370,4 +375,78 @@ func TestIsValidWordAndIsAcceptedWord(t *testing.T) {
 	if !app.isAcceptedWord("BERRY") || app.isAcceptedWord("APPLE") {
 		t.Errorf("isAcceptedWord logic error (extended)")
 	}
+}
+
+// TestDirExists checks directory existence and error handling.
+func TestDirExists(t *testing.T) {
+	dir := t.TempDir()
+	if !dirExists(dir) {
+		t.Errorf("dirExists should return true for existing directory")
+	}
+	if dirExists(dir + "_doesnotexist") {
+		t.Errorf("dirExists should return false for non-existent directory")
+	}
+	file := dir + "/file.txt"
+	os.WriteFile(file, []byte("test"), 0644)
+	if dirExists(file) {
+		t.Errorf("dirExists should return false for a file, not a directory")
+	}
+}
+
+// TestGetLimiter checks rate limiter creation and cache behavior.
+func TestGetLimiter(t *testing.T) {
+	app := &App{
+		LimiterMap:     make(map[string]*rate.Limiter),
+		LimiterMutex:   sync.Mutex{},
+		RateLimitRPS:   2,
+		RateLimitBurst: 3,
+	}
+	lim1 := app.getLimiter("127.0.0.1")
+	lim2 := app.getLimiter("127.0.0.1")
+	if lim1 != lim2 {
+		t.Errorf("getLimiter should return the same limiter for the same key")
+	}
+	lim3 := app.getLimiter("other")
+	if lim3 == lim1 {
+		t.Errorf("getLimiter should return different limiters for different keys")
+	}
+}
+
+// TestRequestIDMiddleware checks that the middleware injects a request ID into context and header.
+func TestRequestIDMiddleware(t *testing.T) {
+	r := gin.New()
+	r.Use(requestIDMiddleware())
+	r.GET("/", func(c *gin.Context) {
+		id := c.Request.Context().Value(requestIDKey)
+		if id == nil {
+			t.Errorf("requestIDMiddleware did not set request_id in context")
+		}
+		c.String(200, "ok")
+	})
+	w := performRequest(r, "GET", "/", nil, nil)
+	if w.Header().Get("X-Request-Id") == "" {
+		t.Errorf("requestIDMiddleware did not set X-Request-Id header")
+	}
+}
+
+// performRequest is a test helper to execute HTTP requests against a handler.
+func performRequest(r http.Handler, method, path string, body *strings.Reader, headers map[string]string) *httptest.ResponseRecorder {
+	w := httptest.NewRecorder()
+	var req *http.Request
+	if body == nil {
+		req = httptest.NewRequest(method, path, http.NoBody)
+	} else {
+		req = httptest.NewRequest(method, path, body)
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	r.ServeHTTP(w, req)
+	return w
+}
+
+// TestLogHelpers ensures the log helpers do not panic.
+func TestLogHelpers(t *testing.T) {
+	logInfo("info: %s", "test")
+	logWarn("warn: %s", "test")
 }
