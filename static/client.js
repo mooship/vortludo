@@ -326,11 +326,6 @@ window.gameApp = function () {
                         tiles.forEach((tile, index) => {
                             tile.style.setProperty('--tile-index', index);
                         });
-                        setTimeout(() => {
-                            this.showToastNotification(
-                                '🎉 Congratulations! You won! 🎉'
-                            );
-                        }, 1500);
                     }
                 }
             });
