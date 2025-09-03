@@ -12,6 +12,12 @@ document.addEventListener(
     false
 );
 
+const WORD_LENGTH = 5;
+const MAX_GUESSES = 6;
+const ANIMATION_DELAY = 100;
+const TOAST_DURATION = 2000;
+const LETTER_REGEX = /^[a-zA-Z]$/;
+
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
@@ -22,10 +28,6 @@ function debounce(func, wait) {
 
 window.gameApp = function () {
     return {
-        WORD_LENGTH: 5,
-        MAX_GUESSES: 6,
-        ANIMATION_DELAY: 100,
-        TOAST_DURATION: 2000,
         currentGuess: '',
         currentRow: 0,
         gameOver: false,
@@ -37,6 +39,28 @@ window.gameApp = function () {
         toastMessage: '',
         toastType: 'primary',
         submittingGuess: false,
+        _gameRows: null,
+        _guessRows: null,
+
+        getGameRows() {
+            if (!this._gameRows) {
+                this._gameRows = document.querySelectorAll('#game-board > div');
+            }
+            return this._gameRows;
+        },
+
+        getGuessRows() {
+            if (!this._guessRows) {
+                this._guessRows = document.querySelectorAll('.guess-row');
+            }
+            return this._guessRows;
+        },
+
+        clearDOMCache() {
+            this._gameRows = null;
+            this._guessRows = null;
+        },
+
         initGame() {
             this.resetGameState();
             this.initTheme();
@@ -49,6 +73,7 @@ window.gameApp = function () {
             this.gameOver = false;
             this.keyStatus = {};
             this.submittingGuess = false;
+            this.clearDOMCache();
         },
         initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -58,6 +83,7 @@ window.gameApp = function () {
         setupHTMXHandlers() {
             document.body.addEventListener('htmx:afterSwap', () => {
                 this.submittingGuess = false;
+                this.clearDOMCache();
                 this.restoreUserInput();
                 const errorFlag = document.getElementById('guess-error-flag');
                 if (errorFlag) {
@@ -122,10 +148,13 @@ window.gameApp = function () {
                 this.tempCurrentRow = null;
             }
         },
-        updateDisplay() {
-            const rows = document.querySelectorAll('#game-board > div');
+        // Debounced updateDisplay for better performance
+        updateDisplay: debounce(function () {
+            const rows = this.getGameRows();
             const row = rows?.[this.currentRow];
-            if (!row) return;
+            if (!row) {
+                return;
+            }
             const tiles = row.querySelectorAll('.tile');
             tiles?.forEach((tile, i) => {
                 tile.classList.remove(
@@ -141,9 +170,9 @@ window.gameApp = function () {
                     tile.classList.remove('filled');
                 }
             });
-        },
+        }, 50),
         shakeCurrentRow() {
-            const rows = document.querySelectorAll('.guess-row');
+            const rows = this.getGuessRows();
             const targetRow = Math.max(0, this.currentRow);
             const row = rows?.[targetRow];
             if (row) {
@@ -155,7 +184,7 @@ window.gameApp = function () {
             if (this.gameOver) {
                 if (
                     e.key === 'Enter' ||
-                    /^[a-zA-Z]$/.test(e.key) ||
+                    LETTER_REGEX.test(e.key) ||
                     e.key === 'Backspace'
                 ) {
                     this.showToastNotification(
@@ -165,12 +194,17 @@ window.gameApp = function () {
                 }
                 return;
             }
-            if (e.key === 'Enter') this.submitGuess();
-            else if (e.key === 'Backspace') this.deleteLetter();
-            else if (/^[a-zA-Z]$/.test(e.key))
+            if (e.key === 'Enter') {
+                this.submitGuess();
+            }
+            else if (e.key === 'Backspace') {
+                this.deleteLetter();
+            }
+            else if (LETTER_REGEX.test(e.key)) {
                 this.addLetter(e.key.toUpperCase());
+            }
         },
-        handleVirtualKey(key) {
+        handleVirtualKey(key, evt) {
             if (this.gameOver) {
                 this.showToastNotification(
                     'Game is over! Start a new game to continue! 🎮',
@@ -178,24 +212,30 @@ window.gameApp = function () {
                 );
                 return;
             }
-            const active = event?.target;
+            const active = evt?.target;
             if (active && active.disabled !== undefined) {
                 active.disabled = true;
                 setTimeout(() => {
                     active.disabled = false;
                 }, 120);
             }
-            if (key === 'ENTER') this.submitGuess();
-            else if (key === 'BACKSPACE') this.deleteLetter();
-            else this.addLetter(key);
+            if (key === 'ENTER') {
+                this.submitGuess();
+            }
+            else if (key === 'BACKSPACE') {
+                this.deleteLetter();
+            }
+            else {
+                this.addLetter(key);
+            }
         },
         addLetter(letter) {
-            if (this.currentGuess.length < this.WORD_LENGTH) {
+            if (this.currentGuess.length < WORD_LENGTH) {
                 this.currentGuess += letter;
                 this.updateDisplay();
             } else {
                 this.showToastNotification(
-                    'Word is already 5 letters! Press Enter to submit! ⌨️',
+                    `Word is already ${WORD_LENGTH} letters! Press Enter to submit! ⌨️`,
                     'warning'
                 );
                 this.shakeCurrentRow();
@@ -215,7 +255,9 @@ window.gameApp = function () {
         },
         updateGameState() {
             const board = document.getElementById('game-board');
-            if (!board) return;
+            if (!board) {
+                return;
+            }
             if (!document.getElementById('guess-error-flag')) {
                 this.currentGuess = '';
             }
@@ -224,7 +266,7 @@ window.gameApp = function () {
                 '.mt-3.p-3.bg-body-secondary'
             );
             this.gameOver = gameOverContainer !== null;
-            const rows = document.querySelectorAll('.guess-row');
+            const rows = this.getGuessRows();
             let completedRows = 0;
             rows.forEach((row) => {
                 const tiles = row.querySelectorAll('.tile.filled');
@@ -245,11 +287,11 @@ window.gameApp = function () {
             if (
                 this.submittingGuess ||
                 this.gameOver ||
-                this.currentGuess.length !== this.WORD_LENGTH
+                this.currentGuess.length !== WORD_LENGTH
             ) {
-                if (this.currentGuess.length < this.WORD_LENGTH) {
+                if (this.currentGuess.length < WORD_LENGTH) {
                     this.showToastNotification(
-                        'Word must be 5 letters long! ✏️',
+                        `Word must be ${WORD_LENGTH} letters long! ✏️`,
                         'warning'
                     );
                     this.shakeCurrentRow();
@@ -277,10 +319,10 @@ window.gameApp = function () {
                 const status = tile.classList.contains('tile-correct')
                     ? 'correct'
                     : tile.classList.contains('tile-present')
-                      ? 'present'
-                      : tile.classList.contains('tile-absent')
-                        ? 'absent'
-                        : '';
+                        ? 'present'
+                        : tile.classList.contains('tile-absent')
+                            ? 'absent'
+                            : '';
                 if (letter && status) {
                     if (
                         !this.keyStatus[letter] ||
@@ -297,11 +339,15 @@ window.gameApp = function () {
             return this.keyStatus[letter] ?? '';
         },
         animateNewGuess() {
-            const rows = document.querySelectorAll('#game-board > div');
+            const rows = this.getGameRows();
             const row = rows?.[this.currentRow - 1];
-            if (!row || row.classList.contains('animated')) return;
+            if (!row || row.classList.contains('animated')) {
+                return;
+            }
             const tiles = row.querySelectorAll('.tile.filled');
-            if (tiles.length !== this.WORD_LENGTH) return;
+            if (tiles.length !== WORD_LENGTH) {
+                return;
+            }
             tiles?.forEach((tile, index) => {
                 tile.style.setProperty('--tile-index', index);
                 setTimeout(() => {
@@ -309,17 +355,17 @@ window.gameApp = function () {
                     setTimeout(() => {
                         tile.classList.add('flip-revealed');
                     }, 300);
-                }, index * this.ANIMATION_DELAY);
+                }, index * ANIMATION_DELAY);
             });
             row.classList.add('animated');
             row.classList.remove('submitting');
         },
         checkForWin() {
-            const rows = document.querySelectorAll('#game-board > div');
+            const rows = this.getGameRows();
             let hasWinner = false;
             rows.forEach((row) => {
                 const tiles = row.querySelectorAll('.tile-correct');
-                if (tiles.length === 5) {
+                if (tiles.length === WORD_LENGTH) {
                     hasWinner = true;
                     if (!row.classList.contains('winner')) {
                         row.classList.add('winner');
@@ -336,7 +382,7 @@ window.gameApp = function () {
                 const completedRows = Array.from(rows).filter((row) => {
                     const tiles = row.querySelectorAll('.tile.filled');
                     return (
-                        tiles.length === 5 &&
+                        tiles.length === WORD_LENGTH &&
                         Array.from(tiles).some(
                             (tile) =>
                                 tile.classList.contains('tile-correct') ||
@@ -346,7 +392,7 @@ window.gameApp = function () {
                     );
                 });
 
-                if (completedRows.length === 6 && !hasWinner) {
+                if (completedRows.length === MAX_GUESSES && !hasWinner) {
                     setTimeout(() => {
                         this.showToastNotification(
                             'Game over! Better luck next time! 🎯',
@@ -357,16 +403,16 @@ window.gameApp = function () {
             }
         },
         launchConfetti() {
-            if (typeof window.confetti !== 'function') {
+            if (!window._confettiScriptLoaded && typeof window.confetti !== 'function') {
+                window._confettiScriptLoaded = true;
                 const script = document.createElement('script');
-                script.src =
-                    'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
+                script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
                 script.onload = () => {
                     this._doConfetti();
                     this._doFireworks();
                 };
                 document.body.appendChild(script);
-            } else {
+            } else if (typeof window.confetti === 'function') {
                 this._doConfetti();
                 this._doFireworks();
             }
@@ -425,11 +471,11 @@ window.gameApp = function () {
             }, 1000);
         },
         shareResults() {
-            const rows = document.querySelectorAll('#game-board > div');
+            const rows = this.getGameRows();
             let emojiGrid = 'Vortludo\n\n';
             rows.forEach((row) => {
                 const tiles = row.querySelectorAll('.tile.filled');
-                if (tiles.length === 5) {
+                if (tiles.length === WORD_LENGTH) {
                     tiles.forEach((tile) => {
                         if (tile.classList.contains('tile-correct'))
                             emojiGrid += '🟩';
@@ -473,19 +519,12 @@ window.gameApp = function () {
             this.toastMessage = message;
             this.toastType = type;
 
-            const showToast = () => {
+            this.$nextTick(() => {
                 const toastElement = document.getElementById('notification-toast');
                 if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
                     const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
                     toast.show();
                 }
-            };
-
-            this.$nextTick(() => {
-                showToast();
-                setTimeout(() => {
-                    showToast();
-                }, 100);
             });
         },
         shouldHideKeyboard() {

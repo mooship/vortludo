@@ -631,17 +631,14 @@ func (app *App) getOrCreateSession(c *gin.Context) string {
 
 // getGameState retrieves or creates the GameState for a session.
 func (app *App) getGameState(ctx context.Context, sessionID string) *GameState {
-	app.SessionMutex.RLock()
+	app.SessionMutex.Lock()
+	defer app.SessionMutex.Unlock()
 	game, exists := app.GameSessions[sessionID]
-	app.SessionMutex.RUnlock()
 	if exists {
-		app.SessionMutex.Lock()
 		game.LastAccessTime = time.Now()
-		app.SessionMutex.Unlock()
 		logInfo("Retrieved cached game state for session: %s, updated last access time.", sessionID)
 		return game
 	}
-
 	logInfo("Creating new game for session: %s", sessionID)
 	return app.createNewGame(ctx, sessionID)
 }
@@ -649,13 +646,10 @@ func (app *App) getGameState(ctx context.Context, sessionID string) *GameState {
 // createNewGame initializes a new GameState for a session and stores it.
 func (app *App) createNewGame(ctx context.Context, sessionID string) *GameState {
 	selectedEntry := app.getRandomWordEntry(ctx)
-
 	logInfo("New game created for session %s with word: %s (hint: %s)", sessionID, selectedEntry.Word, selectedEntry.Hint)
-
 	guesses := lo.Times(MaxGuesses, func(_ int) []GuessResult {
 		return lo.Times(WordLength, func(_ int) GuessResult { return GuessResult{} })
 	})
-
 	game := &GameState{
 		Guesses:        guesses,
 		CurrentRow:     0,
@@ -666,20 +660,16 @@ func (app *App) createNewGame(ctx context.Context, sessionID string) *GameState 
 		GuessHistory:   []string{},
 		LastAccessTime: time.Now(),
 	}
-
-	app.SessionMutex.Lock()
 	app.GameSessions[sessionID] = game
-	app.SessionMutex.Unlock()
-
 	return game
 }
 
 // saveGameState updates the in-memory game state for a session.
 func (app *App) saveGameState(sessionID string, game *GameState) {
 	app.SessionMutex.Lock()
+	defer app.SessionMutex.Unlock()
 	app.GameSessions[sessionID] = game
 	game.LastAccessTime = time.Now()
-	app.SessionMutex.Unlock()
 	logInfo("Updated in-memory game state for session: %s", sessionID)
 }
 
@@ -709,12 +699,9 @@ func (app *App) retryWordHandler(c *gin.Context) {
 		return
 	}
 	sessionWord := game.SessionWord
-	app.SessionMutex.Unlock()
-
 	guesses := lo.Times(MaxGuesses, func(_ int) []GuessResult {
 		return lo.Times(WordLength, func(_ int) GuessResult { return GuessResult{} })
 	})
-
 	newGame := &GameState{
 		Guesses:        guesses,
 		CurrentRow:     0,
@@ -725,11 +712,8 @@ func (app *App) retryWordHandler(c *gin.Context) {
 		GuessHistory:   []string{},
 		LastAccessTime: time.Now(),
 	}
-
-	app.SessionMutex.Lock()
 	app.GameSessions[sessionID] = newGame
 	app.SessionMutex.Unlock()
-
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
@@ -743,7 +727,11 @@ func (app *App) getLimiter(key string) *rate.Limiter {
 	if key == "" || key == "::1" {
 		logWarn("Rate limiter key is empty or loopback: %q", key)
 	}
-	lim := rate.NewLimiter(rate.Every(time.Second/time.Duration(app.RateLimitRPS)), app.RateLimitBurst)
+	rps := app.RateLimitRPS
+	if rps <= 0 {
+		rps = 1
+	}
+	lim := rate.NewLimiter(rate.Every(time.Second/time.Duration(rps)), app.RateLimitBurst)
 	app.LimiterMap[key] = lim
 	return lim
 }
@@ -824,13 +812,19 @@ func getEnvInt(key string, fallback int) int {
 	if val == "" {
 		return fallback
 	}
-	var i int
-	_, err := fmt.Sscanf(val, "%d", &i)
+	i, err := parseInt(val)
 	if err != nil {
 		logWarn("Invalid int for %s: %v, using default %d", key, err, fallback)
 		return fallback
 	}
 	return i
+}
+
+// parseInt parses a string as an int, supporting decimal and hex.
+func parseInt(val string) (int, error) {
+	var i int
+	_, err := fmt.Sscanf(val, "%d", &i)
+	return i, err
 }
 
 const requestIDKey contextKey = "request_id"

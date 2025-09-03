@@ -413,19 +413,23 @@
     0% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.05);
     }
+
     100% {
         transform: scale(1);
     }
 }
 
 @keyframes shake {
+
     0%,
     100% {
         transform: translateX(0);
     }
+
     10%,
     30%,
     50%,
@@ -433,6 +437,7 @@
     90% {
         transform: translateX(-3px);
     }
+
     20%,
     40%,
     60%,
@@ -446,13 +451,16 @@
 }
 
 @keyframes bounce {
+
     0%,
     100% {
         transform: translateY(0);
     }
+
     40% {
         transform: translateY(-20px);
     }
+
     60% {
         transform: translateY(-10px);
     }
@@ -470,9 +478,11 @@
     0% {
         transform: rotateX(0);
     }
+
     50% {
         transform: rotateX(-90deg);
     }
+
     100% {
         transform: rotateX(0);
     }
@@ -551,19 +561,23 @@ body {
         height: 2.8rem;
         font-size: 1.3rem;
     }
+
     .key-button {
         min-width: 2.2rem;
         height: 2.8rem;
         font-size: 0.8rem;
     }
+
     .keyboard .btn.px-3 {
         min-width: 3.5rem;
         font-size: 0.75rem;
     }
+
     .keyboard .btn.px-2 {
         min-width: 2.8rem;
         font-size: 0.8rem;
     }
+
     #game-board-container {
         margin-bottom: 0.75rem;
     }
@@ -575,33 +589,35 @@ body {
         height: 2.4rem;
         font-size: 1.1rem;
     }
+
     .key-button {
         min-width: 1.9rem;
         height: 2.5rem;
         font-size: 0.75rem;
     }
+
     #game-board-container {
         margin-bottom: 0.5rem;
     }
 }
 
 .text-gradient {
-    background: linear-gradient(
-        90deg,
-        var(--vortludo-green1),
-        var(--vortludo-green2)
-    );
+    background: linear-gradient(90deg,
+            var(--vortludo-green1),
+            var(--vortludo-green2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 @keyframes sparkle {
+
     0%,
     100% {
         opacity: 0;
         transform: scale(0);
     }
+
     50% {
         opacity: 1;
         transform: scale(1);
@@ -626,6 +642,7 @@ body {
         transform: scale(0) rotate(0deg);
         opacity: 1;
     }
+
     100% {
         transform: scale(3) rotate(180deg);
         opacity: 0;
@@ -649,6 +666,7 @@ body {
     animation-delay:
         calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 0.5s);
 }
+
 .winner .tile-correct {
     animation:
         bounce 0.5s ease-out,
@@ -661,15 +679,19 @@ body {
     0% {
         filter: hue-rotate(0deg) brightness(1);
     }
+
     25% {
         filter: hue-rotate(90deg) brightness(1.2);
     }
+
     50% {
         filter: hue-rotate(180deg) brightness(1);
     }
+
     75% {
         filter: hue-rotate(270deg) brightness(1.2);
     }
+
     100% {
         filter: hue-rotate(360deg) brightness(1);
     }
@@ -684,6 +706,7 @@ body {
     justify-content: flex-start;
     position: relative;
 }
+
 .hint-area .hint-btn-row {
     height: 2em;
     display: flex;
@@ -691,6 +714,7 @@ body {
     justify-content: center;
     width: 100%;
 }
+
 .hint-area .hint-text-row {
     height: 1.5em;
     display: flex;

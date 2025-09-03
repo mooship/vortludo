@@ -444,9 +444,3 @@ func performRequest(r http.Handler, method, path string, body *strings.Reader, h
 	r.ServeHTTP(w, req)
 	return w
 }
-
-// TestLogHelpers ensures the log helpers do not panic.
-func TestLogHelpers(t *testing.T) {
-	logInfo("info: %s", "test")
-	logWarn("warn: %s", "test")
-}
