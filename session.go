@@ -1,0 +1,45 @@
+package main
+
+import (
+	"context"
+	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+)
+
+// getOrCreateSession retrieves the session ID from the cookie or creates a new one.
+func (app *App) getOrCreateSession(c *gin.Context) string {
+	sessionID, err := c.Cookie(SessionCookieName)
+	if err != nil || len(sessionID) < 10 {
+		sessionID = uuid.NewString()
+		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie(SessionCookieName, sessionID, int(app.CookieMaxAge.Seconds()), "/", "", false, true)
+		logInfo("Created new session: %s", sessionID)
+	}
+	return sessionID
+}
+
+// getGameState retrieves or creates the GameState for a session.
+func (app *App) getGameState(ctx context.Context, sessionID string) *GameState {
+	app.SessionMutex.Lock()
+	defer app.SessionMutex.Unlock()
+	game, exists := app.GameSessions[sessionID]
+	if exists {
+		game.LastAccessTime = time.Now()
+		logInfo("Retrieved cached game state for session: %s, updated last access time.", sessionID)
+		return game
+	}
+	logInfo("Creating new game for session: %s", sessionID)
+	return app.createNewGame(ctx, sessionID)
+}
+
+// saveGameState updates the in-memory game state for a session.
+func (app *App) saveGameState(sessionID string, game *GameState) {
+	app.SessionMutex.Lock()
+	defer app.SessionMutex.Unlock()
+	app.GameSessions[sessionID] = game
+	game.LastAccessTime = time.Now()
+	logInfo("Updated in-memory game state for session: %s", sessionID)
+}

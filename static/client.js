@@ -18,6 +18,7 @@ const ANIMATION_DELAY = 100;
 const TOAST_DURATION = 2000;
 const LETTER_REGEX = /^[a-zA-Z]$/;
 
+// Debounce function to limit rapid function calls
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
@@ -61,12 +62,15 @@ window.gameApp = function () {
             this._guessRows = null;
         },
 
+        // Initialize game state and setup event handlers
         initGame() {
             this.resetGameState();
             this.initTheme();
             this.setupHTMXHandlers();
             setTimeout(() => this.updateGameState(), 100);
         },
+
+        // Reset all game state variables to initial values
         resetGameState() {
             this.currentGuess = '';
             this.currentRow = 0;
@@ -75,16 +79,21 @@ window.gameApp = function () {
             this.submittingGuess = false;
             this.clearDOMCache();
         },
+
+        // Load theme preference from localStorage and apply it
         initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             this.isDarkMode = savedTheme === 'dark';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
         },
+        // Setup HTMX event handlers for server communication
         setupHTMXHandlers() {
+            // Handle successful HTMX responses
             document.body.addEventListener('htmx:afterSwap', () => {
                 this.submittingGuess = false;
                 this.clearDOMCache();
                 this.restoreUserInput();
+
                 const errorFlag = document.getElementById('guess-error-flag');
                 if (errorFlag) {
                     const msg = errorFlag.getAttribute('data-message') || 'Word not accepted. Try another word.';
@@ -101,6 +110,7 @@ window.gameApp = function () {
                 }
             });
 
+            // Preserve user input before HTMX swap
             document.body.addEventListener('htmx:beforeSwap', () => {
                 if (this.currentGuess) {
                     this.tempCurrentGuess = this.currentGuess;
@@ -108,6 +118,7 @@ window.gameApp = function () {
                 }
             });
 
+            // Handle HTTP errors
             document.body.addEventListener('htmx:responseError', (evt) => {
                 if (evt.detail.xhr.status === 429) {
                     this.showToastNotification(
@@ -122,6 +133,7 @@ window.gameApp = function () {
                 }
             });
 
+            // Handle network errors
             document.body.addEventListener('htmx:sendError', () => {
                 this.showToastNotification(
                     'Network error. Check your connection! 📡',
@@ -129,13 +141,23 @@ window.gameApp = function () {
                 );
             });
 
+            // Handle timeouts
             document.body.addEventListener('htmx:timeout', () => {
                 this.showToastNotification(
                     'Request timed out. Please try again! ⏱️',
                     'error'
                 );
             });
+
+            // Handle server triggers (like reset command)
+            document.body.addEventListener('htmx:afterSettle', (evt) => {
+                const triggerHeader = evt.detail.xhr.getResponseHeader('HX-Trigger');
+                if (triggerHeader && triggerHeader.includes('clear-completed-words')) {
+                    this.clearCompletedWords();
+                }
+            });
         },
+        // Restore user input after HTMX operations
         restoreUserInput() {
             if (this.tempCurrentGuess && !this.currentGuess) {
                 this.currentGuess = this.tempCurrentGuess;
@@ -171,6 +193,7 @@ window.gameApp = function () {
                 }
             });
         }, 50),
+        // Animate row shake effect for invalid guesses
         shakeCurrentRow() {
             const rows = this.getGuessRows();
             const targetRow = Math.max(0, this.currentRow);
@@ -180,6 +203,7 @@ window.gameApp = function () {
                 setTimeout(() => row.classList.remove('shake'), 500);
             }
         },
+        // Handle keyboard input for game interaction
         handleKeyPress(e) {
             if (this.gameOver) {
                 if (
@@ -194,16 +218,16 @@ window.gameApp = function () {
                 }
                 return;
             }
+
             if (e.key === 'Enter') {
                 this.submitGuess();
-            }
-            else if (e.key === 'Backspace') {
+            } else if (e.key === 'Backspace') {
                 this.deleteLetter();
-            }
-            else if (LETTER_REGEX.test(e.key)) {
+            } else if (LETTER_REGEX.test(e.key)) {
                 this.addLetter(e.key.toUpperCase());
             }
         },
+
         handleVirtualKey(key, evt) {
             if (this.gameOver) {
                 this.showToastNotification(
@@ -212,6 +236,8 @@ window.gameApp = function () {
                 );
                 return;
             }
+
+            // Disable button briefly to prevent rapid clicking
             const active = evt?.target;
             if (active && active.disabled !== undefined) {
                 active.disabled = true;
@@ -219,16 +245,17 @@ window.gameApp = function () {
                     active.disabled = false;
                 }, 120);
             }
+
             if (key === 'ENTER') {
                 this.submitGuess();
-            }
-            else if (key === 'BACKSPACE') {
+            } else if (key === 'BACKSPACE') {
                 this.deleteLetter();
-            }
-            else {
+            } else {
                 this.addLetter(key);
             }
         },
+
+        // Add a letter to the current guess if within word length limit
         addLetter(letter) {
             if (this.currentGuess.length < WORD_LENGTH) {
                 this.currentGuess += letter;
@@ -241,12 +268,15 @@ window.gameApp = function () {
                 this.shakeCurrentRow();
             }
         },
+
+        // Remove the last letter from the current guess
         deleteLetter() {
             if (this.currentGuess.length > 0) {
                 this.currentGuess = this.currentGuess.slice(0, -1);
                 this.updateDisplay();
             }
         },
+        // Toggle between light and dark theme modes
         toggleTheme() {
             this.isDarkMode = !this.isDarkMode;
             const theme = this.isDarkMode ? 'dark' : 'light';
@@ -258,14 +288,20 @@ window.gameApp = function () {
             if (!board) {
                 return;
             }
+
+            // Clear current guess if no error flag present
             if (!document.getElementById('guess-error-flag')) {
                 this.currentGuess = '';
             }
+
+            // Reset keyboard status
             this.keyStatus = {};
-            const gameOverContainer = board.parentElement.querySelector(
-                '.mt-3.p-3.bg-body-secondary'
-            );
+
+            // Check if game is over
+            const gameOverContainer = board.parentElement.querySelector('.mt-3.p-3.bg-body-secondary');
             this.gameOver = gameOverContainer !== null;
+
+            // Count completed rows
             const rows = this.getGuessRows();
             let completedRows = 0;
             rows.forEach((row) => {
@@ -278,12 +314,15 @@ window.gameApp = function () {
                 );
                 if (hasStatusTiles) completedRows++;
             });
+
             this.currentRow = Math.min(completedRows, rows.length - 1);
             this.updateKeyboardColors();
             this.animateNewGuess();
             this.checkForWin();
         },
+
         submitGuess() {
+            // Validate submission conditions
             if (
                 this.submittingGuess ||
                 this.gameOver ||
@@ -305,6 +344,7 @@ window.gameApp = function () {
                 return;
             }
 
+            // Submit the guess
             this.submittingGuess = true;
             const guessInput = document.getElementById('guess-input');
             guessInput.value = this.currentGuess;
@@ -378,6 +418,34 @@ window.gameApp = function () {
             if (hasWinner) {
                 this.gameOver = true;
                 this.launchConfetti();
+
+                // Save the completed word to localStorage
+                // First try to find the word in the winning row
+                const winningRow = Array.from(rows).find(row => {
+                    const tiles = row.querySelectorAll('.tile-correct');
+                    return tiles.length === WORD_LENGTH;
+                });
+
+                if (winningRow) {
+                    const tiles = winningRow.querySelectorAll('.tile-correct');
+                    const word = Array.from(tiles).map(tile => tile.textContent).join('');
+                    if (word && word.length === WORD_LENGTH) {
+                        this.saveCompletedWord(word.toUpperCase());
+                    }
+                } else {
+                    // Fallback: look for the target word in the game over message
+                    const gameBoard = document.getElementById('game-board');
+                    if (gameBoard) {
+                        const gameOverContainer = gameBoard.parentElement.querySelector('.mt-3.p-3.bg-body-secondary');
+                        if (gameOverContainer) {
+                            const gameOverText = gameOverContainer.textContent || '';
+                            const wordMatch = gameOverText.match(/word was:\s*(\w+)/i);
+                            if (wordMatch && wordMatch[1]) {
+                                this.saveCompletedWord(wordMatch[1].toUpperCase());
+                            }
+                        }
+                    }
+                }
             } else {
                 const completedRows = Array.from(rows).filter((row) => {
                     const tiles = row.querySelectorAll('.tile.filled');
@@ -529,6 +597,54 @@ window.gameApp = function () {
         },
         shouldHideKeyboard() {
             return this.gameOver;
+        },
+        getCompletedWords() {
+            try {
+                const completed = localStorage.getItem('vortludo-completed-words');
+                return completed ? JSON.parse(completed) : [];
+            } catch (e) {
+                console.warn('Error reading completed words from localStorage:', e);
+                return [];
+            }
+        },
+        saveCompletedWord(word) {
+            try {
+                const completed = this.getCompletedWords();
+                if (!completed.includes(word)) {
+                    completed.push(word);
+                    localStorage.setItem('vortludo-completed-words', JSON.stringify(completed));
+                    this.showToastNotification(`Word "${word}" added to your completed list! 🎯`, 'success');
+                }
+            } catch (e) {
+                console.warn('Error saving completed word to localStorage:', e);
+            }
+        },
+        clearCompletedWords() {
+            try {
+                localStorage.removeItem('vortludo-completed-words');
+                this.showToastNotification('🎉 Congratulations! You\'ve completed all words! Progress reset.', 'success');
+            } catch (e) {
+                console.warn('Error clearing completed words from localStorage:', e);
+            }
+        },
+
+        startNewGame() {
+            const completedWords = this.getCompletedWords();
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/new-game';
+            form.style.display = 'none';
+
+            if (completedWords.length > 0) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'completedWords';
+                input.value = JSON.stringify(completedWords);
+                form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
         },
     };
 };

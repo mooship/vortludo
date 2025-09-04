@@ -723,3 +723,24 @@ body {
     width: 100%;
     transition: opacity 0.2s;
 }
+
+.hint-area .btn-outline-warning:focus,
+.hint-area .btn-outline-warning:active,
+.hint-area .btn-outline-warning:focus-visible {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+[data-bs-theme='light'] .hint-area .btn-outline-warning:focus,
+[data-bs-theme='light'] .hint-area .btn-outline-warning:active {
+    color: #f7f2e3 !important;
+    background-color: #bfa055 !important;
+    border-color: #bfa055 !important;
+}
+
+[data-bs-theme='dark'] .hint-area .btn-outline-warning:focus,
+[data-bs-theme='dark'] .hint-area .btn-outline-warning:active {
+    color: #2c2114 !important;
+    background-color: #d1b05a !important;
+    border-color: #d1b05a !important;
+}

@@ -1,0 +1,271 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/samber/lo"
+)
+
+// homeHandler renders the main game page for the current session.
+func (app *App) homeHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	game := app.getGameState(ctx, sessionID)
+	hint := app.getHintForWord(game.SessionWord)
+
+	c.HTML(http.StatusOK, "index.html", gin.H{
+		"title":   "Vortludo - A Libre Wordle Clone",
+		"message": "Guess the 5-letter word!",
+		"hint":    hint,
+		"game":    game,
+	})
+}
+
+// newGameHandler starts a new game session, optionally resetting the session ID.
+func (app *App) newGameHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	logInfo("Creating new game for session: %s", sessionID)
+
+	// Parse completed words from request
+	var completedWords []string
+	if c.Request.Method == "POST" {
+		completedWordsStr := c.PostForm("completedWords")
+		if completedWordsStr != "" {
+			if err := json.Unmarshal([]byte(completedWordsStr), &completedWords); err != nil {
+				logWarn("Failed to parse completed words: %v", err)
+				completedWords = []string{}
+			} else {
+				// Validate completed words exist in our word list
+				validCompletedWords := lo.Filter(completedWords, func(word string, _ int) bool {
+					_, exists := app.WordSet[word]
+					if !exists {
+						logWarn("Invalid completed word ignored: %s", word)
+					}
+					return exists
+				})
+				completedWords = validCompletedWords
+				logInfo("Validated %d completed words for session %s", len(completedWords), sessionID)
+			}
+		}
+	}
+
+	// Clear existing session data
+	app.SessionMutex.Lock()
+	delete(app.GameSessions, sessionID)
+	app.SessionMutex.Unlock()
+	logInfo("Cleared old session data for: %s", sessionID)
+
+	// Handle session reset if requested
+	if c.Query("reset") == "1" {
+		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie(SessionCookieName, "", -1, "/", "", false, true)
+
+		newSessionID := uuid.NewString()
+		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie(SessionCookieName, newSessionID, int(app.CookieMaxAge.Seconds()), "/", "", false, true)
+		logInfo("Created new session ID: %s", newSessionID)
+
+		if len(completedWords) > 0 {
+			_, needsReset := app.createNewGameWithCompletedWords(ctx, newSessionID, completedWords)
+			if needsReset {
+				c.Header("HX-Trigger", "clear-completed-words")
+			}
+		} else {
+			app.createNewGame(ctx, newSessionID)
+		}
+	} else {
+		// Use existing session
+		if len(completedWords) > 0 {
+			_, needsReset := app.createNewGameWithCompletedWords(ctx, sessionID, completedWords)
+			if needsReset {
+				c.Header("HX-Trigger", "clear-completed-words")
+			}
+		} else {
+			app.createNewGame(ctx, sessionID)
+		}
+	}
+
+	c.Redirect(http.StatusSeeOther, RouteHome)
+}
+
+// guessHandler processes a guess submission, validates it, and updates the game state.
+func (app *App) guessHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	game := app.getGameState(ctx, sessionID)
+	hint := app.getHintForWord(game.SessionWord)
+
+	renderBoard := func(errMsg string) {
+		c.HTML(http.StatusOK, "game-board", gin.H{
+			"game":  game,
+			"hint":  hint,
+			"error": errMsg,
+		})
+	}
+
+	renderFullPage := func(errMsg string) {
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"title":   "Vortludo - A Libre Wordle Clone",
+			"message": "Guess the 5-letter word!",
+			"hint":    hint,
+			"game":    game,
+			"error":   errMsg,
+		})
+	}
+
+	isHTMX := c.GetHeader("HX-Request") == "true"
+	var errMsg string
+	if err := app.validateGameState(c, game); err != nil {
+		errMsg = err.Error()
+		if isHTMX {
+			renderBoard(errMsg)
+		} else {
+			renderFullPage(errMsg)
+		}
+		return
+	}
+
+	guess := normalizeGuess(c.PostForm("guess"))
+	if !app.isAcceptedWord(guess) {
+		errMsg = "Word not accepted, please try another word"
+		if isHTMX {
+			renderBoard(errMsg)
+		} else {
+			renderFullPage(errMsg)
+		}
+		return
+	}
+
+	if slices.Contains(game.GuessHistory, guess) {
+		errMsg = "You already guessed that word"
+		if isHTMX {
+			renderBoard(errMsg)
+		} else {
+			renderFullPage(errMsg)
+		}
+		return
+	}
+	if err := app.processGuess(ctx, c, sessionID, game, guess, isHTMX, hint); err != nil {
+		errMsg = err.Error()
+		if isHTMX {
+			renderBoard(errMsg)
+		} else {
+			renderFullPage(errMsg)
+		}
+		return
+	}
+}
+
+// gameStateHandler renders the current game board as an HTML fragment.
+func (app *App) gameStateHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	game := app.getGameState(ctx, sessionID)
+	hint := app.getHintForWord(game.SessionWord)
+
+	c.HTML(http.StatusOK, "game-board", gin.H{
+		"game": game,
+		"hint": hint,
+	})
+}
+
+// retryWordHandler resets the game state for the current session but keeps the same word.
+func (app *App) retryWordHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+	sessionID := app.getOrCreateSession(c)
+	app.SessionMutex.Lock()
+	game, exists := app.GameSessions[sessionID]
+	if !exists {
+		app.SessionMutex.Unlock()
+		app.createNewGame(ctx, sessionID)
+		c.Redirect(http.StatusSeeOther, "/")
+		return
+	}
+	sessionWord := game.SessionWord
+	guesses := lo.Times(MaxGuesses, func(_ int) []GuessResult {
+		return lo.Times(WordLength, func(_ int) GuessResult { return GuessResult{} })
+	})
+	newGame := &GameState{
+		Guesses:        guesses,
+		CurrentRow:     0,
+		GameOver:       false,
+		Won:            false,
+		TargetWord:     "",
+		SessionWord:    sessionWord,
+		GuessHistory:   []string{},
+		LastAccessTime: time.Now(),
+	}
+	app.GameSessions[sessionID] = newGame
+	app.SessionMutex.Unlock()
+	c.Redirect(http.StatusSeeOther, "/")
+}
+
+// healthzHandler returns a JSON health check with server stats.
+func (app *App) healthzHandler(c *gin.Context) {
+	uptime := time.Since(app.StartTime)
+	c.JSON(http.StatusOK, gin.H{
+		"status":         "ok",
+		"env":            map[bool]string{true: "production", false: "development"}[app.IsProduction],
+		"words_loaded":   len(app.WordList),
+		"accepted_words": len(app.AcceptedWordSet),
+		"uptime":         formatUptime(uptime),
+		"timestamp":      time.Now().UTC().Format(time.RFC3339),
+	})
+}
+
+// validateGameState returns an error if the game is already over.
+// The gin.Context parameter is included for future extensibility and best practice, but is currently unused.
+func (app *App) validateGameState(_ *gin.Context, game *GameState) error {
+	if game.GameOver {
+		logWarn("session attempted guess on completed game")
+		return errors.New("game is already over, please start a new game")
+	}
+	return nil
+}
+
+// normalizeGuess trims and uppercases a guess string for comparison.
+func normalizeGuess(input string) string {
+	return strings.ToUpper(strings.TrimSpace(input))
+}
+
+// processGuess applies a guess to the game state, updates session, and renders the result.
+func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID string, game *GameState, guess string, isHTMX bool, hint string) error {
+	logInfo("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
+
+	if len(guess) != WordLength {
+		logWarn("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
+		return errors.New("word must be 5 letters")
+	}
+
+	if game.CurrentRow >= MaxGuesses {
+		logWarn("session %s attempted guess after max guesses reached", sessionID)
+		return errors.New("no more guesses allowed")
+	}
+
+	targetWord := app.getTargetWord(ctx, game)
+	isInvalid := !app.isValidWord(guess)
+	result := checkGuess(guess, targetWord)
+	app.updateGameState(ctx, game, guess, targetWord, result, isInvalid)
+	app.saveGameState(sessionID, game)
+
+	if isHTMX {
+		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "hint": hint})
+	} else {
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"title":   "Vortludo - A Libre Wordle Clone",
+			"message": "Guess the 5-letter word!",
+			"hint":    hint,
+			"game":    game,
+		})
+	}
+	return nil
+}
