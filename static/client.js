@@ -4,6 +4,7 @@ const ANIMATION_DELAY = 100;
 const TOAST_DURATION = 2000;
 const LETTER_REGEX = /^[a-zA-Z]$/;
 
+// Prevent zoom on double-tap for mobile devices
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 let lastTouchEnd = 0;
 document.addEventListener(
@@ -27,7 +28,7 @@ function debounce(func, wait) {
     };
 }
 
-// Read cookie by name
+// Extract cookie value by name from document.cookie
 function readCookie(name) {
     const v = `; ${document.cookie}`;
     const parts = v.split(`; ${name}=`);
@@ -53,6 +54,7 @@ window.gameApp = function () {
         _gameRows: null,
         _guessRows: null,
 
+        // Get game board rows with caching for performance
         getGameRows() {
             if (!this._gameRows) {
                 this._gameRows = document.querySelectorAll('#game-board > div');
@@ -60,6 +62,7 @@ window.gameApp = function () {
             return this._gameRows;
         },
 
+        // Get guess rows with caching for performance
         getGuessRows() {
             if (!this._guessRows) {
                 this._guessRows = document.querySelectorAll('.guess-row');
@@ -67,6 +70,7 @@ window.gameApp = function () {
             return this._guessRows;
         },
 
+        // Clear cached DOM elements after updates
         clearDOMCache() {
             this._gameRows = null;
             this._guessRows = null;
@@ -249,6 +253,7 @@ window.gameApp = function () {
             }
         },
 
+        // Handle virtual keyboard input from on-screen keys
         handleVirtualKey(key, evt) {
             if (this.gameOver) {
                 this.showToastNotification(
@@ -305,6 +310,7 @@ window.gameApp = function () {
             document.documentElement.setAttribute('data-bs-theme', theme);
             localStorage.setItem('theme', theme);
         },
+        // Sync game state from DOM after server updates
         updateGameState() {
             const board = document.getElementById('game-board');
             if (!board) {
@@ -343,6 +349,7 @@ window.gameApp = function () {
             this.checkForWin();
         },
 
+        // Submit current guess to server via HTMX
         submitGuess() {
             // Validate submission conditions
             if (
@@ -373,6 +380,7 @@ window.gameApp = function () {
 
             htmx.trigger('#guess-form', 'submit');
         },
+        // Update keyboard key colors based on guess results
         updateKeyboardColors() {
             const tiles = document.querySelectorAll('.tile.filled');
             this.keyStatus = {};
@@ -397,9 +405,11 @@ window.gameApp = function () {
                 }
             });
         },
+        // Get CSS class for keyboard key based on guess history
         getKeyClass(letter) {
             return this.keyStatus[letter] ?? '';
         },
+        // Animate tile flip animation for newly submitted guess
         animateNewGuess() {
             const rows = this.getGameRows();
             const row = rows?.[this.currentRow - 1];
@@ -438,6 +448,7 @@ window.gameApp = function () {
                 }
             }, WORD_LENGTH * ANIMATION_DELAY + 400);
         },
+        // Check for win/lose conditions and handle game completion
         checkForWin() {
             const rows = this.getGameRows();
             let hasWinner = false;
@@ -508,6 +519,7 @@ window.gameApp = function () {
                 }
             }
         },
+        // Initialize and trigger confetti animation for wins
         launchConfetti() {
             if (!window._confettiScriptLoaded && typeof window.confetti !== 'function') {
                 window._confettiScriptLoaded = true;
@@ -576,9 +588,34 @@ window.gameApp = function () {
                 });
             }, 1000);
         },
+        // Generate shareable emoji grid with attempt count
         shareResults() {
             const rows = this.getGameRows();
-            let emojiGrid = 'Vortludo\n\n';
+            let emojiGrid = 'Vortludo ';
+            let completedRowCount = 0;
+            let hasWon = false;
+
+            // Count completed rows and check for win
+            rows.forEach((row) => {
+                const tiles = row.querySelectorAll('.tile.filled');
+                if (tiles.length === WORD_LENGTH) {
+                    completedRowCount++;
+                    // Check if this row is all correct (winning row)
+                    const correctTiles = row.querySelectorAll('.tile-correct');
+                    if (correctTiles.length === WORD_LENGTH) {
+                        hasWon = true;
+                    }
+                }
+            });
+
+            // Add the score (tries out of 6, or X/6 if failed)
+            if (hasWon) {
+                emojiGrid += `${completedRowCount}/6\n\n`;
+            } else {
+                emojiGrid += 'X/6\n\n';
+            }
+
+            // Generate the emoji grid
             rows.forEach((row) => {
                 const tiles = row.querySelectorAll('.tile.filled');
                 if (tiles.length === WORD_LENGTH) {
@@ -598,6 +635,7 @@ window.gameApp = function () {
             });
             this.copyToClipboard(emojiGrid.trim());
         },
+        // Copy text to clipboard with fallback modal for unsupported browsers
         async copyToClipboard(text) {
             try {
                 if (navigator.clipboard && window.isSecureContext) {
@@ -643,6 +681,7 @@ window.gameApp = function () {
         shouldHideKeyboard() {
             return this.gameOver;
         },
+        // Manage completed words in localStorage for progress tracking
         getCompletedWords() {
             try {
                 const completed = localStorage.getItem('vortludo-completed-words');
@@ -672,6 +711,7 @@ window.gameApp = function () {
                 this.showToastNotification('Could not clear completed words from your browser storage.', 'warning');
             }
         },
+        // Create and submit form to start new game with completed words
         startNewGame() {
             const completedWords = this.getCompletedWords();
             const form = document.createElement('form');

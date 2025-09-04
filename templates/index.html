@@ -37,7 +37,7 @@
         </div>
     </noscript>
 
-    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1060">
+    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 z-3">
         <div id="notification-toast" class="toast" :class="{
                     'text-bg-success': toastType === 'success',
                     'text-bg-danger': toastType === 'error',
@@ -48,8 +48,8 @@
         </div>
     </div>
 
-    <div class="modal fade" :class="{'show d-block': showCopyModal}" x-show="showCopyModal" tabindex="-1"
-        style="background: rgba(0, 0, 0, 0.5)" x-transition>
+    <div class="modal fade bg-dark bg-opacity-50" :class="{'show d-block': showCopyModal}" x-show="showCopyModal"
+        tabindex="-1" x-transition>
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -92,7 +92,7 @@
 
     <div class="container-fluid d-flex flex-column vh-100" @keydown.window="handleKeyPress($event)">
         <div class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2">
-            <div class="d-flex flex-column align-items-center w-100" style="max-width: 500px">
+            <div class="d-flex flex-column align-items-center w-100 maxw-500">
                 <div class="text-center">
                     <p class="mb-2 small">{{.message}}</p>
                     <div x-data="{ hintVisible: false }" class="mb-2 hint-area">
@@ -107,13 +107,12 @@
                         </div>
                         <div class="hint-text-row">
                             {{if .hint}}
-                            <p class="mb-0 small text-warning" x-show="hintVisible" x-transition
-                                style="width: 100%; text-align: center;">
+                            <p class="mb-0 small text-warning w-100 text-center" x-show="hintVisible" x-transition>
                                 <i class="bi bi-lightbulb"></i>
                                 <span>Hint: {{.hint}}</span>
                             </p>
                             {{else}}
-                            <p class="mb-0 small" style="width: 100%;"></p>
+                            <p class="mb-0 small w-100"></p>
                             {{end}}
                         </div>
                     </div>
@@ -125,11 +124,11 @@
                 </div>
 
                 <form id="guess-form" hx-post="/guess" hx-target="#game-board-container" hx-swap="innerHTML"
-                    style="display: none" @submit.prevent="submitGuess">
+                    class="d-none" @submit.prevent="submitGuess">
                     <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control" />
                 </form>
 
-                <div class="keyboard mx-auto w-100" style="max-width: 500px" x-show="!shouldHideKeyboard()"
+                <div class="keyboard mx-auto w-100 mw-100" style="max-width:500px;" x-show="!shouldHideKeyboard()"
                     x-transition>
                     <div class="d-flex justify-content-center mb-1">
                         <template x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']">
