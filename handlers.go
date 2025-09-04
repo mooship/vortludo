@@ -143,7 +143,7 @@ func (app *App) guessHandler(c *gin.Context) {
 
 	guess := normalizeGuess(c.PostForm("guess"))
 	if !app.isAcceptedWord(guess) {
-		errMsg = "Word not accepted, please try another word"
+		errMsg = "Word not accepted, please try another word."
 		if isHTMX {
 			renderBoard(errMsg)
 		} else {
@@ -153,7 +153,7 @@ func (app *App) guessHandler(c *gin.Context) {
 	}
 
 	if slices.Contains(game.GuessHistory, guess) {
-		errMsg = "You already guessed that word"
+		errMsg = "You already guessed that word."
 		if isHTMX {
 			renderBoard(errMsg)
 		} else {

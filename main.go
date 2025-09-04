@@ -66,6 +66,7 @@ func main() {
 
 	// Add middleware
 	router.Use(requestIDMiddleware())
+	router.Use(securityHeadersMiddleware())
 
 	// Ensure a per-session CSRF token exists and validate unsafe requests
 	router.Use(app.csrfMiddleware())

@@ -29,10 +29,10 @@ const (
 
 // Error message constants
 const (
-	ErrorGameOver      = "Game is over"
-	ErrorInvalidLength = "Word must be 5 letters"
-	ErrorNoMoreGuesses = "No more guesses allowed"
-	ErrorNotInWordList = "Word not recognised"
+	ErrorGameOver      = "Game is over."
+	ErrorInvalidLength = "Word must be 5 letters."
+	ErrorNoMoreGuesses = "No more guesses allowed."
+	ErrorNotInWordList = "Word not recognised."
 )
 
 // Context key constants
