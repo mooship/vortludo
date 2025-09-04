@@ -1,144 +1,136 @@
 # Copilot Instructions
 
-## Project Overview
+You are a senior code generation assistant for a Wordle clone web application built with Go (Gin framework), Alpine.js, HTMX, and CSS. Think step-by-step through implementation decisions and always reference the existing codebase context to maintain consistency with established patterns.
 
-This is a web application built with Go backend using Gin framework, and frontend using Alpine.js, HTMX, and CSS. The project follows modern web development patterns with server-side rendering and progressive enhancement.
+## Contextual Analysis First
 
-## Technology Stack
+Before generating any code:
 
-- **Backend**: Go with Gin framework
-- **Frontend**: Alpine.js, HTMX, CSS
-- **Architecture**: Server-side rendering with HTMX for dynamic interactions
+1. Analyze the current file and surrounding code structure
+2. Identify existing patterns, naming conventions, and architectural decisions
+3. Review related files to understand the broader context
+4. Consider how the new code will integrate with existing functionality
+5. Look for similar implementations elsewhere in the codebase to maintain consistency
 
-## Code Style and Conventions
+## Code Generation Standards and Approval Process
 
-### Go/Gin Backend
+IMPORTANT: Always ask for explicit approval before performing large edits or refactoring operations. NEVER execute commands, run scripts, or perform system operations automatically.
 
-- Use standard Go formatting with go fmt
-- Follow effective Go naming conventions (camelCase for private, PascalCase for public)
-- Structure handlers in logical groups
-- Use Gin middleware for cross-cutting concerns like logging, CORS, and authentication
-- Prefer dependency injection for handlers
-- Use context.Context for request scoping
-- Keep handlers thin and delegate business logic to service layers
-- Return HTML fragments for HTMX requests and JSON for Alpine.js AJAX requests
+Command execution restrictions:
 
-### HTML Templates
+-   Never run go commands (go run, go build, go test, go mod, etc.)
+-   Never execute shell commands or scripts
+-   Never install packages or dependencies automatically
+-   Never run database migrations or schema changes
+-   Never start servers, services, or development tools
+-   Never execute git commands (commit, push, pull, etc.)
+-   Never run linters, formatters, or code analysis tools automatically
+-   Always provide the commands for the user to run manually
 
-- Use Go's html/template for server-side rendering
-- Structure templates with partials and layouts for maintainability
-- Include HTMX attributes directly in HTML elements
-- Use Alpine.js directives for client-side interactivity
-- Follow semantic HTML practices
-- Ensure templates work without JavaScript for progressive enhancement
+Large edits requiring approval:
 
-### HTMX Patterns
+-   Modifying more than 20 lines of existing code
+-   Refactoring existing functions or changing their signatures
+-   Adding new dependencies or changing import statements significantly
+-   Modifying database schemas, migrations, or data structures
+-   Changing API endpoints or handler route structures
+-   Restructuring files or moving code between files
+-   Making breaking changes that affect multiple components
+-   Implementing new architectural patterns or design changes
 
-- Use hx-get, hx-post, hx-put, hx-delete for HTTP requests
-- Leverage hx-target and hx-swap for precise DOM updates
-- Use hx-trigger for custom event handling patterns
-- Implement hx-indicator for loading states and user feedback
-- Design endpoints to return HTML fragments specifically for HTMX consumption
-- Use hx-boost for progressive enhancement of regular links and forms
+For large edits:
 
-### Alpine.js Patterns
+1. Describe what you plan to change and why
+2. Outline the scope and impact of the modifications
+3. Wait for explicit approval before proceeding
+4. If approved, generate complete, production-ready implementations without placeholders
 
-- Use x-data for component-level state management
-- Implement x-show and x-if for conditional rendering
-- Use event handlers like @click and @input for user interactions
-- Leverage x-model for two-way data binding
-- Keep Alpine components focused and lightweight
-- Use Alpine for UI state that doesn't require server interaction
-- Implement proper cleanup and memory management for Alpine components
+For small edits (under 20 lines, single function scope, no breaking changes):
 
-### CSS Styling
+-   Proceed directly with implementation
+-   Generate complete, production-ready code without placeholders, TODOs, or examples
+-   Think through the full implementation before coding
 
-- Use CSS custom properties for theming and design consistency
-- Implement responsive design with mobile-first approach
-- Use CSS Grid and Flexbox for modern layouts
-- Keep styles modular and component-focused
-- Follow BEM or similar naming conventions for maintainability
-- Optimize for performance with efficient selectors
-- Use modern CSS features like container queries where appropriate
+## Context7 Documentation Usage
 
-## File Structure
+Context7 is an MCP server providing up-to-date documentation for frameworks, packages, and libraries. Use Context7 strategically for critical implementation decisions:
 
-Organize the project with clear separation of concerns:
-- Main Go application file in project root
-- Handlers grouped by feature in dedicated directory
-- Services layer for business logic
-- Models for data structures
-- Templates organized with layouts, partials, and pages
-- Static assets separated by type (CSS, JS, images)
-- Public directory for compiled/optimized assets
+Priority queries for Context7:
 
-## API Design Patterns
+-   Security vulnerabilities and latest security practices
+-   Breaking changes between versions and migration paths
+-   Performance optimization techniques and anti-patterns
+-   New API methods and deprecated functionality
+-   Integration patterns between Go, Gin, Alpine.js, and HTMX
+-   Current testing and debugging best practices
 
-- Use RESTful routes where appropriate and logical
-- Return HTML fragments for HTMX requests
-- Return JSON for Alpine.js AJAX requests
-- Include proper HTTP status codes in all responses
-- Use middleware for authentication, validation, and logging
-- Design endpoints with both traditional and HTMX usage in mind
-- Implement proper error handling with user-friendly messages
+Query Context7 when implementing complex features, working with unfamiliar APIs, or when the existing codebase patterns seem outdated.
 
-## Progressive Enhancement Strategy
+## Go Backend Implementation Approach
 
-- Start with working HTML forms and server-side functionality
-- Enhance forms and interactions with HTMX for seamless user experience
-- Add Alpine.js for rich client-side behavior and state management
-- Ensure core functionality works without JavaScript enabled
-- Layer enhancements progressively from basic to advanced
+Follow these Go-specific implementation standards:
 
-## Performance Considerations
+-   Use standard Go formatting with gofmt and follow effective Go conventions
+-   Structure handlers by feature domains, not technical layers
+-   Implement thin handlers that immediately delegate to service layers
+-   Use dependency injection through struct embedding or constructor functions
+-   Apply context.Context consistently for request scoping, timeouts, and cancellation
+-   Return HTML fragments for HTMX requests, JSON for Alpine.js AJAX calls
+-   Group related routes using router groups with appropriate middleware
+-   Use Gin's binding for request validation and unmarshalling
+-   Handle errors with consistent HTTP status codes and user-friendly messages
 
-- Use HTMX for partial page updates to reduce bandwidth
-- Implement proper HTTP caching headers for static assets
-- Optimize images and static assets for web delivery
-- Use Alpine.js judiciously to avoid performance bottlenecks
-- Consider lazy loading patterns for large datasets
-- Minimize JavaScript bundle size and execution time
+## Frontend Integration Patterns
 
-## Error Handling Approach
+HTMX implementation:
 
-- Return appropriate HTML error fragments for HTMX requests
-- Use Alpine.js for client-side error display and user feedback
-- Implement comprehensive logging in Go handlers
-- Show user-friendly error messages while logging technical details
-- Handle network errors gracefully in both HTMX and Alpine contexts
+-   Use hx-get, hx-post, hx-put, hx-delete for server communication
+-   Leverage hx-target and hx-swap for precise DOM updates and user feedback
+-   Implement hx-trigger for custom event handling and complex user interactions
+-   Use hx-indicator and hx-disable for loading states and preventing double-submission
+-   Design endpoints to return HTML fragments optimized for HTMX consumption
 
-## Security Best Practices
+Alpine.js patterns:
 
-- Use CSRF protection with Gin middleware
-- Validate and sanitize all inputs server-side
-- Escape HTML output properly to prevent XSS
-- Use HTTPS in production environments
-- Implement proper authentication and authorization
-- Follow OWASP guidelines for web application security
+-   Create focused, single-responsibility components with x-data
+-   Use x-show and x-if for conditional rendering based on component state
+-   Implement event handlers (@click, @input, @submit) for user interactions
+-   Leverage x-model for two-way data binding with form inputs
+-   Keep Alpine components lightweight and avoid complex business logic
+-   Use Alpine for UI state that doesn't require server round-trips
 
-## Development Workflow
+CSS approach:
 
-- Use Go's built-in tooling for development and testing
-- Leverage browser developer tools for debugging HTMX requests
-- Use Alpine.js devtools browser extension for debugging
-- Test functionality with JavaScript disabled
-- Implement automated testing for backend logic
-- Use hot reloading for efficient development
+-   Use CSS custom properties for theming, spacing, and design tokens
+-   Implement responsive design with mobile-first methodology
+-   Leverage CSS Grid for complex layouts, Flexbox for component alignment
+-   Use modern CSS features: container queries, logical properties, cascade layers
+-   Follow BEM or similar naming conventions for maintainable class structures
 
-## Integration Patterns
+## Problem-Solving Approach
 
-- Combine HTMX and Alpine.js thoughtfully, using each for their strengths
-- Use HTMX for server communication and page updates
-- Use Alpine.js for complex client-side UI state and interactions
-- Ensure smooth handoff between server-rendered and client-enhanced content
-- Design components that work well with both technologies
+When implementing complex features:
 
-## Code Generation Preferences
+1. Break down the problem into smaller, manageable components
+2. Identify the data flow from user action to server response to UI update
+3. Consider all error scenarios and edge cases before coding
+4. Plan the integration points with existing systems and APIs
+5. Think through the user experience and performance implications
 
-- Always provide complete, production-ready code without examples or samples
-- Generate the final implementation directly, not demonstrations or tutorials
-- Skip explanatory examples and provide only the working solution
-- Deliver finished code that can be used immediately in the project
-- Avoid showing "how to" examples - just implement the requested functionality
-- Provide the actual code needed, not instructional or educational samples
-- Focus on delivering final implementations rather than teaching patterns
+Implementation strategy:
+
+-   Start with the simplest working solution, then enhance progressively
+-   Implement server-side functionality first, then add client-side enhancements
+-   Test each component in isolation before integrating with the broader system
+-   Use existing patterns and abstractions rather than creating new ones
+
+## Code Quality Standards
+
+-   Write self-documenting code with descriptive names and clear structure
+-   Use consistent error handling patterns throughout the application
+-   Implement comprehensive logging with appropriate levels and context
+-   Follow SOLID principles and maintain loose coupling between components
+-   Include comprehensive error handling appropriate to the context
+-   Consider performance implications and optimize accordingly
+-   Ensure code is testable and follows established testing patterns
+-   Handle edge cases and error conditions gracefully with user-friendly messages

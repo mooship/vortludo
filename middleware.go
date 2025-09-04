@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -56,6 +58,52 @@ func requestIDMiddleware() gin.HandlerFunc {
 		ctx := context.WithValue(c.Request.Context(), requestIDKey, reqID)
 		c.Request = c.Request.WithContext(ctx)
 		c.Header("X-Request-Id", reqID)
+		c.Next()
+	}
+}
+
+// validateCSRFMiddleware enforces that unsafe methods include a matching CSRF token
+func (app *App) validateCSRFMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		method := c.Request.Method
+		if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete || method == http.MethodPatch {
+			cookie, _ := c.Cookie("csrf_token")
+			header := c.GetHeader("X-CSRF-Token")
+			form := c.PostForm("csrf_token")
+			var token string
+			if header != "" {
+				token = header
+			} else if form != "" {
+				token = form
+			}
+			if token == "" || cookie == "" || token != cookie {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "invalid csrf token"})
+				return
+			}
+		}
+		c.Next()
+	}
+}
+
+// csrfMiddleware ensures a per-session CSRF token cookie exists and stores it in the context.
+// It does not validate requests; handlers should validate the token on unsafe methods.
+func (app *App) csrfMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Try to read token cookie
+		token, err := c.Cookie("csrf_token")
+		if err != nil || len(token) < 8 {
+			// Generate new token
+			b := make([]byte, 32)
+			if _, err := rand.Read(b); err == nil {
+				token = fmt.Sprintf("%x", b)
+				// Set cookie; allow JS to not read it (HttpOnly) while handlers can still read it from request cookies
+				secure := app.IsProduction
+				c.SetSameSite(http.SameSiteStrictMode)
+				c.SetCookie("csrf_token", token, int(app.CookieMaxAge.Seconds()), "/", "", secure, true)
+			}
+		}
+		// Expose token in context for handlers/templates
+		c.Set("csrf_token", token)
 		c.Next()
 	}
 }

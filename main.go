@@ -67,6 +67,10 @@ func main() {
 	// Add middleware
 	router.Use(requestIDMiddleware())
 
+	// Ensure a per-session CSRF token exists and validate unsafe requests
+	router.Use(app.csrfMiddleware())
+	router.Use(app.validateCSRFMiddleware())
+
 	router.Use(ginGzip.Gzip(ginGzip.DefaultCompression,
 		ginGzip.WithExcludedExtensions([]string{".svg", ".ico", ".png", ".jpg", ".jpeg", ".gif"}),
 		ginGzip.WithExcludedPaths([]string{"/static/fonts"})))

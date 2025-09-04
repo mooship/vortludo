@@ -21,11 +21,13 @@ func (app *App) homeHandler(c *gin.Context) {
 	game := app.getGameState(ctx, sessionID)
 	hint := app.getHintForWord(game.SessionWord)
 
+	csrfToken, _ := c.Cookie("csrf_token")
 	c.HTML(http.StatusOK, "index.html", gin.H{
-		"title":   "Vortludo - A Libre Wordle Clone",
-		"message": "Guess the 5-letter word!",
-		"hint":    hint,
-		"game":    game,
+		"title":      "Vortludo - A Libre Wordle Clone",
+		"message":    "Guess the 5-letter word!",
+		"hint":       hint,
+		"game":       game,
+		"csrf_token": csrfToken,
 	})
 }
 
@@ -67,11 +69,12 @@ func (app *App) newGameHandler(c *gin.Context) {
 	// Handle session reset if requested
 	if c.Query("reset") == "1" {
 		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie(SessionCookieName, "", -1, "/", "", false, true)
+		secure := app.IsProduction
+		c.SetCookie(SessionCookieName, "", -1, "/", "", secure, true)
 
 		newSessionID := uuid.NewString()
 		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie(SessionCookieName, newSessionID, int(app.CookieMaxAge.Seconds()), "/", "", false, true)
+		c.SetCookie(SessionCookieName, newSessionID, int(app.CookieMaxAge.Seconds()), "/", "", secure, true)
 		logInfo("Created new session ID: %s", newSessionID)
 
 		if len(completedWords) > 0 {
@@ -105,20 +108,24 @@ func (app *App) guessHandler(c *gin.Context) {
 	hint := app.getHintForWord(game.SessionWord)
 
 	renderBoard := func(errMsg string) {
+		csrfToken, _ := c.Cookie("csrf_token")
 		c.HTML(http.StatusOK, "game-board", gin.H{
-			"game":  game,
-			"hint":  hint,
-			"error": errMsg,
+			"game":       game,
+			"hint":       hint,
+			"error":      errMsg,
+			"csrf_token": csrfToken,
 		})
 	}
 
 	renderFullPage := func(errMsg string) {
+		csrfToken, _ := c.Cookie("csrf_token")
 		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title":   "Vortludo - A Libre Wordle Clone",
-			"message": "Guess the 5-letter word!",
-			"hint":    hint,
-			"game":    game,
-			"error":   errMsg,
+			"title":      "Vortludo - A Libre Wordle Clone",
+			"message":    "Guess the 5-letter word!",
+			"hint":       hint,
+			"game":       game,
+			"error":      errMsg,
+			"csrf_token": csrfToken,
 		})
 	}
 
@@ -172,9 +179,11 @@ func (app *App) gameStateHandler(c *gin.Context) {
 	game := app.getGameState(ctx, sessionID)
 	hint := app.getHintForWord(game.SessionWord)
 
+	csrfToken, _ := c.Cookie("csrf_token")
 	c.HTML(http.StatusOK, "game-board", gin.H{
-		"game": game,
-		"hint": hint,
+		"game":       game,
+		"hint":       hint,
+		"csrf_token": csrfToken,
 	})
 }
 

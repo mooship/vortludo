@@ -1,3 +1,9 @@
+const WORD_LENGTH = 5;
+const MAX_GUESSES = 6;
+const ANIMATION_DELAY = 100;
+const TOAST_DURATION = 2000;
+const LETTER_REGEX = /^[a-zA-Z]$/;
+
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 let lastTouchEnd = 0;
 document.addEventListener(
@@ -12,12 +18,6 @@ document.addEventListener(
     false
 );
 
-const WORD_LENGTH = 5;
-const MAX_GUESSES = 6;
-const ANIMATION_DELAY = 100;
-const TOAST_DURATION = 2000;
-const LETTER_REGEX = /^[a-zA-Z]$/;
-
 // Debounce function to limit rapid function calls
 function debounce(func, wait) {
     let timeout;
@@ -25,6 +25,16 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
+}
+
+// Read cookie by name
+function readCookie(name) {
+    const v = `; ${document.cookie}`;
+    const parts = v.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop().split(';').shift();
+    }
+    return '';
 }
 
 window.gameApp = function () {
@@ -156,6 +166,17 @@ window.gameApp = function () {
                     this.clearCompletedWords();
                 }
             });
+
+            // Ensure HTMX sends CSRF token header for POST requests
+            if (window.htmx) {
+                htmx.on('htmx:configRequest', (evt) => {
+                    const meta = document.querySelector('meta[name="csrf-token"]');
+                    const token = meta ? meta.getAttribute('content') : '';
+                    if (token) {
+                        evt.detail.headers['X-CSRF-Token'] = token;
+                    }
+                });
+            }
         },
         // Restore user input after HTMX operations
         restoreUserInput() {
@@ -399,6 +420,22 @@ window.gameApp = function () {
             });
             row.classList.add('animated');
             row.classList.remove('submitting');
+
+            // After reveal animation completes, announce results for screen readers
+            setTimeout(() => {
+                const sr = document.getElementById('sr-live');
+                if (sr) {
+                    const tiles = row.querySelectorAll('.tile.filled');
+                    if (tiles.length === WORD_LENGTH) {
+                        const parts = Array.from(tiles).map((tile) => {
+                            const letter = tile.textContent || '';
+                            const status = tile.classList.contains('tile-correct') ? 'correct' : (tile.classList.contains('tile-present') ? 'present' : (tile.classList.contains('tile-absent') ? 'absent' : 'unknown'));
+                            return `${letter} is ${status}`;
+                        });
+                        sr.textContent = `Row ${this.currentRow} revealed: ${parts.join(', ')}.`;
+                    }
+                }
+            }, WORD_LENGTH * ANIMATION_DELAY + 400);
         },
         checkForWin() {
             const rows = this.getGameRows();
@@ -545,11 +582,15 @@ window.gameApp = function () {
                 const tiles = row.querySelectorAll('.tile.filled');
                 if (tiles.length === WORD_LENGTH) {
                     tiles.forEach((tile) => {
-                        if (tile.classList.contains('tile-correct'))
+                        if (tile.classList.contains('tile-correct')) {
                             emojiGrid += '🟩';
-                        else if (tile.classList.contains('tile-present'))
+                        }
+                        else if (tile.classList.contains('tile-present')) {
                             emojiGrid += '🟨';
-                        else emojiGrid += '⬛';
+                        }
+                        else {
+                            emojiGrid += '⬛';
+                        }
                     });
                     emojiGrid += '\n';
                 }
@@ -566,6 +607,7 @@ window.gameApp = function () {
                 this.openCopyModal(text);
             } catch (err) {
                 this.openCopyModal(text);
+                this.showToastNotification('Could not copy to clipboard automatically. Please copy manually.', 'warning');
             }
         },
         openCopyModal(text) {
@@ -581,6 +623,8 @@ window.gameApp = function () {
             if (textarea) {
                 textarea.select();
                 textarea.focus();
+            } else {
+                this.showToastNotification('Could not select text for copying.', 'warning');
             }
         },
         showToastNotification(message, type = 'success') {
@@ -603,7 +647,7 @@ window.gameApp = function () {
                 const completed = localStorage.getItem('vortludo-completed-words');
                 return completed ? JSON.parse(completed) : [];
             } catch (e) {
-                console.warn('Error reading completed words from localStorage:', e);
+                this.showToastNotification('Could not load completed words from your browser storage.', 'warning');
                 return [];
             }
         },
@@ -616,7 +660,7 @@ window.gameApp = function () {
                     this.showToastNotification(`Word "${word}" added to your completed list! 🎯`, 'success');
                 }
             } catch (e) {
-                console.warn('Error saving completed word to localStorage:', e);
+                this.showToastNotification('Could not save completed word to your browser storage.', 'warning');
             }
         },
         clearCompletedWords() {
@@ -624,16 +668,26 @@ window.gameApp = function () {
                 localStorage.removeItem('vortludo-completed-words');
                 this.showToastNotification('🎉 Congratulations! You\'ve completed all words! Progress reset.', 'success');
             } catch (e) {
-                console.warn('Error clearing completed words from localStorage:', e);
+                this.showToastNotification('Could not clear completed words from your browser storage.', 'warning');
             }
         },
-
         startNewGame() {
             const completedWords = this.getCompletedWords();
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/new-game';
             form.style.display = 'none';
+
+            // Add CSRF token as hidden input
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            const token = meta ? meta.getAttribute('content') : '';
+            if (token) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = token;
+                form.appendChild(csrfInput);
+            }
 
             if (completedWords.length > 0) {
                 const input = document.createElement('input');

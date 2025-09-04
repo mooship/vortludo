@@ -15,7 +15,8 @@ func (app *App) getOrCreateSession(c *gin.Context) string {
 	if err != nil || len(sessionID) < 10 {
 		sessionID = uuid.NewString()
 		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie(SessionCookieName, sessionID, int(app.CookieMaxAge.Seconds()), "/", "", false, true)
+		secure := app.IsProduction
+		c.SetCookie(SessionCookieName, sessionID, int(app.CookieMaxAge.Seconds()), "/", "", secure, true)
 		logInfo("Created new session: %s", sessionID)
 	}
 	return sessionID
