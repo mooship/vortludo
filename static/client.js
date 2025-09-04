@@ -174,13 +174,13 @@ window.gameApp = function () {
             // Ensure HTMX sends CSRF token header for POST requests
             if (window.htmx) {
                 htmx.on('htmx:configRequest', (evt) => {
-                    // Try to get token from meta tag first, then from cookie as fallback
-                    const meta = document.querySelector('meta[name="csrf-token"]');
-                    let token = meta ? meta.getAttribute('content') : '';
+                    // Read token from cookie first, then meta tag as fallback
+                    let token = readCookie('csrf_token');
 
-                    // If no meta token, try to read from cookie
+                    // If no cookie token, try to read from meta tag as fallback
                     if (!token) {
-                        token = readCookie('csrf_token');
+                        const meta = document.querySelector('meta[name="csrf-token"]');
+                        token = meta ? meta.getAttribute('content') : '';
                     }
 
                     if (token) {
@@ -740,8 +740,7 @@ window.gameApp = function () {
             form.style.display = 'none';
 
             // Add CSRF token as hidden input
-            const meta = document.querySelector('meta[name="csrf-token"]');
-            const token = meta ? meta.getAttribute('content') : '';
+            const token = readCookie('csrf_token');
             if (token) {
                 const csrfInput = document.createElement('input');
                 csrfInput.type = 'hidden';
