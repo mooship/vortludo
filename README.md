@@ -23,7 +23,7 @@ git clone https://github.com/mooship/vortludo.git
 cd vortludo
 
 # Run the server
-go run main.go
+go run .
 ```
 
 Then open your browser and go to [http://localhost:8080](http://localhost:8080) 🌐
@@ -53,10 +53,19 @@ Air will watch for changes in Go and HTML files, rebuild, and restart the server
 
 ## Project Structure 🗂️
 
-- `main.go` – Main application entrypoint and server
-- `static/` – JS, CSS, and icons
-- `templates/` – HTML templates
-- `data/` – Word lists
+- `main.go`: Main application entrypoint.
+- `handlers.go`: HTTP handlers for different routes.
+- `game.go`: Core game logic.
+- `session.go`: Manages game sessions.
+- `middleware.go`: Defines middleware for logging and other tasks.
+- `constants.go`: Holds application constants.
+- `types.go`: Defines data structures.
+- `util.go`: Contains utility functions.
+- `static/`: Holds all static assets like CSS, JavaScript, and favicons.
+- `templates/`: Contains HTML templates for the web interface.
+- `data/`: Includes word lists used in the game.
+- `.air.toml`: Configuration file for Air, a live-reloading tool.
+- `go.mod`, `go.sum`: Manage project dependencies.
 
 ## Contributing 🤝
 
