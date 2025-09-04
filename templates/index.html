@@ -134,25 +134,41 @@
                     <div class="d-flex justify-content-center mb-1">
                         <template x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']">
                             <button class="btn btn-secondary btn-sm m-1 key-button" :data-key="key"
-                                :class="'key-' + getKeyClass(key)" @click="handleVirtualKey(key)" x-text="key"></button>
+                                :class="'key-' + getKeyClass(key)" @click="handleVirtualKey(key, $event)"
+                                @keydown.enter.prevent="handleVirtualKey(key, $event)"
+                                @keydown.space.prevent="handleVirtualKey(key, $event)" :aria-label="'Letter ' + key"
+                                tabindex="0" type="button" x-text="key"></button>
                         </template>
                     </div>
                     <div class="d-flex justify-content-center mb-1">
                         <template x-for="key in ['A','S','D','F','G','H','J','K','L']">
                             <button class="btn btn-secondary btn-sm m-1 key-button" :data-key="key"
-                                :class="'key-' + getKeyClass(key)" @click="handleVirtualKey(key)" x-text="key"></button>
+                                :class="'key-' + getKeyClass(key)" @click="handleVirtualKey(key, $event)"
+                                @keydown.enter.prevent="handleVirtualKey(key, $event)"
+                                @keydown.space.prevent="handleVirtualKey(key, $event)" :aria-label="'Letter ' + key"
+                                tabindex="0" type="button" x-text="key"></button>
                         </template>
                     </div>
                     <div class="d-flex justify-content-center">
-                        <button class="btn btn-secondary btn-sm m-1 px-3 key-button" @click="handleVirtualKey('ENTER')">
+                        <button class="btn btn-secondary btn-sm m-1 px-3 key-button"
+                            @click="handleVirtualKey('ENTER', $event)"
+                            @keydown.enter.prevent="handleVirtualKey('ENTER', $event)"
+                            @keydown.space.prevent="handleVirtualKey('ENTER', $event)" aria-label="Enter" tabindex="0"
+                            type="button">
                             ENTER
                         </button>
                         <template x-for="key in ['Z','X','C','V','B','N','M']">
                             <button class="btn btn-secondary btn-sm m-1 key-button" :data-key="key"
-                                :class="'key-' + getKeyClass(key)" @click="handleVirtualKey(key)" x-text="key"></button>
+                                :class="'key-' + getKeyClass(key)" @click="handleVirtualKey(key, $event)"
+                                @keydown.enter.prevent="handleVirtualKey(key, $event)"
+                                @keydown.space.prevent="handleVirtualKey(key, $event)" :aria-label="'Letter ' + key"
+                                tabindex="0" type="button" x-text="key"></button>
                         </template>
                         <button class="btn btn-secondary btn-sm m-1 px-2 key-button"
-                            @click="handleVirtualKey('BACKSPACE')">
+                            @click="handleVirtualKey('BACKSPACE', $event)"
+                            @keydown.enter.prevent="handleVirtualKey('BACKSPACE', $event)"
+                            @keydown.space.prevent="handleVirtualKey('BACKSPACE', $event)" aria-label="Backspace"
+                            tabindex="0" type="button">
                             <i class="bi bi-backspace"></i>
                         </button>
                     </div>

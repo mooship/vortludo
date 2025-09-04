@@ -258,12 +258,13 @@ window.gameApp = function () {
                 return;
             }
 
-            // Disable button briefly to prevent rapid clicking
             const active = evt?.target;
             if (active && active.disabled !== undefined) {
                 active.disabled = true;
+                active.classList.add('pressed');
                 setTimeout(() => {
                     active.disabled = false;
+                    active.classList.remove('pressed');
                 }, 120);
             }
 
