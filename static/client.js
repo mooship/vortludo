@@ -174,8 +174,15 @@ window.gameApp = function () {
             // Ensure HTMX sends CSRF token header for POST requests
             if (window.htmx) {
                 htmx.on('htmx:configRequest', (evt) => {
+                    // Try to get token from meta tag first, then from cookie as fallback
                     const meta = document.querySelector('meta[name="csrf-token"]');
-                    const token = meta ? meta.getAttribute('content') : '';
+                    let token = meta ? meta.getAttribute('content') : '';
+
+                    // If no meta token, try to read from cookie
+                    if (!token) {
+                        token = readCookie('csrf_token');
+                    }
+
                     if (token) {
                         evt.detail.headers['X-CSRF-Token'] = token;
                     }

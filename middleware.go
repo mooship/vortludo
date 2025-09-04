@@ -117,8 +117,8 @@ func (app *App) csrfMiddleware() gin.HandlerFunc {
 				token = fmt.Sprintf("%x", b)
 				// Set cookie; allow JS to not read it (HttpOnly) while handlers can still read it from request cookies
 				secure := app.IsProduction
-				c.SetSameSite(http.SameSiteStrictMode)
-				c.SetCookie("csrf_token", token, int(app.CookieMaxAge.Seconds()), "/", "", secure, true)
+				c.SetSameSite(http.SameSiteLaxMode)
+				c.SetCookie("csrf_token", token, int(app.CookieMaxAge.Seconds()), "/", "", secure, false)
 			}
 		}
 		// Expose token in context for handlers/templates

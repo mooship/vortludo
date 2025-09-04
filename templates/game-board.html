@@ -54,6 +54,9 @@
         </p>
         <div class="d-flex justify-content-center gap-2 mb-2">
             <form method="POST" action="/retry-word" class="d-inline">
+                {{if $.csrf_token}}
+                <input type="hidden" name="csrf_token" value="{{$.csrf_token}}" />
+                {{end}}
                 <button type="submit" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-arrow-repeat"></i> Retry Word
                 </button>
