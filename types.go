@@ -23,14 +23,14 @@ type WordList struct {
 
 // GameState holds the state of a user's current game session.
 type GameState struct {
-	Guesses        [][]GuessResult `json:"guesses"`        // All guesses made so far
-	CurrentRow     int             `json:"currentRow"`     // Index of the current guess
-	GameOver       bool            `json:"gameOver"`       // Whether the game is over
-	Won            bool            `json:"won"`            // Whether the player has won
-	TargetWord     string          `json:"targetWord"`     // The word to guess (revealed at end)
-	SessionWord    string          `json:"sessionWord"`    // The word assigned to this session
-	GuessHistory   []string        `json:"guessHistory"`   // List of previous guesses
-	LastAccessTime time.Time       `json:"lastAccessTime"` // Last time this session was accessed
+	Guesses        [][]GuessResult `json:"guesses"`
+	CurrentRow     int             `json:"currentRow"`
+	GameOver       bool            `json:"gameOver"`
+	Won            bool            `json:"won"`
+	TargetWord     string          `json:"targetWord"`
+	SessionWord    string          `json:"sessionWord"`
+	GuessHistory   []string        `json:"guessHistory"`
+	LastAccessTime time.Time       `json:"lastAccessTime"`
 }
 
 // GuessResult represents the result of a single letter in a guess.
@@ -41,18 +41,32 @@ type GuessResult struct {
 
 // App is the main application struct holding all global state and configuration.
 type App struct {
-	WordList        []WordEntry              // List of all playable words
-	WordSet         map[string]struct{}      // Set for fast word lookup
-	AcceptedWordSet map[string]struct{}      // Set of all accepted guess words
-	HintMap         map[string]string        // Map from word to hint
-	GameSessions    map[string]*GameState    // Active game sessions by session ID
-	SessionMutex    sync.RWMutex             // Mutex for session map
-	LimiterMap      map[string]*rate.Limiter // Rate limiters by client IP
-	LimiterMutex    sync.Mutex               // Mutex for limiter map
-	IsProduction    bool                     // True if running in production
-	StartTime       time.Time                // Server start time
-	CookieMaxAge    time.Duration            // Max age for session cookies
-	StaticCacheAge  time.Duration            // Cache age for static assets
-	RateLimitRPS    int                      // Requests per second for rate limiting
-	RateLimitBurst  int                      // Burst size for rate limiting
+	WordList        []WordEntry
+	WordSet         map[string]struct{}
+	AcceptedWordSet map[string]struct{}
+	HintMap         map[string]string
+	GameSessions    map[string]*GameState
+	SessionMutex    sync.RWMutex
+	LimiterMap      map[string]*rate.Limiter
+	LimiterMutex    sync.RWMutex
+	IsProduction    bool
+	StartTime       time.Time
+	CookieMaxAge    time.Duration
+	StaticCacheAge  time.Duration
+	RateLimitRPS    int
+	RateLimitBurst  int
+	RuneBufPool     *sync.Pool
+}
+
+// globalApp holds a reference to the running App instance for small helpers.
+var globalApp *App
+
+// setGlobalApp sets the package-level App pointer.
+func setGlobalApp(a *App) {
+	globalApp = a
+}
+
+// getAppInstance returns the package-level App pointer (may be nil in tests).
+func getAppInstance() *App {
+	return globalApp
 }

@@ -12,18 +12,16 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// precomputed Content-Security-Policy header to avoid allocations per-request
+var cspHeader = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.jsdelivr.net/npm 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net https://fonts.bunny.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.bunny.net; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+
 // securityHeadersMiddleware sets recommended security headers including CSP.
 func securityHeadersMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Content Security Policy (adjust as needed for your stack)
-		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.jsdelivr.net/npm 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net https://fonts.bunny.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.bunny.net; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';")
-		// Prevent clickjacking
+		c.Header("Content-Security-Policy", cspHeader)
 		c.Header("X-Frame-Options", "DENY")
-		// Prevent MIME sniffing
 		c.Header("X-Content-Type-Options", "nosniff")
-		// Referrer policy
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
-		// HSTS (only if using HTTPS)
 		if c.Request.TLS != nil {
 			c.Header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
 		}
@@ -33,13 +31,19 @@ func securityHeadersMiddleware() gin.HandlerFunc {
 
 // getLimiter returns a rate limiter for the given key (usually client IP).
 func (app *App) getLimiter(key string) *rate.Limiter {
-	app.LimiterMutex.Lock()
-	defer app.LimiterMutex.Unlock()
-	if lim, ok := app.LimiterMap[key]; ok {
+	app.LimiterMutex.RLock()
+	lim, ok := app.LimiterMap[key]
+	app.LimiterMutex.RUnlock()
+	if ok {
 		return lim
 	}
 
-	// Use relaxed limits for localhost connections
+	app.LimiterMutex.Lock()
+	defer app.LimiterMutex.Unlock()
+	if lim, ok = app.LimiterMap[key]; ok {
+		return lim
+	}
+
 	if key == "" || key == "::1" {
 		logWarn("Rate limiter key is empty or loopback: %q", key)
 	}
@@ -47,7 +51,7 @@ func (app *App) getLimiter(key string) *rate.Limiter {
 	if rps <= 0 {
 		rps = 1
 	}
-	lim := rate.NewLimiter(rate.Every(time.Second/time.Duration(rps)), app.RateLimitBurst)
+	lim = rate.NewLimiter(rate.Every(time.Second/time.Duration(rps)), app.RateLimitBurst)
 	app.LimiterMap[key] = lim
 	return lim
 }
@@ -108,20 +112,16 @@ func (app *App) validateCSRFMiddleware() gin.HandlerFunc {
 // It does not validate requests; handlers should validate the token on unsafe methods.
 func (app *App) csrfMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Try to read token cookie
 		token, err := c.Cookie("csrf_token")
 		if err != nil || len(token) < 8 {
-			// Generate new token
 			b := make([]byte, 32)
 			if _, err := rand.Read(b); err == nil {
 				token = fmt.Sprintf("%x", b)
-				// Set cookie; allow JS to not read it (HttpOnly) while handlers can still read it from request cookies
 				secure := app.IsProduction
 				c.SetSameSite(http.SameSiteLaxMode)
 				c.SetCookie("csrf_token", token, int(app.CookieMaxAge.Seconds()), "/", "", secure, false)
 			}
 		}
-		// Expose token in context for handlers/templates
 		c.Set("csrf_token", token)
 		c.Next()
 	}

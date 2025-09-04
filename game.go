@@ -14,7 +14,6 @@ import (
 func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
 	reqID, _ := ctx.Value(requestIDKey).(string)
 
-	// Check if context is cancelled
 	select {
 	case <-ctx.Done():
 		if reqID != "" {
@@ -26,7 +25,6 @@ func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
 	default:
 	}
 
-	// Generate cryptographically secure random index
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(app.WordList))))
 	if err != nil {
 		if reqID != "" {
@@ -48,17 +46,14 @@ func (app *App) getRandomWordEntry(ctx context.Context) WordEntry {
 func (app *App) getRandomWordEntryExcluding(ctx context.Context, completedWords []string) (WordEntry, bool) {
 	reqID, _ := ctx.Value(requestIDKey).(string)
 
-	// If no completed words, use standard selection
 	if len(completedWords) == 0 {
 		return app.getRandomWordEntry(ctx), false
 	}
 
-	// Filter out completed words from available pool
 	availableWords := lo.Filter(app.WordList, func(entry WordEntry, _ int) bool {
 		return !slices.Contains(completedWords, entry.Word)
 	})
 
-	// If all words completed, signal reset needed
 	if len(availableWords) == 0 {
 		if reqID != "" {
 			logInfo("[request_id=%v] All words completed, reset needed. Total words: %d, Completed: %d", reqID, len(app.WordList), len(completedWords))
@@ -68,7 +63,6 @@ func (app *App) getRandomWordEntryExcluding(ctx context.Context, completedWords 
 		return app.getRandomWordEntry(ctx), true
 	}
 
-	// Check for context cancellation
 	select {
 	case <-ctx.Done():
 		if reqID != "" {
@@ -80,7 +74,6 @@ func (app *App) getRandomWordEntryExcluding(ctx context.Context, completedWords 
 	default:
 	}
 
-	// Select random word from filtered list
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(availableWords))))
 	if err != nil {
 		if reqID != "" {
@@ -135,17 +128,14 @@ func (app *App) getTargetWord(ctx context.Context, game *GameState) string {
 func (app *App) updateGameState(ctx context.Context, game *GameState, guess, targetWord string, result []GuessResult, isInvalid bool) {
 	reqID, _ := ctx.Value(requestIDKey).(string)
 
-	// Prevent updates beyond max guesses
 	if game.CurrentRow >= MaxGuesses {
 		return
 	}
 
-	// Update game state with new guess
 	game.Guesses[game.CurrentRow] = result
 	game.GuessHistory = append(game.GuessHistory, guess)
 	game.LastAccessTime = time.Now()
 
-	// Check for win condition
 	if !isInvalid && guess == targetWord {
 		game.Won = true
 		game.GameOver = true
@@ -155,10 +145,8 @@ func (app *App) updateGameState(ctx context.Context, game *GameState, guess, tar
 			logInfo("Player won! Target word was: %s", targetWord)
 		}
 	} else {
-		// Move to next row
 		game.CurrentRow++
 
-		// Check for game over (max guesses reached)
 		if game.CurrentRow >= MaxGuesses {
 			game.GameOver = true
 			if reqID != "" {
@@ -169,7 +157,6 @@ func (app *App) updateGameState(ctx context.Context, game *GameState, guess, tar
 		}
 	}
 
-	// Reveal target word when game ends
 	if game.GameOver {
 		game.TargetWord = targetWord
 	}
@@ -178,37 +165,61 @@ func (app *App) updateGameState(ctx context.Context, game *GameState, guess, tar
 // checkGuess compares a guess to the target word and returns per-letter results.
 func checkGuess(guess, target string) []GuessResult {
 	result := make([]GuessResult, WordLength)
-	targetCopy := []rune(target)
+	var targetCopy []rune
+	var pooledBuf []rune
+	usedPool := false
+	if appInstance := getAppInstance(); appInstance != nil && appInstance.RuneBufPool != nil {
+		if v := appInstance.RuneBufPool.Get(); v != nil {
+			if ptr, ok := v.(*[]rune); ok && ptr != nil {
+				pooledBuf = *ptr
+				targetCopy = pooledBuf[:WordLength]
+				copy(targetCopy, []rune(target))
+				usedPool = true
+			} else {
+				targetCopy = []rune(target)
+			}
+		} else {
+			targetCopy = []rune(target)
+		}
+	} else {
+		targetCopy = []rune(target)
+	}
 
-	// First pass: mark correct positions (exact matches)
 	for i := range WordLength {
 		if guess[i] == target[i] {
 			result[i] = GuessResult{Letter: string(guess[i]), Status: GuessStatusCorrect}
-			targetCopy[i] = ' ' // Mark as used
+			targetCopy[i] = ' '
 		}
 	}
 
-	// Second pass: mark present/absent for non-exact matches
 	for i := range WordLength {
 		if result[i].Status == "" {
 			letter := string(guess[i])
 			result[i].Letter = letter
 
-			// Check if letter exists elsewhere in target
 			found := false
 			for j := range WordLength {
 				if targetCopy[j] == rune(guess[i]) {
 					result[i].Status = GuessStatusPresent
-					targetCopy[j] = ' ' // Mark as used
+					targetCopy[j] = ' '
 					found = true
 					break
 				}
 			}
 
-			// Letter not found in target
 			if !found {
 				result[i].Status = GuessStatusAbsent
 			}
+		}
+	}
+
+	if usedPool {
+		for i := range pooledBuf {
+			pooledBuf[i] = 0
+		}
+		if appInstance := getAppInstance(); appInstance != nil && appInstance.RuneBufPool != nil {
+			buf := pooledBuf
+			appInstance.RuneBufPool.Put(&buf)
 		}
 	}
 

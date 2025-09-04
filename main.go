@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -30,7 +31,6 @@ func main() {
 	isProduction := os.Getenv("GIN_MODE") == "release" || os.Getenv("ENV") == "production"
 	logInfo("Starting Vortludo in %s mode", map[bool]string{true: "production", false: "development"}[isProduction])
 
-	// Load word data
 	wordList, wordSet, err := loadWords()
 	if err != nil {
 		logFatal("Failed to load words: %v", err)
@@ -45,7 +45,6 @@ func main() {
 
 	hintMap := buildHintMap(wordList)
 
-	// Initialize application
 	app := &App{
 		WordList:        wordList,
 		WordSet:         wordSet,
@@ -59,16 +58,18 @@ func main() {
 		RateLimitRPS:    getEnvInt("RATE_LIMIT_RPS", 5),
 		RateLimitBurst:  getEnvInt("RATE_LIMIT_BURST", 10),
 		LimiterMap:      make(map[string]*rate.Limiter),
+		RuneBufPool: &sync.Pool{
+			New: func() any { buf := make([]rune, WordLength); return &buf },
+		},
 	}
 
-	// Setup router
+	setGlobalApp(app)
+
 	router := gin.Default()
 
-	// Add middleware
 	router.Use(requestIDMiddleware())
 	router.Use(securityHeadersMiddleware())
 
-	// Ensure a per-session CSRF token exists and validate unsafe requests
 	router.Use(app.csrfMiddleware())
 	router.Use(app.validateCSRFMiddleware())
 
@@ -80,7 +81,6 @@ func main() {
 		logWarn("Failed to set trusted proxies: %v", err)
 	}
 
-	// Apply cache headers
 	if isProduction {
 		router.Use(func(c *gin.Context) {
 			app.applyCacheHeaders(c, true)
@@ -91,7 +91,6 @@ func main() {
 		})
 	}
 
-	// Configure templates and static assets
 	if isProduction && dirExists("dist") {
 		logInfo("Serving assets from dist/ directory")
 		router.LoadHTMLGlob("dist/templates/*.html")
@@ -107,7 +106,6 @@ func main() {
 	}
 	router.SetFuncMap(funcMap)
 
-	// Register routes
 	router.GET("/", app.homeHandler)
 	router.GET("/new-game", app.newGameHandler)
 	router.POST("/new-game", app.rateLimitMiddleware(), app.newGameHandler)
@@ -195,7 +193,6 @@ func loadWords() ([]WordEntry, map[string]struct{}, error) {
 		return nil, nil, err
 	}
 
-	// Filter out words that aren't 5 letters
 	wordList := lo.Filter(wl.Words, func(entry WordEntry, _ int) bool {
 		if len(entry.Word) != 5 {
 			logWarn("Skipping word %q: not 5 letters", entry.Word)
@@ -204,7 +201,6 @@ func loadWords() ([]WordEntry, map[string]struct{}, error) {
 		return true
 	})
 
-	// Create word set for fast lookup
 	wordSet := make(map[string]struct{}, len(wordList))
 	lo.ForEach(wordList, func(entry WordEntry, _ int) {
 		wordSet[entry.Word] = struct{}{}

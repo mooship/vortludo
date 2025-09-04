@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -78,9 +79,7 @@ func getEnvInt(key string, fallback int) int {
 
 // parseInt parses a string as an int, supporting decimal and hex.
 func parseInt(val string) (int, error) {
-	var i int
-	_, err := fmt.Sscanf(val, "%d", &i)
-	return i, err
+	return strconv.Atoi(val)
 }
 
 // logInfo logs an info-level message.
