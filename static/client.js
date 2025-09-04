@@ -651,10 +651,23 @@ window.gameApp = function () {
         },
         openCopyModal(text) {
             this.copyModalText = text;
-            this.showCopyModal = true;
+            const modalEl = document.querySelector('.modal');
+            if (window.bootstrap && modalEl) {
+                if (!this._bsModal) {
+                    this._bsModal = new bootstrap.Modal(modalEl);
+                }
+                this._bsModal.show();
+            } else {
+                this.showCopyModal = true;
+            }
         },
         closeCopyModal() {
-            this.showCopyModal = false;
+            const modalEl = document.querySelector('.modal');
+            if (window.bootstrap && modalEl && this._bsModal) {
+                this._bsModal.hide();
+            } else {
+                this.showCopyModal = false;
+            }
             this.copyModalText = '';
         },
         selectAllText() {

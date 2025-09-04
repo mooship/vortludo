@@ -90,7 +90,7 @@
         </div>
     </nav>
 
-    <div class="container-fluid d-flex flex-column vh-100" @keydown.window="handleKeyPress($event)">
+    <main class="container-fluid d-flex flex-column vh-100" @keydown.window="handleKeyPress($event)">
         <div class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2">
             <div class="d-flex flex-column align-items-center w-100 maxw-500">
                 <div class="text-center">
@@ -128,7 +128,7 @@
                     <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control" />
                 </form>
 
-                <div class="keyboard mx-auto w-100 mw-100" style="max-width:500px;" x-show="!shouldHideKeyboard()"
+                <div class="keyboard mx-auto w-100" style="max-width:500px;" x-show="!shouldHideKeyboard()"
                     x-transition>
                     <div class="d-flex justify-content-center mb-1">
                         <template x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']">
@@ -174,7 +174,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/htmx.org@2/dist/htmx.min.js"></script>
 
