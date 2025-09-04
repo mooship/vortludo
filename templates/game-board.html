@@ -39,9 +39,12 @@
             You guessed the word in {{len .game.GuessHistory}} {{if eq (len
             .game.GuessHistory) 1}}try{{else}}tries{{end}}!
         </p>
-        <div class="d-flex justify-content-center gap-2 mb-2">
-            <button class="btn btn-primary btn-sm" onclick="shareResults()">
+        <div class="d-flex flex-column align-items-center gap-2 mb-2">
+            <button class="btn btn-primary btn-sm btn-max-130" onclick="shareResults()">
                 <i class="bi bi-share"></i> Share Results
+            </button>
+            <button class="btn btn-primary btn-sm btn-max-130" @click="$dispatch('start-new-game')">
+                <i class="bi bi-arrow-clockwise"></i> New Game
             </button>
         </div>
         {{else}}
@@ -65,9 +68,12 @@
                 <i class="bi bi-arrow-clockwise"></i> New Game
             </button>
         </div>
-        <div class="d-flex justify-content-center gap-2">
-            <button class="btn btn-primary btn-sm" onclick="shareResults()">
+        <div class="d-flex flex-column align-items-center gap-2 mb-2">
+            <button class="btn btn-primary btn-sm btn-max-130" onclick="shareResults()">
                 <i class="bi bi-share"></i> Share Results
+            </button>
+            <button class="btn btn-primary btn-sm btn-max-130" @click="$dispatch('start-new-game')">
+                <i class="bi bi-arrow-clockwise"></i> New Game
             </button>
         </div>
         {{end}}

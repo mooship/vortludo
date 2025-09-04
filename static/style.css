@@ -730,6 +730,12 @@
     background-clip: text;
 }
 
+/* Utility class for max-width buttons on game over */
+.btn-max-130 {
+    max-width: 130px;
+    width: 100%;
+}
+
 /* ===== RESPONSIVE DESIGN & MOBILE ===== */
 
 /* Prevent zoom on iOS */
