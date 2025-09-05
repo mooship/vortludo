@@ -660,7 +660,7 @@ window.gameApp = function () {
             try {
                 const completed = localStorage.getItem('vortludo-completed-words');
                 return completed ? JSON.parse(completed) : [];
-            } catch (e) {
+            } catch {
                 this.showToastNotification('Could not load completed words from your browser storage.', 'warning');
                 return [];
             }
@@ -673,7 +673,7 @@ window.gameApp = function () {
                     localStorage.setItem('vortludo-completed-words', JSON.stringify(completed));
                     this.showToastNotification(`Word "${word}" added to your completed list! 🎯`, 'success');
                 }
-            } catch (e) {
+            } catch {
                 this.showToastNotification('Could not save completed word to your browser storage.', 'warning');
             }
         },
@@ -681,7 +681,7 @@ window.gameApp = function () {
             try {
                 localStorage.removeItem('vortludo-completed-words');
                 this.showToastNotification('🎉 Congratulations! You\'ve completed all words! Progress reset.', 'success');
-            } catch (e) {
+            } catch {
                 this.showToastNotification('Could not clear completed words from your browser storage.', 'warning');
             }
         },
