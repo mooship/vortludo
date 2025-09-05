@@ -2,8 +2,8 @@ package main
 
 // Game configuration constants
 const (
-	MaxGuesses = 6 // Maximum number of guesses per game
-	WordLength = 5 // Length of the word to guess
+	MaxGuesses = 6
+	WordLength = 5
 )
 
 // Guess status constants
