@@ -37,7 +37,6 @@ func (app *App) newGameHandler(c *gin.Context) {
 	sessionID := app.getOrCreateSession(c)
 	logInfo("Creating new game for session: %s", sessionID)
 
-	// Parse completed words from request
 	var completedWords []string
 	if c.Request.Method == "POST" {
 		completedWordsStr := c.PostForm("completedWords")
@@ -46,7 +45,6 @@ func (app *App) newGameHandler(c *gin.Context) {
 				logWarn("Failed to parse completed words: %v", err)
 				completedWords = []string{}
 			} else {
-				// Validate completed words exist in our word list
 				validCompletedWords := lo.Filter(completedWords, func(word string, _ int) bool {
 					_, exists := app.WordSet[word]
 					if !exists {
@@ -60,13 +58,11 @@ func (app *App) newGameHandler(c *gin.Context) {
 		}
 	}
 
-	// Clear existing session data
 	app.SessionMutex.Lock()
 	delete(app.GameSessions, sessionID)
 	app.SessionMutex.Unlock()
 	logInfo("Cleared old session data for: %s", sessionID)
 
-	// Handle session reset if requested
 	if c.Query("reset") == "1" {
 		c.SetSameSite(http.SameSiteStrictMode)
 		secure := app.IsProduction
@@ -109,6 +105,14 @@ func (app *App) guessHandler(c *gin.Context) {
 
 	renderBoard := func(errMsg string) {
 		csrfToken, _ := c.Cookie("csrf_token")
+		if errMsg != "" {
+			payload := map[string]string{"server_error": errMsg}
+			if b, jerr := json.Marshal(payload); jerr == nil {
+				c.Header("HX-Trigger", string(b))
+			} else {
+				logWarn("Failed to marshal HX-Trigger payload: %v", jerr)
+			}
+		}
 		c.HTML(http.StatusOK, "game-board", gin.H{
 			"game":       game,
 			"hint":       hint,
@@ -119,6 +123,14 @@ func (app *App) guessHandler(c *gin.Context) {
 
 	renderFullPage := func(errMsg string) {
 		csrfToken, _ := c.Cookie("csrf_token")
+		if errMsg != "" {
+			payload := map[string]string{"server_error": errMsg}
+			if b, jerr := json.Marshal(payload); jerr == nil {
+				c.Header("HX-Trigger", string(b))
+			} else {
+				logWarn("Failed to marshal HX-Trigger payload: %v", jerr)
+			}
+		}
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"title":      "Vortludo - A Libre Wordle Clone",
 			"message":    "Guess the 5-letter word!",
@@ -143,7 +155,7 @@ func (app *App) guessHandler(c *gin.Context) {
 
 	guess := normalizeGuess(c.PostForm("guess"))
 	if !app.isAcceptedWord(guess) {
-		errMsg = "Word not accepted, please try another word."
+		errMsg = ErrorWordNotAccepted
 		if isHTMX {
 			renderBoard(errMsg)
 		} else {
@@ -153,7 +165,7 @@ func (app *App) guessHandler(c *gin.Context) {
 	}
 
 	if slices.Contains(game.GuessHistory, guess) {
-		errMsg = "You already guessed that word."
+		errMsg = ErrorDuplicateGuess
 		if isHTMX {
 			renderBoard(errMsg)
 		} else {
@@ -236,7 +248,7 @@ func (app *App) healthzHandler(c *gin.Context) {
 func (app *App) validateGameState(_ *gin.Context, game *GameState) error {
 	if game.GameOver {
 		logWarn("session attempted guess on completed game")
-		return errors.New("game is already over, please start a new game")
+		return errors.New(ErrorGameOver)
 	}
 	return nil
 }
@@ -246,18 +258,17 @@ func normalizeGuess(input string) string {
 	return strings.ToUpper(strings.TrimSpace(input))
 }
 
-// processGuess applies a guess to the game state, updates session, and renders the result.
 func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID string, game *GameState, guess string, isHTMX bool, hint string) error {
 	logInfo("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
 
 	if len(guess) != WordLength {
 		logWarn("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
-		return errors.New("word must be 5 letters")
+		return errors.New(ErrorInvalidLength)
 	}
 
 	if game.CurrentRow >= MaxGuesses {
 		logWarn("session %s attempted guess after max guesses reached", sessionID)
-		return errors.New("no more guesses allowed")
+		return errors.New(ErrorNoMoreGuesses)
 	}
 
 	targetWord := app.getTargetWord(ctx, game)

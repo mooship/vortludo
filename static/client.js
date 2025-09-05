@@ -1,8 +1,12 @@
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
 const ANIMATION_DELAY = 100;
-const TOAST_DURATION = 2000;
+const TOAST_DURATION = 1500;
+const FIRST_ALPHA_REGEX = /[A-Za-z]/;
 const LETTER_REGEX = /^[a-zA-Z]$/;
+const TRAILING_WS_REGEX = /\s+$/u;
+const END_PUNCT_REGEX = /[*.!?]/u;
+const ALNUM_REGEX = /\p{L}|\p{N}/u;
 
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 let lastTouchEnd = 0;
@@ -35,6 +39,24 @@ function readCookie(name) {
     return '';
 }
 
+function ensureSentenceEnding(message) {
+    if (!message || typeof message !== 'string') {
+        return message;
+    }
+    const trimmed = message.replace(TRAILING_WS_REGEX, '');
+    if (trimmed.length === 0) {
+        return message;
+    }
+    const lastChar = trimmed.charAt(trimmed.length - 1);
+    if (END_PUNCT_REGEX.test(lastChar)) {
+        return trimmed;
+    }
+    if (ALNUM_REGEX.test(lastChar)) {
+        return trimmed + '.';
+    }
+    return trimmed;
+}
+
 window.gameApp = function () {
     return {
         currentGuess: '',
@@ -48,6 +70,8 @@ window.gameApp = function () {
         toastMessage: '',
         toastType: 'info',
         submittingGuess: false,
+        lastServerError: '',
+        _suppressGuessClear: false,
         _gameRows: null,
         _guessRows: null,
         getGameRows() {
@@ -90,8 +114,6 @@ window.gameApp = function () {
                 this.submittingGuess = false;
                 this.clearDOMCache();
                 this.restoreUserInput();
-
-
                 const targetEl = evt?.detail?.target || document.getElementById('game-board-container');
                 if (window.Alpine && targetEl) {
                     if (typeof window.Alpine.initTree === 'function') {
@@ -103,20 +125,6 @@ window.gameApp = function () {
                     }
                 }
 
-                const errorFlag = document.getElementById('guess-error-flag');
-                if (errorFlag) {
-                    const msg = errorFlag.getAttribute('data-message') || 'Word not accepted. Try another word.';
-                    this.showToastNotification(msg, 'warning');
-                    this.shakeCurrentRow();
-                } else if (document.getElementById('not-accepted-flag')) {
-                    this.showToastNotification(
-                        'Word not in accepted list. Try another word.',
-                        'warning'
-                    );
-                    this.shakeCurrentRow();
-                } else {
-                    this.updateGameState();
-                }
             });
 
             document.body.addEventListener('htmx:beforeSwap', () => {
@@ -155,9 +163,40 @@ window.gameApp = function () {
             });
 
             document.body.addEventListener('htmx:afterSettle', (evt) => {
-                const triggerHeader = evt.detail.xhr.getResponseHeader('HX-Trigger');
-                if (triggerHeader && triggerHeader.includes('clear-completed-words')) {
-                    this.clearCompletedWords();
+                const xhr = evt?.detail?.xhr;
+                if (xhr && typeof xhr.getResponseHeader === 'function') {
+                    const triggerHeader = xhr.getResponseHeader('HX-Trigger');
+                    if (triggerHeader) {
+                        try {
+                            const parsed = JSON.parse(triggerHeader);
+                            if (typeof parsed['clear-completed-words'] !== 'undefined') {
+                                this.clearCompletedWords();
+                            }
+                            if (parsed.server_error) {
+                                this.lastServerError = parsed.server_error;
+                                this._suppressGuessClear = true;
+                                this.showToastNotification(parsed.server_error, 'warning');
+                                this.submittingGuess = false;
+                                this.shakeCurrentRow();
+                            } else {
+                                this.lastServerError = '';
+                                this.updateGameState();
+                            }
+                        } catch {
+                            if (triggerHeader.includes('clear-completed-words')) {
+                                this.clearCompletedWords();
+                            }
+                            if (!triggerHeader.includes('server_error')) {
+                                this.lastServerError = '';
+                                this.updateGameState();
+                            }
+                        }
+                    } else {
+                        this.lastServerError = '';
+                        this.updateGameState();
+                    }
+                } else {
+                    this.updateGameState();
                 }
             });
 
@@ -299,7 +338,9 @@ window.gameApp = function () {
                 return;
             }
 
-            if (!document.getElementById('guess-error-flag')) {
+            if (this._suppressGuessClear) {
+                this._suppressGuessClear = false;
+            } else {
                 this.currentGuess = '';
             }
 
@@ -642,6 +683,22 @@ window.gameApp = function () {
             }
         },
         showToastNotification(message, type = 'success') {
+            if (message && typeof message === 'string') {
+                const firstAlphaMatch = message.match(FIRST_ALPHA_REGEX);
+                if (firstAlphaMatch) {
+                    const idx = firstAlphaMatch.index;
+                    if (idx !== undefined) {
+                        const ch = message[idx];
+                        if (ch === ch.toLowerCase()) {
+                            message =
+                                message.slice(0, idx) +
+                                ch.toUpperCase() +
+                                message.slice(idx + 1);
+                        }
+                    }
+                }
+            }
+            message = ensureSentenceEnding(message);
             this.toastMessage = message;
             this.toastType = type;
 

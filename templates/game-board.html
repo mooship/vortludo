@@ -1,7 +1,7 @@
 {{define "game-board"}}
 <main id="game-board" class="mx-auto maxw-350">
     {{if .error}}
-    <span id="guess-error-flag" data-message="{{.error}}" class="d-none"></span>
+    <div class="visually-hidden" aria-live="assertive" aria-atomic="true">{{.error}}</div>
     {{end}}
     {{range $row, $guesses := .game.Guesses}}
     <div class="guess-row d-flex justify-content-center mb-1">
@@ -23,9 +23,7 @@
     </div>
     {{end}}
 
-    {{if .notAccepted}}
-    <span id="not-accepted-flag" class="d-none"></span>
-    {{end}} {{if .newGame}}
+    {{if .newGame}}
     <span id="new-game-flag" class="d-none"></span>
     {{end}} {{if .retryGame}}
     <span id="retry-game-flag" class="d-none"></span>
