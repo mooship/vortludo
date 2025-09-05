@@ -4,16 +4,16 @@ A fun, open-source Wordle-inspired game built with Go! 🎮
 
 ## Features ✨
 
-- Guess the hidden word in 6 tries
-- Color-coded feedback for each guess
-- Web-based interface
-- Custom word lists
+-   Guess the hidden word in 6 tries
+-   Color-coded feedback for each guess
+-   Web-based interface
+-   Custom word lists
 
 ## Getting Started 🚀
 
 ### Prerequisites
 
-- Go 1.24 or newer
+-   Go 1.24 or newer
 
 ### Running Locally
 
@@ -36,36 +36,45 @@ This project includes a preconfigured [Air](https://github.com/air-verse/air) se
 
 1. [Install Air](https://github.com/air-verse/air#installation) (if you haven't already):
 
-	```sh
-	# macOS/Linux
-	curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh
-	# Windows (Powershell)
-	iwr -useb https://raw.githubusercontent.com/air-verse/air/master/install.ps1 | iex
-	```
+    ```sh
+    # macOS/Linux
+
+    curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh
+
+    # Windows (Powershell)
+
+    iwr -useb https://raw.githubusercontent.com/air-verse/air/master/install.ps1 | iex
+
+    # Install via Go (Go 1.20+)
+
+    go install github.com/air-verse/air@latest
+
+    # On Windows you may need to add your Go bin to PATH, e.g. add %USERPROFILE%\go\bin so the `air` command is runnable
+    ```
 
 2. Start the dev server with live reload:
 
-	```sh
-	air
-	```
+    ```sh
+    air
+    ```
 
 Air will watch for changes in Go and HTML files, rebuild, and restart the server automatically. The default `.air.toml` is set up for Windows, but can be easily adapted for other platforms if needed.
 
 ## Project Structure 🗂️
 
-- `main.go`: Main application entrypoint.
-- `handlers.go`: HTTP handlers for different routes.
-- `game.go`: Core game logic.
-- `session.go`: Manages game sessions.
-- `middleware.go`: Defines middleware for logging and other tasks.
-- `constants.go`: Holds application constants.
-- `types.go`: Defines data structures.
-- `util.go`: Contains utility functions.
-- `static/`: Holds all static assets like CSS, JavaScript, and favicons.
-- `templates/`: Contains HTML templates for the web interface.
-- `data/`: Includes word lists used in the game.
-- `.air.toml`: Configuration file for Air, a live-reloading tool.
-- `go.mod`, `go.sum`: Manage project dependencies.
+-   `main.go`: Main application entrypoint.
+-   `handlers.go`: HTTP handlers for different routes.
+-   `game.go`: Core game logic.
+-   `session.go`: Manages game sessions.
+-   `middleware.go`: Defines middleware for logging and other tasks.
+-   `constants.go`: Holds application constants.
+-   `types.go`: Defines data structures.
+-   `util.go`: Contains utility functions.
+-   `static/`: Holds all static assets like CSS, JavaScript, and favicons.
+-   `templates/`: Contains HTML templates for the web interface.
+-   `data/`: Includes word lists used in the game.
+-   `.air.toml`: Configuration file for Air, a live-reloading tool.
+-   `go.mod`, `go.sum`: Manage project dependencies.
 
 ## Contributing 🤝
 

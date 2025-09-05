@@ -1,5 +1,5 @@
 {{define "game-board"}}
-<main id="game-board" class="mx-auto" style="max-width:350px;" x-data>
+<main id="game-board" class="mx-auto maxw-350" x-data>
     {{if .error}}
     <span id="guess-error-flag" data-message="{{.error}}" class="d-none"></span>
     {{end}}
@@ -23,7 +23,6 @@
         {{end}}
     </div>
     {{end}}
-    </div>
 
     {{if .notAccepted}}
     <span id="not-accepted-flag" class="d-none"></span>
@@ -32,7 +31,7 @@
     {{end}} {{if .retryGame}}
     <span id="retry-game-flag" class="d-none"></span>
     {{end}} {{if .game.GameOver}}
-    <div class="mt-3 p-3 bg-body-secondary rounded shadow-sm" style="max-width:350px;">
+    <div class="mt-3 p-3 bg-body-secondary rounded shadow-sm maxw-350">
         {{if .game.Won}}
         <h3 class="text-success text-center h5 mb-2">🎉 Congratulations! 🎉</h3>
         <p class="text-center mb-3 small">

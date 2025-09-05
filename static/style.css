@@ -1,6 +1,5 @@
-/* ===== CSS CUSTOM PROPERTIES ===== */
+@layer tokens, theme, base, components, utilities, overrides;
 
-/* Light theme color palette */
 :root {
     --wordle-correct: #6aaa64;
     --wordle-present: #c9b458;
@@ -21,9 +20,50 @@
     --sepia-warning-bg: #bfa055;
     --sepia-info-bg: #8a7c4f;
     --sepia-toast-text-light: #f7f2e3;
+    --vl-btn-primary-bg: #bfa055;
+    --vl-btn-primary-border: #a48c6b;
+    --vl-btn-primary-color: #f7f2e3;
+    --vl-btn-primary-hover-bg: #e2d3b3;
+    --vl-btn-primary-hover-border: #bfa055;
+    --vl-btn-primary-hover-color: #6b5434;
+    --vl-btn-outline-primary-color: #bfa055;
+    --vl-btn-outline-primary-border: #bfa055;
+    --vl-btn-outline-primary-hover-bg: #bfa055;
+    --vl-btn-outline-primary-hover-color: #f7f2e3;
+    --vl-btn-outline-primary-hover-border: #bfa055;
+    --vl-btn-outline-warning-active-bg: #bfa055;
+    --vl-btn-outline-warning-active-border: #bfa055;
+    --vl-btn-outline-warning-active-color: #f7f2e3;
+    --vl-key-bg: var(--sepia-tile-bg);
+    --vl-key-border: var(--sepia-tile-border);
+    --vl-key-color: var(--sepia-text);
+    --vl-key-hover-bg: var(--sepia-surface);
+    --vl-key-hover-border: var(--sepia-border);
+    --vl-key-hover-color: var(--sepia-text);
+    --vl-key-correct-bg: var(--sepia-correct);
+    --vl-key-correct-border: var(--sepia-correct);
+    --vl-key-correct-color: #f7f2e3;
+    --vl-key-present-bg: var(--sepia-present);
+    --vl-key-present-border: var(--sepia-present);
+    --vl-key-present-color: #f7f2e3;
+    --vl-key-absent-bg: var(--sepia-absent);
+    --vl-key-absent-border: var(--sepia-absent);
+    --vl-key-absent-color: #f7f2e3;
+    --vl-toast-warning-bg: var(--sepia-warning-bg);
+    --vl-toast-info-bg: var(--sepia-info-bg);
+    --vl-toast-danger-bg: var(--sepia-error-bg);
+    --vl-toast-text: var(--sepia-toast-text-light);
+    --vl-tile-correct-bg: var(--sepia-correct);
+    --vl-tile-correct-border: var(--sepia-correct);
+    --vl-tile-correct-color: #f7f2e3;
+    --vl-tile-present-bg: var(--sepia-present);
+    --vl-tile-present-border: var(--sepia-present);
+    --vl-tile-present-color: #f7f2e3;
+    --vl-tile-absent-bg: var(--sepia-absent);
+    --vl-tile-absent-border: var(--sepia-absent);
+    --vl-tile-absent-color: #f7f2e3;
 }
 
-/* Dark theme color palette */
 [data-bs-theme='dark'] {
     --sepia-dark-bg: #2c2114;
     --sepia-dark-surface: #3a2a1a;
@@ -40,6 +80,48 @@
     --sepia-warning-bg: #b08a2e;
     --sepia-info-bg: #7e9c4b;
     --sepia-toast-text-dark: #f4f1e8;
+    --vl-btn-primary-bg: #b08a2e;
+    --vl-btn-primary-border: #7e6a2b;
+    --vl-btn-primary-color: #f4f1e8;
+    --vl-btn-primary-hover-bg: #d1b05a;
+    --vl-btn-primary-hover-border: #b08a2e;
+    --vl-btn-primary-hover-color: #2c2114;
+    --vl-btn-outline-primary-color: #d1b05a;
+    --vl-btn-outline-primary-border: #d1b05a;
+    --vl-btn-outline-primary-hover-bg: #d1b05a;
+    --vl-btn-outline-primary-hover-color: #2c2114;
+    --vl-btn-outline-primary-hover-border: #d1b05a;
+    --vl-btn-outline-warning-active-bg: #d1b05a;
+    --vl-btn-outline-warning-active-border: #d1b05a;
+    --vl-btn-outline-warning-active-color: #2c2114;
+    --vl-key-bg: var(--sepia-dark-tile-bg);
+    --vl-key-border: var(--sepia-dark-tile-border);
+    --vl-key-color: var(--sepia-dark-text);
+    --vl-key-hover-bg: var(--sepia-dark-surface);
+    --vl-key-hover-border: var(--sepia-dark-border);
+    --vl-key-hover-color: var(--sepia-dark-text);
+    --vl-key-correct-bg: var(--sepia-dark-correct);
+    --vl-key-correct-border: var(--sepia-dark-correct);
+    --vl-key-correct-color: #f4f1e8;
+    --vl-key-present-bg: var(--sepia-dark-present);
+    --vl-key-present-border: var(--sepia-dark-present);
+    --vl-key-present-color: #f4f1e8;
+    --vl-key-absent-bg: var(--sepia-dark-absent);
+    --vl-key-absent-border: var(--sepia-dark-absent);
+    --vl-key-absent-color: #f4f1e8;
+    --vl-toast-warning-bg: var(--sepia-warning-bg);
+    --vl-toast-info-bg: var(--sepia-info-bg);
+    --vl-toast-danger-bg: var(--sepia-error-bg);
+    --vl-toast-text: var(--sepia-toast-text-dark);
+    --vl-tile-correct-bg: var(--sepia-dark-correct);
+    --vl-tile-correct-border: var(--sepia-dark-correct);
+    --vl-tile-correct-color: #f4f1e8;
+    --vl-tile-present-bg: var(--sepia-dark-present);
+    --vl-tile-present-border: var(--sepia-dark-present);
+    --vl-tile-present-color: #f4f1e8;
+    --vl-tile-absent-bg: var(--sepia-dark-absent);
+    --vl-tile-absent-border: var(--sepia-dark-absent);
+    --vl-tile-absent-color: #f4f1e8;
 }
 
 /* ===== BASE THEME STYLES ===== */
@@ -88,7 +170,6 @@
     color: var(--sepia-text-muted);
 }
 
-/* Dark theme navigation */
 [data-bs-theme='dark'] .navbar,
 [data-bs-theme='dark'] .bg-body-tertiary,
 [data-bs-theme='dark'] .bg-body-secondary {
@@ -113,29 +194,38 @@
 
 /* ===== GAME TILES ===== */
 
-/* Base tile styling */
-.tile {
-    width: 3.2rem;
-    height: 3.2rem;
-    font-size: 1.5rem;
-    transition: all 0.3s ease;
+@layer tokens {
+    :root {
+        --vl-tile-bg: var(--sepia-tile-bg);
+        --vl-tile-border: var(--sepia-tile-border);
+        --vl-tile-text: var(--sepia-text);
+    }
 }
 
-/* Empty tile states */
-[data-bs-theme='light'] .tile {
-    background-color: var(--sepia-tile-bg);
-    border-color: var(--sepia-tile-border);
-    color: var(--sepia-text);
-    box-shadow: 0 1px 4px 0 rgba(180, 160, 120, 0.06);
+@layer theme {
+    [data-bs-theme='dark'] {
+        --vl-tile-bg: var(--sepia-dark-tile-bg);
+        --vl-tile-border: var(--sepia-dark-tile-border);
+        --vl-tile-text: var(--sepia-dark-text);
+    }
 }
 
-[data-bs-theme='dark'] .tile {
-    background-color: var(--sepia-dark-tile-bg);
-    border-color: var(--sepia-dark-tile-border);
-    color: var(--sepia-dark-text);
+@layer components {
+    .tile {
+        width: 3.2rem;
+        height: 3.2rem;
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+        background-color: var(--vl-tile-bg);
+        border-color: var(--vl-tile-border);
+        color: var(--vl-tile-text);
+    }
+
+    [data-bs-theme='light'] .tile {
+        box-shadow: 0 1px 4px 0 rgba(180, 160, 120, 0.06);
+    }
 }
 
-/* Active input tile */
 .tile.tile-active {
     border-color: #878a8c;
     animation: pulse 2s infinite;
@@ -149,66 +239,30 @@
     border-color: var(--sepia-dark-text-muted);
 }
 
-/* Guess result tiles - fallback colors */
-.tile[class*='tile-correct'] {
-    background-color: var(--wordle-correct);
-    color: white;
-    border-color: var(--wordle-correct);
+/* Guess result tiles (semantic variables) */
+.tile.tile-correct,
+.tile.flip.flip-revealed.tile-correct {
+    background-color: var(--vl-tile-correct-bg) !important;
+    border-color: var(--vl-tile-correct-border) !important;
+    color: var(--vl-tile-correct-color) !important;
 }
 
-.tile[class*='tile-present'] {
-    background-color: var(--wordle-present);
-    color: white;
-    border-color: var(--wordle-present);
+.tile.tile-present,
+.tile.flip.flip-revealed.tile-present {
+    background-color: var(--vl-tile-present-bg) !important;
+    border-color: var(--vl-tile-present-border) !important;
+    color: var(--vl-tile-present-color) !important;
 }
 
-.tile[class*='tile-absent'] {
-    background-color: var(--wordle-absent);
-    color: white;
-    border-color: var(--wordle-absent);
-}
-
-/* Guess result tiles - light theme */
-[data-bs-theme='light'] .tile[class*='tile-correct'] {
-    background-color: var(--sepia-correct);
-    color: #f7f2e3;
-    border-color: var(--sepia-correct);
-}
-
-[data-bs-theme='light'] .tile[class*='tile-present'] {
-    background-color: var(--sepia-present);
-    color: #f7f2e3;
-    border-color: var(--sepia-present);
-}
-
-[data-bs-theme='light'] .tile[class*='tile-absent'] {
-    background-color: var(--sepia-absent);
-    color: #f7f2e3;
-    border-color: var(--sepia-absent);
-}
-
-/* Guess result tiles - dark theme */
-[data-bs-theme='dark'] .tile[class*='tile-correct'] {
-    background-color: var(--sepia-dark-correct);
-    color: #f4f1e8;
-    border-color: var(--sepia-dark-correct);
-}
-
-[data-bs-theme='dark'] .tile[class*='tile-present'] {
-    background-color: var(--sepia-dark-present);
-    color: #f4f1e8;
-    border-color: var(--sepia-dark-present);
-}
-
-[data-bs-theme='dark'] .tile[class*='tile-absent'] {
-    background-color: var(--sepia-dark-absent);
-    color: #f4f1e8;
-    border-color: var(--sepia-dark-absent);
+.tile.tile-absent,
+.tile.flip.flip-revealed.tile-absent {
+    background-color: var(--vl-tile-absent-bg) !important;
+    border-color: var(--vl-tile-absent-border) !important;
+    color: var(--vl-tile-absent-color) !important;
 }
 
 /* ===== VIRTUAL KEYBOARD ===== */
 
-/* Base keyboard button styling */
 .key-button {
     min-width: 2.5rem;
     height: 3rem;
@@ -226,81 +280,67 @@
         border 0.15s;
 }
 
-[data-bs-theme='light'] .key-button,
-[data-bs-theme='light'] .btn-secondary.key-button {
-    background-color: var(--sepia-tile-bg);
-    border-color: var(--sepia-tile-border);
-    color: var(--sepia-text);
+[data-bs-theme='light'] .key-button {
+    background-color: var(--vl-key-bg);
+    border-color: var(--vl-key-border);
+    color: var(--vl-key-color);
     box-shadow: 0 1px 2px 0 rgba(180, 160, 120, 0.04);
 }
 
 [data-bs-theme='light'] .key-button:hover,
 [data-bs-theme='light'] .key-button:focus {
-    background-color: var(--sepia-surface);
-    border-color: var(--sepia-border);
-    color: var(--sepia-text);
+    background-color: var(--vl-key-hover-bg);
+    border-color: var(--vl-key-hover-border);
+    color: var(--vl-key-hover-color);
 }
 
-[data-bs-theme='dark'] .key-button,
-[data-bs-theme='dark'] .btn-secondary.key-button {
-    background-color: var(--sepia-dark-tile-bg);
-    border-color: var(--sepia-dark-tile-border);
-    color: var(--sepia-dark-text);
+[data-bs-theme='dark'] .key-button {
+    background-color: var(--vl-key-bg);
+    border-color: var(--vl-key-border);
+    color: var(--vl-key-color);
 }
 
 [data-bs-theme='dark'] .key-button:hover,
 [data-bs-theme='dark'] .key-button:focus {
-    background-color: var(--sepia-dark-surface);
-    border-color: var(--sepia-dark-border);
-    color: var(--sepia-dark-text);
+    background-color: var(--vl-key-hover-bg);
+    border-color: var(--vl-key-hover-border);
+    color: var(--vl-key-hover-color);
 }
 
 [data-bs-theme='light'] .key-correct {
-    background-color: var(--sepia-correct) !important;
-    border-color: var(--sepia-correct) !important;
-    color: #f7f2e3 !important;
+    background-color: var(--vl-key-correct-bg) !important;
+    border-color: var(--vl-key-correct-border) !important;
+    color: var(--vl-key-correct-color) !important;
 }
 
 [data-bs-theme='light'] .key-present {
-    background-color: var(--sepia-present) !important;
-    border-color: var(--sepia-present) !important;
-    color: #f7f2e3 !important;
+    background-color: var(--vl-key-present-bg) !important;
+    border-color: var(--vl-key-present-border) !important;
+    color: var(--vl-key-present-color) !important;
 }
 
 [data-bs-theme='light'] .key-absent {
-    background-color: var(--sepia-absent) !important;
-    border-color: var(--sepia-absent) !important;
-    color: #f7f2e3 !important;
+    background-color: var(--vl-key-absent-bg) !important;
+    border-color: var(--vl-key-absent-border) !important;
+    color: var(--vl-key-absent-color) !important;
 }
 
 [data-bs-theme='dark'] .key-correct {
-    background-color: var(--sepia-dark-correct) !important;
-    border-color: var(--sepia-dark-correct) !important;
-    color: #f4f1e8 !important;
+    background-color: var(--vl-key-correct-bg) !important;
+    border-color: var(--vl-key-correct-border) !important;
+    color: var(--vl-key-correct-color) !important;
 }
 
 [data-bs-theme='dark'] .key-present {
-    background-color: var(--sepia-dark-present) !important;
-    border-color: var(--sepia-dark-present) !important;
-    color: #f4f1e8 !important;
+    background-color: var(--vl-key-present-bg) !important;
+    border-color: var(--vl-key-present-border) !important;
+    color: var(--vl-key-present-color) !important;
 }
 
 [data-bs-theme='dark'] .key-absent {
-    background-color: var(--sepia-dark-absent) !important;
-    border-color: var(--sepia-dark-absent) !important;
-    color: #f4f1e8 !important;
-}
-
-[data-bs-theme='light'] .btn-secondary.key-button {
-    background-color: var(--sepia-tile-bg);
-    border-color: var(--sepia-tile-border);
-    color: var(--sepia-text);
-}
-
-[data-bs-theme='dark'] .btn-secondary.key-button {
-    background-color: var(--sepia-dark-tile-bg);
-    border-color: var(--sepia-dark-tile-border);
-    color: var(--sepia-dark-text);
+    background-color: var(--vl-key-absent-bg) !important;
+    border-color: var(--vl-key-absent-border) !important;
+    color: var(--vl-key-absent-color) !important;
 }
 
 .keyboard .d-flex {
@@ -326,71 +366,86 @@
 
 /* ===== BUTTONS & UI COMPONENTS ===== */
 
-/* Primary buttons */
 [data-bs-theme='light'] .btn-primary {
-    background-color: #bfa055;
-    border-color: #a48c6b;
-    color: #f7f2e3;
+    background-color: var(--vl-btn-primary-bg);
+    border-color: var(--vl-btn-primary-border);
+    color: var(--vl-btn-primary-color);
 }
 
 [data-bs-theme='light'] .btn-primary:hover,
 [data-bs-theme='light'] .btn-primary:focus {
-    background-color: #e2d3b3;
-    border-color: #bfa055;
-    color: #6b5434;
+    background-color: var(--vl-btn-primary-hover-bg);
+    border-color: var(--vl-btn-primary-hover-border);
+    color: var(--vl-btn-primary-hover-color);
 }
 
 [data-bs-theme='dark'] .btn-primary {
-    background-color: #b08a2e;
-    border-color: #7e6a2b;
-    color: #f4f1e8;
+    background-color: var(--vl-btn-primary-bg);
+    border-color: var(--vl-btn-primary-border);
+    color: var(--vl-btn-primary-color);
 }
 
 [data-bs-theme='dark'] .btn-primary:hover,
 [data-bs-theme='dark'] .btn-primary:focus {
-    background-color: #d1b05a;
-    border-color: #b08a2e;
-    color: #2c2114;
+    background-color: var(--vl-btn-primary-hover-bg);
+    border-color: var(--vl-btn-primary-hover-border);
+    color: var(--vl-btn-primary-hover-color);
 }
 
+.btn,
 .btn-primary,
 .btn-outline-primary,
+.btn-link,
 .btn-primary:focus,
 .btn-primary:active,
 .btn-outline-primary:focus,
 .btn-outline-primary:active {
-    border-radius: 0.5rem;
+    border-radius: 1.5rem;
     box-shadow: none;
 }
 
-/* Outline buttons */
+[data-bs-theme='light'] .btn-outline-warning:focus,
+[data-bs-theme='light'] .btn-outline-warning:active,
+[data-bs-theme='light'] .btn-outline-warning:focus-visible {
+    background-color: var(--vl-btn-outline-warning-active-bg) !important;
+    border-color: var(--vl-btn-outline-warning-active-border) !important;
+    color: var(--vl-btn-outline-warning-active-color) !important;
+}
+
+[data-bs-theme='dark'] .btn-outline-warning:focus,
+[data-bs-theme='dark'] .btn-outline-warning:active,
+[data-bs-theme='dark'] .btn-outline-warning:focus-visible {
+    background-color: var(--vl-btn-outline-warning-active-bg) !important;
+    border-color: var(--vl-btn-outline-warning-active-border) !important;
+    color: var(--vl-btn-outline-warning-active-color) !important;
+}
+
 [data-bs-theme='light'] .btn-outline-primary {
-    color: #bfa055;
-    border-color: #bfa055;
+    color: var(--vl-btn-outline-primary-color);
+    border-color: var(--vl-btn-outline-primary-border);
     background-color: transparent;
 }
 
 [data-bs-theme='light'] .btn-outline-primary:hover,
 [data-bs-theme='light'] .btn-outline-primary:focus {
-    color: #f7f2e3;
-    background-color: #bfa055;
-    border-color: #bfa055;
+    color: var(--vl-btn-outline-primary-hover-color);
+    background-color: var(--vl-btn-outline-primary-hover-bg);
+    border-color: var(--vl-btn-outline-primary-hover-border);
 }
 
 [data-bs-theme='dark'] .btn-outline-primary {
-    color: #d1b05a;
-    border-color: #d1b05a;
+    color: var(--vl-btn-outline-primary-color);
+    border-color: var(--vl-btn-outline-primary-border);
     background-color: transparent;
 }
 
 [data-bs-theme='dark'] .btn-outline-primary:hover,
 [data-bs-theme='dark'] .btn-outline-primary:focus {
-    color: #2c2114;
-    background-color: #d1b05a;
-    border-color: #d1b05a;
+    color: var(--vl-btn-outline-primary-hover-color);
+    background-color: var(--vl-btn-outline-primary-hover-bg);
+    border-color: var(--vl-btn-outline-primary-hover-border);
 }
 
-/* Link buttons */
 [data-bs-theme='light'] .btn-link.text-body {
     color: var(--sepia-text-muted) !important;
 }
@@ -409,7 +464,6 @@
     color: var(--sepia-dark-text) !important;
 }
 
-/* Hint button area styling */
 .hint-area {
     min-height: 3.5em;
     height: 3.5em;
@@ -444,20 +498,6 @@
     outline: none !important;
 }
 
-[data-bs-theme='light'] .hint-area .btn-outline-warning:focus,
-[data-bs-theme='light'] .hint-area .btn-outline-warning:active {
-    color: #f7f2e3 !important;
-    background-color: #bfa055 !important;
-    border-color: #bfa055 !important;
-}
-
-[data-bs-theme='dark'] .hint-area .btn-outline-warning:focus,
-[data-bs-theme='dark'] .hint-area .btn-outline-warning:active {
-    color: #2c2114 !important;
-    background-color: #d1b05a !important;
-    border-color: #d1b05a !important;
-}
-
 /* Toast notifications */
 .toast {
     min-width: 280px;
@@ -468,39 +508,51 @@
     padding: 0.75rem 1rem;
 }
 
+/* Toasts (variable driven) */
 [data-bs-theme='light'] .toast.text-bg-warning {
-    background-color: var(--sepia-warning-bg) !important;
-    color: var(--sepia-toast-text-light) !important;
+    background-color: var(--vl-toast-warning-bg) !important;
+    color: var(--vl-toast-text) !important;
 }
 
 [data-bs-theme='light'] .toast.text-bg-info {
-    background-color: var(--sepia-info-bg) !important;
-    color: var(--sepia-toast-text-light) !important;
-}
-
-[data-bs-theme='dark'] .toast.text-bg-warning {
-    background-color: var(--sepia-warning-bg) !important;
-    color: var(--sepia-toast-text-dark) !important;
-}
-
-[data-bs-theme='dark'] .toast.text-bg-info {
-    background-color: var(--sepia-info-bg) !important;
-    color: var(--sepia-toast-text-dark) !important;
+    background-color: var(--vl-toast-info-bg) !important;
+    color: var(--vl-toast-text) !important;
 }
 
 [data-bs-theme='light'] .toast.text-bg-danger {
-    background-color: var(--sepia-error-bg) !important;
-    color: var(--sepia-toast-text-light) !important;
+    background-color: var(--vl-toast-danger-bg) !important;
+    color: var(--vl-toast-text) !important;
+}
+
+[data-bs-theme='dark'] .toast.text-bg-warning {
+    background-color: var(--vl-toast-warning-bg) !important;
+    color: var(--vl-toast-text) !important;
+}
+
+[data-bs-theme='dark'] .toast.text-bg-info {
+    background-color: var(--vl-toast-info-bg) !important;
+    color: var(--vl-toast-text) !important;
 }
 
 [data-bs-theme='dark'] .toast.text-bg-danger {
-    background-color: var(--sepia-error-bg) !important;
-    color: var(--sepia-toast-text-dark) !important;
+    background-color: var(--vl-toast-danger-bg) !important;
+    color: var(--vl-toast-text) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .bounce,
+    .shake,
+    .tile.flip,
+    .winner .tile,
+    .celebration-sparkle,
+    .firework-particle {
+        animation: none !important;
+    }
 }
 
 /* ===== ANIMATIONS & EFFECTS ===== */
 
-/* Core animation keyframes */
 @keyframes pulse {
     0% {
         transform: scale(1);
@@ -554,7 +606,6 @@
     }
 }
 
-/* Tile flip animation for guess reveals */
 @keyframes flip {
     0% {
         transform: rotateX(0);
@@ -617,7 +668,6 @@
     }
 }
 
-/* Animation classes */
 .shake {
     animation: shake 0.5s ease-in-out;
 }
@@ -639,45 +689,8 @@
     color: var(--sepia-dark-text) !important;
 }
 
-.tile.flip.flip-revealed.tile-correct {
-    background-color: var(--sepia-correct) !important;
-    border-color: var(--sepia-correct) !important;
-    color: #faf8f3 !important;
-}
-
-.tile.flip.flip-revealed.tile-present {
-    background-color: var(--sepia-present) !important;
-    border-color: var(--sepia-present) !important;
-    color: #faf8f3 !important;
-}
-
-.tile.flip.flip-revealed.tile-absent {
-    background-color: var(--sepia-absent) !important;
-    border-color: var(--sepia-absent) !important;
-    color: #faf8f3 !important;
-}
-
-[data-bs-theme='dark'] .tile.flip.flip-revealed.tile-correct {
-    background-color: var(--sepia-dark-correct) !important;
-    border-color: var(--sepia-dark-correct) !important;
-    color: #f4f1e8 !important;
-}
-
-[data-bs-theme='dark'] .tile.flip.flip-revealed.tile-present {
-    background-color: var(--sepia-dark-present) !important;
-    border-color: var(--sepia-dark-present) !important;
-    color: #f4f1e8 !important;
-}
-
-[data-bs-theme='dark'] .tile.flip.flip-revealed.tile-absent {
-    background-color: var(--sepia-dark-absent) !important;
-    border-color: var(--sepia-dark-absent) !important;
-    color: #f4f1e8 !important;
-}
-
 /* ===== WIN CELEBRATION EFFECTS ===== */
 
-/* Win animation effects */
 .winner .tile {
     animation:
         bounce 0.5s ease-out,
@@ -694,7 +707,6 @@
         calc(var(--tile-index) * 0.1s), calc(var(--tile-index) * 0.1s + 1s);
 }
 
-/* Confetti and celebration particles */
 .celebration-sparkle {
     position: fixed;
     pointer-events: none;
@@ -720,7 +732,6 @@
 
 /* ===== UTILITY CLASSES ===== */
 
-/* Text gradient for branding */
 .text-gradient {
     background: linear-gradient(90deg,
             var(--vortludo-green1),
@@ -730,10 +741,17 @@
     background-clip: text;
 }
 
-/* Utility class for max-width buttons on game over */
 .btn-max-130 {
     max-width: 130px;
     width: 100%;
+}
+
+.maxw-350 {
+    max-width: 350px;
+}
+
+.maxw-500 {
+    max-width: 500px;
 }
 
 /* ===== RESPONSIVE DESIGN & MOBILE ===== */
@@ -754,7 +772,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Mobile breakpoints */
 @media (max-width: 576px) {
     .tile {
         width: 2.8rem;

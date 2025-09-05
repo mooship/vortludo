@@ -48,6 +48,8 @@
         </div>
     </div>
 
+    <div id="sr-live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
     <div class="modal fade bg-dark bg-opacity-50" :class="{'show d-block': showCopyModal}" x-show="showCopyModal"
         tabindex="-1" x-transition>
         <div class="modal-dialog modal-dialog-centered">
@@ -70,8 +72,6 @@
                     </button>
                 </div>
             </div>
-
-            <div id="sr-live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
         </div>
     </div>
 
@@ -128,8 +128,7 @@
                     <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control" />
                 </form>
 
-                <div class="keyboard mx-auto w-100" style="max-width:500px;" x-show="!shouldHideKeyboard()"
-                    x-transition>
+                <div class="keyboard mx-auto w-100 maxw-500" x-show="!shouldHideKeyboard()" x-transition>
                     <div class="d-flex justify-content-center mb-1">
                         <template x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']">
                             <button class="btn btn-secondary btn-sm m-1 key-button" :data-key="key"
