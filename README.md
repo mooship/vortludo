@@ -34,7 +34,7 @@ This project includes a preconfigured [Air](https://github.com/air-verse/air) se
 
 **To use Air:**
 
-1. [Install Air](https://github.com/air-verse/air#installation) (if you haven't already):
+1. [Install Air](https://github.com/air-verse/air#installation):
 
     ```sh
     # macOS/Linux

@@ -4,7 +4,6 @@ const ANIMATION_DELAY = 100;
 const TOAST_DURATION = 2000;
 const LETTER_REGEX = /^[a-zA-Z]$/;
 
-// Prevent zoom on double-tap for mobile devices
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 let lastTouchEnd = 0;
 document.addEventListener(
@@ -19,7 +18,6 @@ document.addEventListener(
     false
 );
 
-// Debounce function to limit rapid function calls
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
@@ -28,7 +26,6 @@ function debounce(func, wait) {
     };
 }
 
-// Extract cookie value by name from document.cookie
 function readCookie(name) {
     const v = `; ${document.cookie}`;
     const parts = v.split(`; ${name}=`);
@@ -49,42 +46,32 @@ window.gameApp = function () {
         copyModalText: '',
         showToast: false,
         toastMessage: '',
-        toastType: 'primary',
+        toastType: 'info',
         submittingGuess: false,
         _gameRows: null,
         _guessRows: null,
-
-        // Get game board rows with caching for performance
         getGameRows() {
             if (!this._gameRows) {
                 this._gameRows = document.querySelectorAll('#game-board > div');
             }
             return this._gameRows;
         },
-
-        // Get guess rows with caching for performance
         getGuessRows() {
             if (!this._guessRows) {
                 this._guessRows = document.querySelectorAll('.guess-row');
             }
             return this._guessRows;
         },
-
-        // Clear cached DOM elements after updates
         clearDOMCache() {
             this._gameRows = null;
             this._guessRows = null;
         },
-
-        // Initialize game state and setup event handlers
         initGame() {
             this.resetGameState();
             this.initTheme();
             this.setupHTMXHandlers();
             setTimeout(() => this.updateGameState(), 100);
         },
-
-        // Reset all game state variables to initial values
         resetGameState() {
             this.currentGuess = '';
             this.currentRow = 0;
@@ -93,30 +80,38 @@ window.gameApp = function () {
             this.submittingGuess = false;
             this.clearDOMCache();
         },
-
-        // Load theme preference from localStorage and apply it
         initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             this.isDarkMode = savedTheme === 'dark';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
         },
-        // Setup HTMX event handlers for server communication
         setupHTMXHandlers() {
-            // Handle successful HTMX responses
-            document.body.addEventListener('htmx:afterSwap', () => {
+            document.body.addEventListener('htmx:afterSwap', (evt) => {
                 this.submittingGuess = false;
                 this.clearDOMCache();
                 this.restoreUserInput();
 
+
+                const targetEl = evt?.detail?.target || document.getElementById('game-board-container');
+                if (window.Alpine && targetEl) {
+                    if (typeof window.Alpine.initTree === 'function') {
+                        window.Alpine.initTree(targetEl);
+                    } else if (typeof window.Alpine.discoverUninitializedComponents === 'function') {
+                        window.Alpine.discoverUninitializedComponents((el) => {
+                            window.Alpine.initializeComponent(el);
+                        }, targetEl);
+                    }
+                }
+
                 const errorFlag = document.getElementById('guess-error-flag');
                 if (errorFlag) {
                     const msg = errorFlag.getAttribute('data-message') || 'Word not accepted. Try another word.';
-                    this.showToastNotification(msg, 'info');
+                    this.showToastNotification(msg, 'warning');
                     this.shakeCurrentRow();
                 } else if (document.getElementById('not-accepted-flag')) {
                     this.showToastNotification(
                         'Word not in accepted list. Try another word.',
-                        'info'
+                        'warning'
                     );
                     this.shakeCurrentRow();
                 } else {
@@ -124,7 +119,6 @@ window.gameApp = function () {
                 }
             });
 
-            // Preserve user input before HTMX swap
             document.body.addEventListener('htmx:beforeSwap', () => {
                 if (this.currentGuess) {
                     this.tempCurrentGuess = this.currentGuess;
@@ -132,12 +126,11 @@ window.gameApp = function () {
                 }
             });
 
-            // Handle HTTP errors
             document.body.addEventListener('htmx:responseError', (evt) => {
                 if (evt.detail.xhr.status === 429) {
                     this.showToastNotification(
                         'Too many requests. Please slow down! ⏰',
-                        'error'
+                        'warning'
                     );
                 } else {
                     this.showToastNotification(
@@ -147,7 +140,6 @@ window.gameApp = function () {
                 }
             });
 
-            // Handle network errors
             document.body.addEventListener('htmx:sendError', () => {
                 this.showToastNotification(
                     'Network error. Check your connection! 📡',
@@ -155,7 +147,6 @@ window.gameApp = function () {
                 );
             });
 
-            // Handle timeouts
             document.body.addEventListener('htmx:timeout', () => {
                 this.showToastNotification(
                     'Request timed out. Please try again! ⏱️',
@@ -163,7 +154,6 @@ window.gameApp = function () {
                 );
             });
 
-            // Handle server triggers (like reset command)
             document.body.addEventListener('htmx:afterSettle', (evt) => {
                 const triggerHeader = evt.detail.xhr.getResponseHeader('HX-Trigger');
                 if (triggerHeader && triggerHeader.includes('clear-completed-words')) {
@@ -171,13 +161,10 @@ window.gameApp = function () {
                 }
             });
 
-            // Ensure HTMX sends CSRF token header for POST requests
             if (window.htmx) {
                 htmx.on('htmx:configRequest', (evt) => {
-                    // Read token from cookie first, then meta tag as fallback
                     let token = readCookie('csrf_token');
 
-                    // If no cookie token, try to read from meta tag as fallback
                     if (!token) {
                         const meta = document.querySelector('meta[name="csrf-token"]');
                         token = meta ? meta.getAttribute('content') : '';
@@ -189,7 +176,6 @@ window.gameApp = function () {
                 });
             }
         },
-        // Restore user input after HTMX operations
         restoreUserInput() {
             if (this.tempCurrentGuess && !this.currentGuess) {
                 this.currentGuess = this.tempCurrentGuess;
@@ -202,7 +188,6 @@ window.gameApp = function () {
                 this.tempCurrentRow = null;
             }
         },
-        // Debounced updateDisplay for better performance
         updateDisplay: debounce(function () {
             const rows = this.getGameRows();
             const row = rows?.[this.currentRow];
@@ -225,7 +210,6 @@ window.gameApp = function () {
                 }
             });
         }, 50),
-        // Animate row shake effect for invalid guesses
         shakeCurrentRow() {
             const rows = this.getGuessRows();
             const targetRow = Math.max(0, this.currentRow);
@@ -235,7 +219,6 @@ window.gameApp = function () {
                 setTimeout(() => row.classList.remove('shake'), 500);
             }
         },
-        // Handle keyboard input for game interaction
         handleKeyPress(e) {
             if (this.gameOver) {
                 if (
@@ -259,8 +242,6 @@ window.gameApp = function () {
                 this.addLetter(e.key.toUpperCase());
             }
         },
-
-        // Handle virtual keyboard input from on-screen keys
         handleVirtualKey(key, evt) {
             if (this.gameOver) {
                 this.showToastNotification(
@@ -288,8 +269,6 @@ window.gameApp = function () {
                 this.addLetter(key);
             }
         },
-
-        // Add a letter to the current guess if within word length limit
         addLetter(letter) {
             if (this.currentGuess.length < WORD_LENGTH) {
                 this.currentGuess += letter;
@@ -302,41 +281,33 @@ window.gameApp = function () {
                 this.shakeCurrentRow();
             }
         },
-
-        // Remove the last letter from the current guess
         deleteLetter() {
             if (this.currentGuess.length > 0) {
                 this.currentGuess = this.currentGuess.slice(0, -1);
                 this.updateDisplay();
             }
         },
-        // Toggle between light and dark theme modes
         toggleTheme() {
             this.isDarkMode = !this.isDarkMode;
             const theme = this.isDarkMode ? 'dark' : 'light';
             document.documentElement.setAttribute('data-bs-theme', theme);
             localStorage.setItem('theme', theme);
         },
-        // Sync game state from DOM after server updates
         updateGameState() {
             const board = document.getElementById('game-board');
             if (!board) {
                 return;
             }
 
-            // Clear current guess if no error flag present
             if (!document.getElementById('guess-error-flag')) {
                 this.currentGuess = '';
             }
 
-            // Reset keyboard status
             this.keyStatus = {};
 
-            // Check if game is over
             const gameOverContainer = board.parentElement.querySelector('.mt-3.p-3.bg-body-secondary');
             this.gameOver = gameOverContainer !== null;
 
-            // Count completed rows
             const rows = this.getGuessRows();
             let completedRows = 0;
             rows.forEach((row) => {
@@ -347,7 +318,9 @@ window.gameApp = function () {
                         tile.classList.contains('tile-present') ||
                         tile.classList.contains('tile-absent')
                 );
-                if (hasStatusTiles) completedRows++;
+                if (hasStatusTiles) {
+                    completedRows++;
+                }
             });
 
             this.currentRow = Math.min(completedRows, rows.length - 1);
@@ -356,9 +329,7 @@ window.gameApp = function () {
             this.checkForWin();
         },
 
-        // Submit current guess to server via HTMX
         submitGuess() {
-            // Validate submission conditions
             if (
                 this.submittingGuess ||
                 this.gameOver ||
@@ -380,14 +351,12 @@ window.gameApp = function () {
                 return;
             }
 
-            // Submit the guess
             this.submittingGuess = true;
             const guessInput = document.getElementById('guess-input');
             guessInput.value = this.currentGuess;
 
             htmx.trigger('#guess-form', 'submit');
         },
-        // Update keyboard key colors based on guess results
         updateKeyboardColors() {
             const tiles = document.querySelectorAll('.tile.filled');
             this.keyStatus = {};
@@ -412,11 +381,9 @@ window.gameApp = function () {
                 }
             });
         },
-        // Get CSS class for keyboard key based on guess history
         getKeyClass(letter) {
             return this.keyStatus[letter] ?? '';
         },
-        // Animate tile flip animation for newly submitted guess
         animateNewGuess() {
             const rows = this.getGameRows();
             const row = rows?.[this.currentRow - 1];
@@ -439,7 +406,6 @@ window.gameApp = function () {
             row.classList.add('animated');
             row.classList.remove('submitting');
 
-            // After reveal animation completes, announce results for screen readers
             setTimeout(() => {
                 const sr = document.getElementById('sr-live');
                 if (sr) {
@@ -455,7 +421,6 @@ window.gameApp = function () {
                 }
             }, WORD_LENGTH * ANIMATION_DELAY + 400);
         },
-        // Check for win/lose conditions and handle game completion
         checkForWin() {
             const rows = this.getGameRows();
             let hasWinner = false;
@@ -475,8 +440,6 @@ window.gameApp = function () {
                 this.gameOver = true;
                 this.launchConfetti();
 
-                // Save the completed word to localStorage
-                // First try to find the word in the winning row
                 const winningRow = Array.from(rows).find(row => {
                     const tiles = row.querySelectorAll('.tile-correct');
                     return tiles.length === WORD_LENGTH;
@@ -489,7 +452,6 @@ window.gameApp = function () {
                         this.saveCompletedWord(word.toUpperCase());
                     }
                 } else {
-                    // Fallback: look for the target word in the game over message
                     const gameBoard = document.getElementById('game-board');
                     if (gameBoard) {
                         const gameOverContainer = gameBoard.parentElement.querySelector('.mt-3.p-3.bg-body-secondary');
@@ -526,7 +488,6 @@ window.gameApp = function () {
                 }
             }
         },
-        // Initialize and trigger confetti animation for wins
         launchConfetti() {
             if (!window._confettiScriptLoaded && typeof window.confetti !== 'function') {
                 window._confettiScriptLoaded = true;
@@ -595,19 +556,16 @@ window.gameApp = function () {
                 });
             }, 1000);
         },
-        // Generate shareable emoji grid with attempt count
         shareResults() {
             const rows = this.getGameRows();
             let emojiGrid = 'Vortludo ';
             let completedRowCount = 0;
             let hasWon = false;
 
-            // Count completed rows and check for win
             rows.forEach((row) => {
                 const tiles = row.querySelectorAll('.tile.filled');
                 if (tiles.length === WORD_LENGTH) {
                     completedRowCount++;
-                    // Check if this row is all correct (winning row)
                     const correctTiles = row.querySelectorAll('.tile-correct');
                     if (correctTiles.length === WORD_LENGTH) {
                         hasWon = true;
@@ -615,14 +573,12 @@ window.gameApp = function () {
                 }
             });
 
-            // Add the score (tries out of 6, or X/6 if failed)
             if (hasWon) {
                 emojiGrid += `${completedRowCount}/6\n\n`;
             } else {
                 emojiGrid += 'X/6\n\n';
             }
 
-            // Generate the emoji grid
             rows.forEach((row) => {
                 const tiles = row.querySelectorAll('.tile.filled');
                 if (tiles.length === WORD_LENGTH) {
@@ -642,12 +598,11 @@ window.gameApp = function () {
             });
             this.copyToClipboard(emojiGrid.trim());
         },
-        // Copy text to clipboard with fallback modal for unsupported browsers
         async copyToClipboard(text) {
             try {
                 if (navigator.clipboard && window.isSecureContext) {
                     await navigator.clipboard.writeText(text);
-                    this.showToastNotification('Results copied to clipboard!');
+                    this.showToastNotification('Results copied to clipboard!', 'success');
                     return;
                 }
                 this.openCopyModal(text);
@@ -701,7 +656,6 @@ window.gameApp = function () {
         shouldHideKeyboard() {
             return this.gameOver;
         },
-        // Manage completed words in localStorage for progress tracking
         getCompletedWords() {
             try {
                 const completed = localStorage.getItem('vortludo-completed-words');
@@ -731,7 +685,6 @@ window.gameApp = function () {
                 this.showToastNotification('Could not clear completed words from your browser storage.', 'warning');
             }
         },
-        // Create and submit form to start new game with completed words
         startNewGame() {
             const completedWords = this.getCompletedWords();
             const form = document.createElement('form');
@@ -739,7 +692,6 @@ window.gameApp = function () {
             form.action = '/new-game';
             form.style.display = 'none';
 
-            // Add CSRF token as hidden input
             const token = readCookie('csrf_token');
             if (token) {
                 const csrfInput = document.createElement('input');

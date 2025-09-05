@@ -1,12 +1,11 @@
 {{define "game-board"}}
-<main id="game-board" class="mx-auto maxw-350" x-data>
+<main id="game-board" class="mx-auto maxw-350">
     {{if .error}}
     <span id="guess-error-flag" data-message="{{.error}}" class="d-none"></span>
     {{end}}
     {{range $row, $guesses := .game.Guesses}}
     <div class="guess-row d-flex justify-content-center mb-1">
         {{if and (eq $row $.game.CurrentRow) (not $.game.GameOver)}}
-        {{/* Active row: render from JS state if available, fallback to backend */}}
         <template x-for="i in Array.from({length: 5}, (_,i)=>i)">
             <div class="tile border border-2 rounded d-flex align-items-center justify-content-center fw-bold text-uppercase mx-1 tile-active"
                 :class="currentGuess && currentGuess[i] ? 'filled' : ''">
