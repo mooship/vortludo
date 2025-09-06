@@ -114,7 +114,7 @@ window.gameApp = function () {
                 this.submittingGuess = false;
                 this.clearDOMCache();
                 this.restoreUserInput();
-                const targetEl = evt?.detail?.target || document.getElementById('game-board-container');
+                const targetEl = evt?.detail?.target || document.getElementById('game-content-container');
                 if (window.Alpine && targetEl) {
                     if (typeof window.Alpine.initTree === 'function') {
                         window.Alpine.initTree(targetEl);
@@ -742,32 +742,13 @@ window.gameApp = function () {
                 this.showToastNotification('Could not clear completed words from your browser storage.', 'warning');
             }
         },
-        startNewGame() {
+        prepareNewGameData(event) {
             const completedWords = this.getCompletedWords();
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/new-game';
-            form.style.display = 'none';
-
-            const token = readCookie('csrf_token');
-            if (token) {
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = 'csrf_token';
-                csrfInput.value = token;
-                form.appendChild(csrfInput);
+            const form = event.target;
+            const completedWordsInput = form.querySelector('input[name="completedWords"]');
+            if (completedWordsInput && completedWords.length > 0) {
+                completedWordsInput.value = JSON.stringify(completedWords);
             }
-
-            if (completedWords.length > 0) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'completedWords';
-                input.value = JSON.stringify(completedWords);
-                form.appendChild(input);
-            }
-
-            document.body.appendChild(form);
-            form.submit();
         },
     };
 };

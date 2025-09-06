@@ -1,3 +1,34 @@
+{{define "game-content"}}
+<div class="text-center">
+    <p class="mb-2 small">Guess the 5-letter word!</p>
+    <div x-data="{ hintVisible: false }" class="mb-2 hint-area">
+        <div class="hint-btn-row">
+            {{if .hint}}
+            <button class="btn btn-outline-warning btn-sm" @click="hintVisible = !hintVisible; $event.target.blur()"
+                type="button">
+                <i class="bi bi-lightbulb"></i>
+                <span x-text="hintVisible ? 'Hide Hint' : 'Show Hint'"></span>
+            </button>
+            {{end}}
+        </div>
+        <div class="hint-text-row">
+            {{if .hint}}
+            <p class="mb-0 small text-warning w-100 text-center" x-show="hintVisible" x-transition>
+                <i class="bi bi-lightbulb"></i>
+                <span>Hint: {{.hint}}</span>
+            </p>
+            {{else}}
+            <p class="mb-0 small w-100"></p>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+<div class="mb-3">
+    {{template "game-board" .}}
+</div>
+{{end}}
+
 {{define "game-board"}}
 <main id="game-board" class="mx-auto maxw-350">
     {{if .error}}
@@ -39,9 +70,16 @@
             <button class="btn btn-primary btn-sm btn-max-130" onclick="shareResults()">
                 <i class="bi bi-share"></i> Share Results
             </button>
-            <button class="btn btn-primary btn-sm btn-max-130" @click="$dispatch('start-new-game')">
-                <i class="bi bi-arrow-clockwise"></i> New Game
-            </button>
+            <form hx-post="/new-game" hx-target="#game-content-container" hx-swap="innerHTML"
+                hx-indicator=".loading-indicator" class="d-inline" @submit="prepareNewGameData($event)">
+                {{if $.csrf_token}}
+                <input type="hidden" name="csrf_token" value="{{$.csrf_token}}" />
+                {{end}}
+                <input type="hidden" name="completedWords" x-ref="completedWordsInput" value="" />
+                <button type="submit" class="btn btn-primary btn-sm btn-max-130">
+                    <i class="bi bi-arrow-clockwise"></i> New Game
+                </button>
+            </form>
         </div>
         {{else}}
         <h3 class="text-danger text-center h5 mb-2">Game Over!</h3>
@@ -60,17 +98,31 @@
                     <i class="bi bi-arrow-repeat"></i> Retry Word
                 </button>
             </form>
-            <button class="btn btn-primary btn-sm" @click="$dispatch('start-new-game')">
-                <i class="bi bi-arrow-clockwise"></i> New Game
-            </button>
+            <form hx-post="/new-game" hx-target="#game-content-container" hx-swap="innerHTML"
+                hx-indicator=".loading-indicator" class="d-inline" @submit="prepareNewGameData($event)">
+                {{if $.csrf_token}}
+                <input type="hidden" name="csrf_token" value="{{$.csrf_token}}" />
+                {{end}}
+                <input type="hidden" name="completedWords" x-ref="completedWordsInput" value="" />
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-arrow-clockwise"></i> New Game
+                </button>
+            </form>
         </div>
         <div class="d-flex flex-column align-items-center gap-2 mb-2">
             <button class="btn btn-primary btn-sm btn-max-130" onclick="shareResults()">
                 <i class="bi bi-share"></i> Share Results
             </button>
-            <button class="btn btn-primary btn-sm btn-max-130" @click="$dispatch('start-new-game')">
-                <i class="bi bi-arrow-clockwise"></i> New Game
-            </button>
+            <form hx-post="/new-game" hx-target="#game-content-container" hx-swap="innerHTML"
+                hx-indicator=".loading-indicator" class="d-inline" @submit="prepareNewGameData($event)">
+                {{if $.csrf_token}}
+                <input type="hidden" name="csrf_token" value="{{$.csrf_token}}" />
+                {{end}}
+                <input type="hidden" name="completedWords" x-ref="completedWordsInput" value="" />
+                <button type="submit" class="btn btn-primary btn-sm btn-max-130">
+                    <i class="bi bi-arrow-clockwise"></i> New Game
+                </button>
+            </form>
         </div>
         {{end}}
 </main>

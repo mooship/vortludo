@@ -28,7 +28,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/js/bootstrap.min.js"></script>
 </head>
 
-<body x-data="gameApp()" x-init="initGame()" @start-new-game.window="startNewGame()">
+<body x-data="gameApp()" x-init="initGame()" @keydown.window="handleKeyPress($event)">
     <noscript>
         <div class="alert alert-danger text-center m-3" role="alert">
             <strong>JavaScript Required:</strong> Vortludo needs JavaScript
@@ -83,47 +83,29 @@
                     aria-label="Toggle theme">
                     <i class="bi fs-4" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
                 </button>
-                <button class="btn btn-primary btn-sm" @click="startNewGame()">
-                    <i class="bi bi-arrow-clockwise"></i> New Game
-                </button>
+                <form hx-post="/new-game" hx-target="#game-content-container" hx-swap="innerHTML"
+                    hx-indicator=".loading-indicator" class="d-inline" @submit="prepareNewGameData($event)">
+                    {{if .csrf_token}}
+                    <input type="hidden" name="csrf_token" value="{{.csrf_token}}" />
+                    {{end}}
+                    <input type="hidden" name="completedWords" x-ref="completedWordsInput" value="" />
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-arrow-clockwise"></i> New Game
+                    </button>
+                </form>
             </div>
         </div>
     </nav>
 
-    <main class="container-fluid d-flex flex-column vh-100" @keydown.window="handleKeyPress($event)">
+    <main class="container-fluid d-flex flex-column vh-100">
         <div class="flex-grow-1 d-flex flex-column justify-content-start align-items-center pt-2">
             <div class="d-flex flex-column align-items-center w-100 maxw-500">
-                <div class="text-center">
-                    <p class="mb-2 small">{{.message}}</p>
-                    <div x-data="{ hintVisible: false }" class="mb-2 hint-area">
-                        <div class="hint-btn-row">
-                            {{if .hint}}
-                            <button class="btn btn-outline-warning btn-sm"
-                                @click="hintVisible = !hintVisible; $event.target.blur()" type="button">
-                                <i class="bi bi-lightbulb"></i>
-                                <span x-text="hintVisible ? 'Hide Hint' : 'Show Hint'"></span>
-                            </button>
-                            {{end}}
-                        </div>
-                        <div class="hint-text-row">
-                            {{if .hint}}
-                            <p class="mb-0 small text-warning w-100 text-center" x-show="hintVisible" x-transition>
-                                <i class="bi bi-lightbulb"></i>
-                                <span>Hint: {{.hint}}</span>
-                            </p>
-                            {{else}}
-                            <p class="mb-0 small w-100"></p>
-                            {{end}}
-                        </div>
-                    </div>
+                <div id="game-content-container" hx-get="/game-state" hx-trigger="load once"
+                    x-on:htmx:after-swap="updateGameState()">
+                    {{template "game-content" .}}
                 </div>
 
-                <div id="game-board-container" hx-get="/game-state" hx-trigger="load once"
-                    x-on:htmx:after-swap="updateGameState()" class="mb-3">
-                    {{template "game-board" .}}
-                </div>
-
-                <form id="guess-form" hx-post="/guess" hx-target="#game-board-container" hx-swap="innerHTML"
+                <form id="guess-form" hx-post="/guess" hx-target="#game-content-container" hx-swap="innerHTML"
                     class="d-none" @submit.prevent="submitGuess">
                     <input type="text" id="guess-input" name="guess" maxlength="5" class="form-control" />
                 </form>

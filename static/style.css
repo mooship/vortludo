@@ -264,13 +264,13 @@
 /* ===== VIRTUAL KEYBOARD ===== */
 
 .key-button {
-    min-width: 2.5rem;
-    height: 3rem;
-    padding: 0.5rem 0.25rem;
+    min-width: 2.8rem;
+    height: 3.4rem;
+    padding: 0.6rem 0.3rem;
     margin: 0.125rem !important;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     font-weight: 600;
     border-radius: 0.4rem;
     border-width: 2px;
@@ -343,6 +343,10 @@
     color: var(--vl-key-absent-color) !important;
 }
 
+.keyboard {
+    padding: 0 1rem;
+}
+
 .keyboard .d-flex {
     margin-bottom: 0.25rem;
 }
@@ -352,15 +356,15 @@
 }
 
 .keyboard .btn.px-3 {
-    min-width: 4rem;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+    min-width: 4.5rem;
+    padding-left: 0.6rem !important;
+    padding-right: 0.6rem !important;
 }
 
 .keyboard .btn.px-2 {
-    min-width: 3rem;
-    padding-left: 0.4rem !important;
-    padding-right: 0.4rem !important;
+    min-width: 3.4rem;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
 }
 
 
@@ -773,6 +777,10 @@ body {
 }
 
 @media (max-width: 576px) {
+    .keyboard {
+        padding: 0 1.25rem;
+    }
+
     .tile {
         width: 2.8rem;
         height: 2.8rem;
@@ -781,12 +789,13 @@ body {
 
     .key-button {
         min-width: 2.2rem;
-        height: 2.8rem;
+        height: 3rem;
         font-size: 0.8rem;
+        margin: 0.1rem !important;
     }
 
     .keyboard .btn.px-3 {
-        min-width: 3.5rem;
+        min-width: 3.4rem;
         font-size: 0.75rem;
     }
 
@@ -801,6 +810,10 @@ body {
 }
 
 @media (max-width: 390px) {
+    .keyboard {
+        padding: 0 1.25rem;
+    }
+
     .tile {
         width: 2.4rem;
         height: 2.4rem;
@@ -809,8 +822,9 @@ body {
 
     .key-button {
         min-width: 1.9rem;
-        height: 2.5rem;
+        height: 2.6rem;
         font-size: 0.75rem;
+        margin: 0.08rem !important;
     }
 
     #game-board-container {

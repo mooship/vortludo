@@ -81,8 +81,8 @@ func (app *App) newGameHandler(c *gin.Context) {
 		} else {
 			app.createNewGame(ctx, newSessionID)
 		}
+		sessionID = newSessionID
 	} else {
-		// Use existing session
 		if len(completedWords) > 0 {
 			_, needsReset := app.createNewGameWithCompletedWords(ctx, sessionID, completedWords)
 			if needsReset {
@@ -93,7 +93,20 @@ func (app *App) newGameHandler(c *gin.Context) {
 		}
 	}
 
-	c.Redirect(http.StatusSeeOther, RouteHome)
+	isHTMX := c.GetHeader("HX-Request") == "true"
+	if isHTMX {
+		game := app.getGameState(ctx, sessionID)
+		hint := app.getHintForWord(game.SessionWord)
+		csrfToken, _ := c.Cookie("csrf_token")
+		c.HTML(http.StatusOK, "game-content", gin.H{
+			"game":       game,
+			"hint":       hint,
+			"newGame":    true,
+			"csrf_token": csrfToken,
+		})
+	} else {
+		c.Redirect(http.StatusSeeOther, RouteHome)
+	}
 }
 
 // guessHandler processes a guess submission, validates it, and updates the game state.
@@ -113,7 +126,7 @@ func (app *App) guessHandler(c *gin.Context) {
 				logWarn("Failed to marshal HX-Trigger payload: %v", jerr)
 			}
 		}
-		c.HTML(http.StatusOK, "game-board", gin.H{
+		c.HTML(http.StatusOK, "game-content", gin.H{
 			"game":       game,
 			"hint":       hint,
 			"error":      errMsg,
@@ -192,7 +205,7 @@ func (app *App) gameStateHandler(c *gin.Context) {
 	hint := app.getHintForWord(game.SessionWord)
 
 	csrfToken, _ := c.Cookie("csrf_token")
-	c.HTML(http.StatusOK, "game-board", gin.H{
+	c.HTML(http.StatusOK, "game-content", gin.H{
 		"game":       game,
 		"hint":       hint,
 		"csrf_token": csrfToken,
@@ -247,7 +260,7 @@ func (app *App) healthzHandler(c *gin.Context) {
 // The gin.Context parameter is included for future extensibility and best practice, but is currently unused.
 func (app *App) validateGameState(_ *gin.Context, game *GameState) error {
 	if game.GameOver {
-		logWarn("session attempted guess on completed game")
+		logWarn("Session attempted guess on completed game")
 		return errors.New(ErrorGameOver)
 	}
 	return nil
@@ -259,15 +272,15 @@ func normalizeGuess(input string) string {
 }
 
 func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID string, game *GameState, guess string, isHTMX bool, hint string) error {
-	logInfo("session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
+	logInfo("Session %s guessed: %s (attempt %d/%d)", sessionID, guess, game.CurrentRow+1, MaxGuesses)
 
 	if len(guess) != WordLength {
-		logWarn("session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
+		logWarn("Session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
 		return errors.New(ErrorInvalidLength)
 	}
 
 	if game.CurrentRow >= MaxGuesses {
-		logWarn("session %s attempted guess after max guesses reached", sessionID)
+		logWarn("Session %s attempted guess after max guesses reached", sessionID)
 		return errors.New(ErrorNoMoreGuesses)
 	}
 
@@ -278,7 +291,7 @@ func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID stri
 	app.saveGameState(sessionID, game)
 
 	if isHTMX {
-		c.HTML(http.StatusOK, "game-board", gin.H{"game": game, "hint": hint})
+		c.HTML(http.StatusOK, "game-content", gin.H{"game": game, "hint": hint})
 	} else {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"title":   "Vortludo - A Libre Wordle Clone",
