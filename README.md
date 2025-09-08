@@ -48,8 +48,6 @@ This project includes a preconfigured [Air](https://github.com/air-verse/air) se
     # Install via Go (Go 1.20+)
 
     go install github.com/air-verse/air@latest
-
-    # On Windows you may need to add your Go bin to PATH, e.g. add %USERPROFILE%\go\bin so the `air` command is runnable
     ```
 
 2. Start the dev server with live reload:
