@@ -1,17 +1,25 @@
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
 const ANIMATION_DELAY = 100;
-const FIRST_ALPHA_REGEX = /[A-Za-z]/;
-const LETTER_REGEX = /^[a-zA-Z]$/;
-const TRAILING_WS_REGEX = /\s+$/u;
-const END_PUNCT_REGEX = /[*.!?]/u;
-const ALNUM_REGEX = /\p{L}|\p{N}/u;
+const REGEX = {
+    LETTER: /^[a-zA-Z]$/,
+};
+const CONFETTI_COLORS = [
+    '#ff0000',
+    '#00ff00',
+    '#0000ff',
+    '#ffff00',
+    '#ff00ff',
+    '#00ffff',
+    '#ffa500',
+    '#ff69b4',
+];
 
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 let lastTouchEnd = 0;
 document.addEventListener(
     'touchend',
-    function (event) {
+    (event) => {
         const now = Date.now();
         if (now - lastTouchEnd <= 300) {
             event.preventDefault();
@@ -24,7 +32,9 @@ document.addEventListener(
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
-        clearTimeout(timeout);
+        if (timeout) {
+            clearTimeout(timeout);
+        }
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
 }
@@ -36,24 +46,6 @@ function readCookie(name) {
         return parts.pop().split(';').shift();
     }
     return '';
-}
-
-function ensureSentenceEnding(message) {
-    if (!message || typeof message !== 'string') {
-        return message;
-    }
-    const trimmed = message.replace(TRAILING_WS_REGEX, '');
-    if (trimmed.length === 0) {
-        return message;
-    }
-    const lastChar = trimmed.charAt(trimmed.length - 1);
-    if (END_PUNCT_REGEX.test(lastChar)) {
-        return trimmed;
-    }
-    if (ALNUM_REGEX.test(lastChar)) {
-        return trimmed + '.';
-    }
-    return trimmed;
 }
 
 window.gameApp = function () {
@@ -73,6 +65,36 @@ window.gameApp = function () {
         _suppressGuessClear: false,
         _gameRows: null,
         _guessRows: null,
+        errorCodeMessages: {
+            game_over: {
+                text: 'Game is already over! Start a new game! 🎮',
+                type: 'warning',
+            },
+            invalid_length: {
+                text: `Word must be ${WORD_LENGTH} letters long! ✏️`,
+                type: 'warning',
+            },
+            no_more_guesses: {
+                text: 'No more guesses allowed! Start a new game! 🚫',
+                type: 'warning',
+            },
+            not_in_word_list: {
+                text: 'Word not recognised! 📘',
+                type: 'warning',
+            },
+            word_not_accepted: {
+                text: 'Word not accepted. Try another word! 🔁',
+                type: 'warning',
+            },
+            duplicate_guess: {
+                text: 'You already guessed that word! 🔂',
+                type: 'warning',
+            },
+            unknown_error: {
+                text: 'An unexpected error occurred. ❗',
+                type: 'error',
+            },
+        },
         getGameRows() {
             if (!this._gameRows) {
                 this._gameRows = document.querySelectorAll('#game-board > div');
@@ -178,12 +200,20 @@ window.gameApp = function () {
                             ) {
                                 this.clearCompletedWords();
                             }
-                            if (parsed.server_error) {
-                                this.lastServerError = parsed.server_error;
+                            if (parsed.server_error_code) {
+                                const code = parsed.server_error_code;
+                                let info = this.errorCodeMessages[code];
+                                if (!info) {
+                                    info = {
+                                        text: `An unexpected error occurred. (code: ${code}) ❗`,
+                                        type: 'error',
+                                    };
+                                }
+                                this.lastServerError = code;
                                 this._suppressGuessClear = true;
                                 this.showToastNotification(
-                                    parsed.server_error,
-                                    'warning'
+                                    info.text,
+                                    info.type
                                 );
                                 this.submittingGuess = false;
                                 this.shakeCurrentRow();
@@ -197,7 +227,7 @@ window.gameApp = function () {
                             ) {
                                 this.clearCompletedWords();
                             }
-                            if (!triggerHeader.includes('server_error')) {
+                            if (!triggerHeader.includes('server_error_code')) {
                                 this.lastServerError = '';
                                 this.updateGameState();
                             }
@@ -271,30 +301,7 @@ window.gameApp = function () {
                 setTimeout(() => row.classList.remove('shake'), 500);
             }
         },
-        handleKeyPress(e) {
-            if (this.gameOver) {
-                if (
-                    e.key === 'Enter' ||
-                    LETTER_REGEX.test(e.key) ||
-                    e.key === 'Backspace'
-                ) {
-                    this.showToastNotification(
-                        'Game is over! Start a new game to continue! 🎮',
-                        'warning'
-                    );
-                }
-                return;
-            }
-
-            if (e.key === 'Enter') {
-                this.submitGuess();
-            } else if (e.key === 'Backspace') {
-                this.deleteLetter();
-            } else if (LETTER_REGEX.test(e.key)) {
-                this.addLetter(e.key.toUpperCase());
-            }
-        },
-        handleVirtualKey(key, evt) {
+        handleKeyInput(key, evt) {
             if (this.gameOver) {
                 this.showToastNotification(
                     'Game is over! Start a new game to continue! 🎮',
@@ -302,24 +309,27 @@ window.gameApp = function () {
                 );
                 return;
             }
-
-            const active = evt?.target;
-            if (active && active.disabled !== undefined) {
-                active.disabled = true;
-                active.classList.add('pressed');
+            if (evt && evt.target && evt.target.disabled !== undefined) {
+                evt.target.disabled = true;
+                evt.target.classList.add('pressed');
                 setTimeout(() => {
-                    active.disabled = false;
-                    active.classList.remove('pressed');
+                    evt.target.disabled = false;
+                    evt.target.classList.remove('pressed');
                 }, 120);
             }
-
-            if (key === 'ENTER') {
+            if (key === 'Enter' || key === 'ENTER') {
                 this.submitGuess();
-            } else if (key === 'BACKSPACE') {
+            } else if (key === 'Backspace' || key === 'BACKSPACE') {
                 this.deleteLetter();
-            } else {
-                this.addLetter(key);
+            } else if (REGEX.LETTER.test(key)) {
+                this.addLetter(key.toUpperCase());
             }
+        },
+        handleKeyPress(e) {
+            this.handleKeyInput(e.key);
+        },
+        handleVirtualKey(key, evt) {
+            this.handleKeyInput(key, evt);
         },
         addLetter(letter) {
             if (this.currentGuess.length < WORD_LENGTH) {
@@ -349,6 +359,21 @@ window.gameApp = function () {
             const board = document.getElementById('game-board');
             if (!board) {
                 return;
+            }
+            const errEl = board.querySelector('[data-error-code]');
+            if (errEl) {
+                const code = errEl.getAttribute('data-error-code');
+                if (code) {
+                    let info = this.errorCodeMessages[code];
+                    if (!info) {
+                        info = {
+                            text: `An unexpected error occurred. (code: ${code}) ❗`,
+                            type: 'error',
+                        };
+                    }
+                    this.showToastNotification(info.text, info.type);
+                    this.shakeCurrentRow();
+                }
             }
 
             if (this._suppressGuessClear) {
@@ -406,11 +431,11 @@ window.gameApp = function () {
                 }
                 return;
             }
-
             this.submittingGuess = true;
             const guessInput = document.getElementById('guess-input');
-            guessInput.value = this.currentGuess;
-
+            if (guessInput) {
+                guessInput.value = this.currentGuess;
+            }
             htmx.trigger('#guess-form', 'submit');
         },
         updateKeyboardColors() {
@@ -593,22 +618,10 @@ window.gameApp = function () {
             });
         },
         _doFireworks() {
-            const colors = [
-                '#ff0000',
-                '#00ff00',
-                '#0000ff',
-                '#ffff00',
-                '#ff00ff',
-                '#00ffff',
-                '#ffa500',
-                '#ff69b4',
-            ];
-
             for (let i = 0; i < 3; i++) {
                 setTimeout(() => {
                     const x = Math.random() * 0.8 + 0.1;
                     const y = Math.random() * 0.4 + 0.2;
-
                     window.confetti({
                         particleCount: 50,
                         angle: Math.random() * 360,
@@ -617,7 +630,11 @@ window.gameApp = function () {
                         decay: 0.95,
                         gravity: 0.8,
                         colors: [
-                            colors[Math.floor(Math.random() * colors.length)],
+                            CONFETTI_COLORS[
+                                Math.floor(
+                                    Math.random() * CONFETTI_COLORS.length
+                                )
+                            ],
                         ],
                         origin: { x: x, y: y },
                         shapes: ['circle'],
@@ -625,7 +642,6 @@ window.gameApp = function () {
                     });
                 }, i * 400);
             }
-
             setTimeout(() => {
                 window.confetti({
                     particleCount: 100,
@@ -731,25 +747,8 @@ window.gameApp = function () {
             }
         },
         showToastNotification(message, type = 'success') {
-            if (message && typeof message === 'string') {
-                const firstAlphaMatch = message.match(FIRST_ALPHA_REGEX);
-                if (firstAlphaMatch) {
-                    const idx = firstAlphaMatch.index;
-                    if (idx !== undefined) {
-                        const ch = message[idx];
-                        if (ch === ch.toLowerCase()) {
-                            message =
-                                message.slice(0, idx) +
-                                ch.toUpperCase() +
-                                message.slice(idx + 1);
-                        }
-                    }
-                }
-            }
-            message = ensureSentenceEnding(message);
             this.toastMessage = message;
             this.toastType = type;
-
             this.$nextTick(() => {
                 const toastElement =
                     document.getElementById('notification-toast');
@@ -758,10 +757,7 @@ window.gameApp = function () {
                     typeof bootstrap !== 'undefined' &&
                     bootstrap.Toast
                 ) {
-                    const toast = new bootstrap.Toast(toastElement, {
-                        delay: 3000,
-                    });
-                    toast.show();
+                    new bootstrap.Toast(toastElement, { delay: 3000 }).show();
                 }
             });
         },
@@ -775,10 +771,7 @@ window.gameApp = function () {
                 );
                 return completed ? JSON.parse(completed) : [];
             } catch {
-                this.showToastNotification(
-                    'Could not load completed words from your browser storage.',
-                    'warning'
-                );
+                this._storageErrorToast('load');
                 return [];
             }
         },
@@ -797,10 +790,7 @@ window.gameApp = function () {
                     );
                 }
             } catch {
-                this.showToastNotification(
-                    'Could not save completed word to your browser storage.',
-                    'warning'
-                );
+                this._storageErrorToast('save');
             }
         },
         clearCompletedWords() {
@@ -811,11 +801,19 @@ window.gameApp = function () {
                     'success'
                 );
             } catch {
-                this.showToastNotification(
-                    'Could not clear completed words from your browser storage.',
-                    'warning'
-                );
+                this._storageErrorToast('clear');
             }
+        },
+        _storageErrorToast(action) {
+            const messages = {
+                load: 'Could not load completed words from your browser storage.',
+                save: 'Could not save completed word to your browser storage.',
+                clear: 'Could not clear completed words from your browser storage.',
+            };
+            this.showToastNotification(
+                messages[action] || 'Storage error.',
+                'warning'
+            );
         },
         prepareNewGameData(event) {
             const completedWords = this.getCompletedWords();

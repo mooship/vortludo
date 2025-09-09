@@ -35,10 +35,13 @@
 <div class="mb-3">{{template "game-board" .}}</div>
 {{end}} {{define "game-board"}}
 <main id="game-board" class="mx-auto maxw-350">
-    {{if .error}}
-    <div class="visually-hidden" aria-live="assertive" aria-atomic="true">
-        {{.error}}
-    </div>
+    {{if .error_code}}
+    <div
+        class="visually-hidden"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-error-code="{{.error_code}}"
+    ></div>
     {{end}} {{range $row, $guesses := .game.Guesses}}
     <div class="guess-row d-flex justify-content-center mb-1">
         {{if and (eq $row $.game.CurrentRow) (not $.game.GameOver)}}

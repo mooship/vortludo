@@ -27,14 +27,14 @@ const (
 	RouteGameState = "/game-state"
 )
 
-// Error message constants
+// Error code constants
 const (
-	ErrorGameOver        = "game is already over! start a new game"
-	ErrorInvalidLength   = "word must be 5 letters"
-	ErrorNoMoreGuesses   = "no more guesses allowed"
-	ErrorNotInWordList   = "word not recognised"
-	ErrorWordNotAccepted = "word not accepted, try another word"
-	ErrorDuplicateGuess  = "you already guessed that word"
+	ErrorCodeGameOver        = "game_over"
+	ErrorCodeInvalidLength   = "invalid_length"
+	ErrorCodeNoMoreGuesses   = "no_more_guesses"
+	ErrorCodeNotInWordList   = "not_in_word_list"
+	ErrorCodeWordNotAccepted = "word_not_accepted"
+	ErrorCodeDuplicateGuess  = "duplicate_guess"
 )
 
 // Context key constants

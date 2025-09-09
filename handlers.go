@@ -116,10 +116,10 @@ func (app *App) guessHandler(c *gin.Context) {
 	game := app.getGameState(ctx, sessionID)
 	hint := app.getHintForWord(game.SessionWord)
 
-	renderBoard := func(errMsg string) {
+	renderBoard := func(errCode string) {
 		csrfToken, _ := c.Cookie("csrf_token")
-		if errMsg != "" {
-			payload := map[string]string{"server_error": errMsg}
+		if errCode != "" {
+			payload := map[string]string{"server_error_code": errCode}
 			if b, jerr := json.Marshal(payload); jerr == nil {
 				c.Header("HX-Trigger", string(b))
 			} else {
@@ -129,15 +129,15 @@ func (app *App) guessHandler(c *gin.Context) {
 		c.HTML(http.StatusOK, "game-content", gin.H{
 			"game":       game,
 			"hint":       hint,
-			"error":      errMsg,
+			"error_code": errCode,
 			"csrf_token": csrfToken,
 		})
 	}
 
-	renderFullPage := func(errMsg string) {
+	renderFullPage := func(errCode string) {
 		csrfToken, _ := c.Cookie("csrf_token")
-		if errMsg != "" {
-			payload := map[string]string{"server_error": errMsg}
+		if errCode != "" {
+			payload := map[string]string{"server_error_code": errCode}
 			if b, jerr := json.Marshal(payload); jerr == nil {
 				c.Header("HX-Trigger", string(b))
 			} else {
@@ -149,49 +149,49 @@ func (app *App) guessHandler(c *gin.Context) {
 			"message":    "Guess the 5-letter word!",
 			"hint":       hint,
 			"game":       game,
-			"error":      errMsg,
+			"error_code": errCode,
 			"csrf_token": csrfToken,
 		})
 	}
 
 	isHTMX := c.GetHeader("HX-Request") == "true"
-	var errMsg string
+	var errCode string
 	if err := app.validateGameState(c, game); err != nil {
-		errMsg = err.Error()
+		errCode = err.Error()
 		if isHTMX {
-			renderBoard(errMsg)
+			renderBoard(errCode)
 		} else {
-			renderFullPage(errMsg)
+			renderFullPage(errCode)
 		}
 		return
 	}
 
 	guess := normalizeGuess(c.PostForm("guess"))
 	if !app.isAcceptedWord(guess) {
-		errMsg = ErrorWordNotAccepted
+		errCode = ErrorCodeWordNotAccepted
 		if isHTMX {
-			renderBoard(errMsg)
+			renderBoard(errCode)
 		} else {
-			renderFullPage(errMsg)
+			renderFullPage(errCode)
 		}
 		return
 	}
 
 	if slices.Contains(game.GuessHistory, guess) {
-		errMsg = ErrorDuplicateGuess
+		errCode = ErrorCodeDuplicateGuess
 		if isHTMX {
-			renderBoard(errMsg)
+			renderBoard(errCode)
 		} else {
-			renderFullPage(errMsg)
+			renderFullPage(errCode)
 		}
 		return
 	}
 	if err := app.processGuess(ctx, c, sessionID, game, guess, isHTMX, hint); err != nil {
-		errMsg = err.Error()
+		errCode = err.Error()
 		if isHTMX {
-			renderBoard(errMsg)
+			renderBoard(errCode)
 		} else {
-			renderFullPage(errMsg)
+			renderFullPage(errCode)
 		}
 		return
 	}
@@ -261,7 +261,7 @@ func (app *App) healthzHandler(c *gin.Context) {
 func (app *App) validateGameState(_ *gin.Context, game *GameState) error {
 	if game.GameOver {
 		logWarn("Session attempted guess on completed game")
-		return errors.New(ErrorGameOver)
+		return errors.New(ErrorCodeGameOver)
 	}
 	return nil
 }
@@ -276,12 +276,12 @@ func (app *App) processGuess(ctx context.Context, c *gin.Context, sessionID stri
 
 	if len(guess) != WordLength {
 		logWarn("Session %s submitted invalid length guess: %s (%d letters)", sessionID, guess, len(guess))
-		return errors.New(ErrorInvalidLength)
+		return errors.New(ErrorCodeInvalidLength)
 	}
 
 	if game.CurrentRow >= MaxGuesses {
 		logWarn("Session %s attempted guess after max guesses reached", sessionID)
-		return errors.New(ErrorNoMoreGuesses)
+		return errors.New(ErrorCodeNoMoreGuesses)
 	}
 
 	targetWord := app.getTargetWord(ctx, game)
