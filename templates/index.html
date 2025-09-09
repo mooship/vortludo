@@ -205,7 +205,10 @@
                             x-ref="completedWordsInput"
                             value=""
                         />
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button
+                            type="submit"
+                            class="btn btn-primary vl-btn-shared btn-sm"
+                        >
                             <i class="bi bi-arrow-clockwise"></i> New Game
                         </button>
                     </form>
@@ -228,7 +231,6 @@
                     >
                         {{template "game-content" .}}
                     </div>
-
                     <form
                         id="guess-form"
                         hx-post="/guess"
@@ -245,7 +247,6 @@
                             class="form-control"
                         />
                     </form>
-
                     <div
                         class="keyboard mx-auto w-100 maxw-500"
                         x-show="!shouldHideKeyboard()"
@@ -256,7 +257,7 @@
                                 x-for="key in ['Q','W','E','R','T','Y','U','I','O','P']"
                             >
                                 <button
-                                    class="btn btn-secondary btn-sm m-1 key-button"
+                                    class="btn btn-secondary btn-sm m-1 key-button vl-btn-shared"
                                     :data-key="key"
                                     :class="'key-' + getKeyClass(key)"
                                     @click="handleVirtualKey(key, $event)"
@@ -274,7 +275,7 @@
                                 x-for="key in ['A','S','D','F','G','H','J','K','L']"
                             >
                                 <button
-                                    class="btn btn-secondary btn-sm m-1 key-button"
+                                    class="btn btn-secondary btn-sm m-1 key-button vl-btn-shared"
                                     :data-key="key"
                                     :class="'key-' + getKeyClass(key)"
                                     @click="handleVirtualKey(key, $event)"
@@ -289,7 +290,7 @@
                         </div>
                         <div class="d-flex justify-content-center">
                             <button
-                                class="btn btn-secondary btn-sm m-1 px-3 key-button"
+                                class="btn btn-secondary btn-sm m-1 px-3 key-button vl-btn-shared"
                                 @click="handleVirtualKey('ENTER', $event)"
                                 @keydown.enter.prevent="handleVirtualKey('ENTER', $event)"
                                 @keydown.space.prevent="handleVirtualKey('ENTER', $event)"
@@ -303,7 +304,7 @@
                                 x-for="key in ['Z','X','C','V','B','N','M']"
                             >
                                 <button
-                                    class="btn btn-secondary btn-sm m-1 key-button"
+                                    class="btn btn-secondary btn-sm m-1 key-button vl-btn-shared"
                                     :data-key="key"
                                     :class="'key-' + getKeyClass(key)"
                                     @click="handleVirtualKey(key, $event)"
@@ -316,7 +317,7 @@
                                 ></button>
                             </template>
                             <button
-                                class="btn btn-secondary btn-sm m-1 px-2 key-button"
+                                class="btn btn-secondary btn-sm m-1 px-2 key-button vl-btn-shared"
                                 @click="handleVirtualKey('BACKSPACE', $event)"
                                 @keydown.enter.prevent="handleVirtualKey('BACKSPACE', $event)"
                                 @keydown.space.prevent="handleVirtualKey('BACKSPACE', $event)"

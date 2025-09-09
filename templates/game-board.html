@@ -4,9 +4,13 @@
     <div x-data="{ hintVisible: false }" class="mb-2 hint-area">
         <div class="hint-btn-row">
             {{if .hint}}
-            <button class="btn btn-outline-warning btn-sm hint-toggle"
-                @click="hintVisible = !hintVisible; $event.target.blur()" :aria-pressed="hintVisible.toString()"
-                :class="hintVisible ? 'is-open' : ''" type="button">
+            <button
+                class="btn btn-outline-warning btn-sm vl-btn-shared"
+                @click="hintVisible = !hintVisible; $event.target.blur()"
+                :aria-pressed="hintVisible.toString()"
+                :class="hintVisible ? 'is-open' : ''"
+                type="button"
+            >
                 <i class="bi bi-lightbulb"></i>
                 <span x-text="hintVisible ? 'Hide Hint' : 'Show Hint'"></span>
             </button>
@@ -14,7 +18,11 @@
         </div>
         <div class="hint-text-row">
             {{if .hint}}
-            <p class="mb-0 small text-warning w-100 text-center" x-show="hintVisible" x-transition>
+            <p
+                class="mb-0 small text-hint w-100 text-center"
+                x-show="hintVisible"
+                x-transition
+            >
                 <i class="bi bi-lightbulb"></i>
                 <span>Hint: {{.hint}}</span>
             </p>
@@ -24,38 +32,35 @@
         </div>
     </div>
 </div>
-
-<div class="mb-3">
-    {{template "game-board" .}}
-</div>
-{{end}}
-
-{{define "game-board"}}
+<div class="mb-3">{{template "game-board" .}}</div>
+{{end}} {{define "game-board"}}
 <main id="game-board" class="mx-auto maxw-350">
     {{if .error}}
-    <div class="visually-hidden" aria-live="assertive" aria-atomic="true">{{.error}}</div>
-    {{end}}
-    {{range $row, $guesses := .game.Guesses}}
+    <div class="visually-hidden" aria-live="assertive" aria-atomic="true">
+        {{.error}}
+    </div>
+    {{end}} {{range $row, $guesses := .game.Guesses}}
     <div class="guess-row d-flex justify-content-center mb-1">
         {{if and (eq $row $.game.CurrentRow) (not $.game.GameOver)}}
         <template x-for="i in Array.from({length: 5}, (_,i)=>i)">
-            <div class="tile border border-2 rounded d-flex align-items-center justify-content-center fw-bold text-uppercase mx-1 tile-active"
-                :class="currentGuess && currentGuess[i] ? 'filled' : ''">
-                <span x-text="currentGuess && currentGuess[i] ? currentGuess[i] : ''"></span>
+            <div
+                class="tile border border-2 rounded d-flex align-items-center justify-content-center fw-bold text-uppercase mx-1 tile-active"
+                :class="currentGuess && currentGuess[i] ? 'filled' : ''"
+            >
+                <span
+                    x-text="currentGuess && currentGuess[i] ? currentGuess[i] : ''"
+                ></span>
             </div>
         </template>
-        {{else}}
-        {{range $col, $guess := $guesses}}
-        <div class="tile border border-2 rounded d-flex align-items-center justify-content-center fw-bold text-uppercase mx-1
-                               {{if $guess.Letter}}filled tile-{{$guess.Status}}{{end}}">
+        {{else}} {{range $col, $guess := $guesses}}
+        <div
+            class="tile border border-2 rounded d-flex align-items-center justify-content-center fw-bold text-uppercase mx-1{{if $guess.Letter}} filled tile-{{$guess.Status}}{{end}}"
+        >
             {{$guess.Letter}}
         </div>
-        {{end}}
-        {{end}}
+        {{end}} {{end}}
     </div>
-    {{end}}
-
-    {{if .newGame}}
+    {{end}} {{if .newGame}}
     <span id="new-game-flag" class="d-none"></span>
     {{end}} {{if .retryGame}}
     <span id="retry-game-flag" class="d-none"></span>
@@ -68,16 +73,37 @@
             .game.GuessHistory) 1}}try{{else}}tries{{end}}!
         </p>
         <div class="d-flex flex-column align-items-center gap-2 mb-2">
-            <button class="btn btn-primary btn-sm btn-max-130" onclick="shareResults()">
+            <button
+                class="btn btn-primary vl-btn-shared btn-sm btn-max-130"
+                onclick="shareResults()"
+            >
                 <i class="bi bi-share"></i> Share Results
             </button>
-            <form hx-post="/new-game" hx-target="#game-content-container" hx-swap="innerHTML"
-                hx-indicator=".loading-indicator" class="d-inline" @submit="prepareNewGameData($event)">
+            <form
+                hx-post="/new-game"
+                hx-target="#game-content-container"
+                hx-swap="innerHTML"
+                hx-indicator=".loading-indicator"
+                class="d-inline"
+                @submit="prepareNewGameData($event)"
+            >
                 {{if $.csrf_token}}
-                <input type="hidden" name="csrf_token" value="{{$.csrf_token}}" />
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{$.csrf_token}}"
+                />
                 {{end}}
-                <input type="hidden" name="completedWords" x-ref="completedWordsInput" value="" />
-                <button type="submit" class="btn btn-primary btn-sm btn-max-130">
+                <input
+                    type="hidden"
+                    name="completedWords"
+                    x-ref="completedWordsInput"
+                    value=""
+                />
+                <button
+                    type="submit"
+                    class="btn btn-primary vl-btn-shared btn-sm btn-max-130"
+                >
                     <i class="bi bi-arrow-clockwise"></i> New Game
                 </button>
             </form>
@@ -93,38 +119,86 @@
         <div class="d-flex justify-content-center gap-2 mb-2">
             <form method="POST" action="/retry-word" class="d-inline">
                 {{if $.csrf_token}}
-                <input type="hidden" name="csrf_token" value="{{$.csrf_token}}" />
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{$.csrf_token}}"
+                />
                 {{end}}
-                <button type="submit" class="btn btn-outline-primary btn-sm">
+                <button
+                    type="submit"
+                    class="btn btn-outline-primary vl-btn-shared btn-sm"
+                >
                     <i class="bi bi-arrow-repeat"></i> Retry Word
                 </button>
             </form>
-            <form hx-post="/new-game" hx-target="#game-content-container" hx-swap="innerHTML"
-                hx-indicator=".loading-indicator" class="d-inline" @submit="prepareNewGameData($event)">
+            <form
+                hx-post="/new-game"
+                hx-target="#game-content-container"
+                hx-swap="innerHTML"
+                hx-indicator=".loading-indicator"
+                class="d-inline"
+                @submit="prepareNewGameData($event)"
+            >
                 {{if $.csrf_token}}
-                <input type="hidden" name="csrf_token" value="{{$.csrf_token}}" />
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{$.csrf_token}}"
+                />
                 {{end}}
-                <input type="hidden" name="completedWords" x-ref="completedWordsInput" value="" />
-                <button type="submit" class="btn btn-primary btn-sm">
+                <input
+                    type="hidden"
+                    name="completedWords"
+                    x-ref="completedWordsInput"
+                    value=""
+                />
+                <button
+                    type="submit"
+                    class="btn btn-primary vl-btn-shared btn-sm"
+                >
                     <i class="bi bi-arrow-clockwise"></i> New Game
                 </button>
             </form>
         </div>
         <div class="d-flex flex-column align-items-center gap-2 mb-2">
-            <button class="btn btn-primary btn-sm btn-max-130" onclick="shareResults()">
+            <button
+                class="btn btn-primary vl-btn-shared btn-sm btn-max-130"
+                onclick="shareResults()"
+            >
                 <i class="bi bi-share"></i> Share Results
             </button>
-            <form hx-post="/new-game" hx-target="#game-content-container" hx-swap="innerHTML"
-                hx-indicator=".loading-indicator" class="d-inline" @submit="prepareNewGameData($event)">
+            <form
+                hx-post="/new-game"
+                hx-target="#game-content-container"
+                hx-swap="innerHTML"
+                hx-indicator=".loading-indicator"
+                class="d-inline"
+                @submit="prepareNewGameData($event)"
+            >
                 {{if $.csrf_token}}
-                <input type="hidden" name="csrf_token" value="{{$.csrf_token}}" />
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{$.csrf_token}}"
+                />
                 {{end}}
-                <input type="hidden" name="completedWords" x-ref="completedWordsInput" value="" />
-                <button type="submit" class="btn btn-primary btn-sm btn-max-130">
+                <input
+                    type="hidden"
+                    name="completedWords"
+                    x-ref="completedWordsInput"
+                    value=""
+                />
+                <button
+                    type="submit"
+                    class="btn btn-primary vl-btn-shared btn-sm btn-max-130"
+                >
                     <i class="bi bi-arrow-clockwise"></i> New Game
                 </button>
             </form>
         </div>
         {{end}}
+    </div>
+    {{end}}
 </main>
-{{end}}{{end}}
+{{end}}
