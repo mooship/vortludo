@@ -1,4 +1,3 @@
-
 # Vortludo Community Code of Conduct 🤝
 
 ## Our Pledge

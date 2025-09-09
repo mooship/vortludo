@@ -1,4 +1,3 @@
-
 # Security at Vortludo 🛡️
 
 > Your safety matters! Vortludo is built with care to keep your game and data secure. If you spot something suspicious, please help us make it better. 🕵️‍♂️

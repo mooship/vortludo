@@ -338,7 +338,6 @@
     padding-right: 0.5rem !important;
 }
 
-
 /* ===== BUTTONS & UI COMPONENTS ===== */
 
 .btn-primary {
@@ -516,7 +515,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
     .bounce,
     .shake,
     .tile.flip,
@@ -544,7 +542,6 @@
 }
 
 @keyframes shake {
-
     0%,
     100% {
         transform: translateX(0);
@@ -567,7 +564,6 @@
 }
 
 @keyframes bounce {
-
     0%,
     100% {
         transform: translateY(0);
@@ -597,7 +593,6 @@
 }
 
 @keyframes sparkle {
-
     0%,
     100% {
         opacity: 0;
@@ -703,9 +698,11 @@
 /* ===== UTILITY CLASSES ===== */
 
 .text-gradient {
-    background: linear-gradient(90deg,
-            var(--vortludo-green1),
-            var(--vortludo-green2));
+    background: linear-gradient(
+        90deg,
+        var(--vortludo-green1),
+        var(--vortludo-green2)
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -744,7 +741,7 @@ body {
 
 @media (max-width: 576px) {
     :root {
-        --vl-tile-size: 3.0rem;
+        --vl-tile-size: 3rem;
     }
 
     .keyboard {

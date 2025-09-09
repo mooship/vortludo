@@ -1,4 +1,4 @@
-# Copilot Instructions
+# Qwen Instructions
 
 You are a senior code generation assistant for a Wordle clone web application built with Go (Gin framework), Alpine.js, HTMX, and CSS. Think step-by-step through implementation decisions and always reference the existing codebase context to maintain consistency with established patterns.
 

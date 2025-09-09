@@ -4,16 +4,16 @@ A fun, open-source Wordle-inspired game built with Go! 🎮
 
 ## Features ✨
 
--   Guess the hidden word in 6 tries
--   Color-coded feedback for each guess
--   Web-based interface
--   Custom word lists
+- Guess the hidden word in 6 tries
+- Color-coded feedback for each guess
+- Web-based interface
+- Custom word lists
 
 ## Getting Started 🚀
 
 ### Prerequisites
 
--   Go 1.24 or newer
+- Go 1.25 or newer
 
 ### Running Locally
 
@@ -60,19 +60,19 @@ Air will watch for changes in Go and HTML files, rebuild, and restart the server
 
 ## Project Structure 🗂️
 
--   `main.go`: Main application entrypoint.
--   `handlers.go`: HTTP handlers for different routes.
--   `game.go`: Core game logic.
--   `session.go`: Manages game sessions.
--   `middleware.go`: Defines middleware for logging and other tasks.
--   `constants.go`: Holds application constants.
--   `types.go`: Defines data structures.
--   `util.go`: Contains utility functions.
--   `static/`: Holds all static assets like CSS, JavaScript, and favicons.
--   `templates/`: Contains HTML templates for the web interface.
--   `data/`: Includes word lists used in the game.
--   `.air.toml`: Configuration file for Air, a live-reloading tool.
--   `go.mod`, `go.sum`: Manage project dependencies.
+- `main.go`: Main application entrypoint.
+- `handlers.go`: HTTP handlers for different routes.
+- `game.go`: Core game logic.
+- `session.go`: Manages game sessions.
+- `middleware.go`: Defines middleware for logging and other tasks.
+- `constants.go`: Holds application constants.
+- `types.go`: Defines data structures.
+- `util.go`: Contains utility functions.
+- `static/`: Holds all static assets like CSS, JavaScript, and favicons.
+- `templates/`: Contains HTML templates for the web interface.
+- `data/`: Includes word lists used in the game.
+- `.air.toml`: Configuration file for Air, a live-reloading tool.
+- `go.mod`, `go.sum`: Manage project dependencies.
 
 ## Contributing 🤝
 

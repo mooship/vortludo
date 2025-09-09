@@ -114,17 +114,21 @@ window.gameApp = function () {
                 this.submittingGuess = false;
                 this.clearDOMCache();
                 this.restoreUserInput();
-                const targetEl = evt?.detail?.target || document.getElementById('game-content-container');
+                const targetEl =
+                    evt?.detail?.target ||
+                    document.getElementById('game-content-container');
                 if (window.Alpine && targetEl) {
                     if (typeof window.Alpine.initTree === 'function') {
                         window.Alpine.initTree(targetEl);
-                    } else if (typeof window.Alpine.discoverUninitializedComponents === 'function') {
+                    } else if (
+                        typeof window.Alpine.discoverUninitializedComponents ===
+                        'function'
+                    ) {
                         window.Alpine.discoverUninitializedComponents((el) => {
                             window.Alpine.initializeComponent(el);
                         }, targetEl);
                     }
                 }
-
             });
 
             document.body.addEventListener('htmx:beforeSwap', () => {
@@ -169,13 +173,19 @@ window.gameApp = function () {
                     if (triggerHeader) {
                         try {
                             const parsed = JSON.parse(triggerHeader);
-                            if (typeof parsed['clear-completed-words'] !== 'undefined') {
+                            if (
+                                typeof parsed['clear-completed-words'] !==
+                                'undefined'
+                            ) {
                                 this.clearCompletedWords();
                             }
                             if (parsed.server_error) {
                                 this.lastServerError = parsed.server_error;
                                 this._suppressGuessClear = true;
-                                this.showToastNotification(parsed.server_error, 'warning');
+                                this.showToastNotification(
+                                    parsed.server_error,
+                                    'warning'
+                                );
                                 this.submittingGuess = false;
                                 this.shakeCurrentRow();
                             } else {
@@ -183,7 +193,9 @@ window.gameApp = function () {
                                 this.updateGameState();
                             }
                         } catch {
-                            if (triggerHeader.includes('clear-completed-words')) {
+                            if (
+                                triggerHeader.includes('clear-completed-words')
+                            ) {
                                 this.clearCompletedWords();
                             }
                             if (!triggerHeader.includes('server_error')) {
@@ -205,7 +217,9 @@ window.gameApp = function () {
                     let token = readCookie('csrf_token');
 
                     if (!token) {
-                        const meta = document.querySelector('meta[name="csrf-token"]');
+                        const meta = document.querySelector(
+                            'meta[name="csrf-token"]'
+                        );
                         token = meta ? meta.getAttribute('content') : '';
                     }
 
@@ -346,7 +360,9 @@ window.gameApp = function () {
 
             this.keyStatus = {};
 
-            const gameOverContainer = board.parentElement.querySelector('.mt-3.p-3.bg-body-secondary');
+            const gameOverContainer = board.parentElement.querySelector(
+                '.mt-3.p-3.bg-body-secondary'
+            );
             this.gameOver = gameOverContainer !== null;
 
             const rows = this.getGuessRows();
@@ -406,10 +422,10 @@ window.gameApp = function () {
                 const status = tile.classList.contains('tile-correct')
                     ? 'correct'
                     : tile.classList.contains('tile-present')
-                        ? 'present'
-                        : tile.classList.contains('tile-absent')
-                            ? 'absent'
-                            : '';
+                    ? 'present'
+                    : tile.classList.contains('tile-absent')
+                    ? 'absent'
+                    : '';
                 if (letter && status) {
                     if (
                         !this.keyStatus[letter] ||
@@ -454,10 +470,20 @@ window.gameApp = function () {
                     if (tiles.length === WORD_LENGTH) {
                         const parts = Array.from(tiles).map((tile) => {
                             const letter = tile.textContent || '';
-                            const status = tile.classList.contains('tile-correct') ? 'correct' : (tile.classList.contains('tile-present') ? 'present' : (tile.classList.contains('tile-absent') ? 'absent' : 'unknown'));
+                            const status = tile.classList.contains(
+                                'tile-correct'
+                            )
+                                ? 'correct'
+                                : tile.classList.contains('tile-present')
+                                ? 'present'
+                                : tile.classList.contains('tile-absent')
+                                ? 'absent'
+                                : 'unknown';
                             return `${letter} is ${status}`;
                         });
-                        sr.textContent = `Row ${this.currentRow} revealed: ${parts.join(', ')}.`;
+                        sr.textContent = `Row ${
+                            this.currentRow
+                        } revealed: ${parts.join(', ')}.`;
                     }
                 }
             }, WORD_LENGTH * ANIMATION_DELAY + 400);
@@ -481,26 +507,35 @@ window.gameApp = function () {
                 this.gameOver = true;
                 this.launchConfetti();
 
-                const winningRow = Array.from(rows).find(row => {
+                const winningRow = Array.from(rows).find((row) => {
                     const tiles = row.querySelectorAll('.tile-correct');
                     return tiles.length === WORD_LENGTH;
                 });
 
                 if (winningRow) {
                     const tiles = winningRow.querySelectorAll('.tile-correct');
-                    const word = Array.from(tiles).map(tile => tile.textContent).join('');
+                    const word = Array.from(tiles)
+                        .map((tile) => tile.textContent)
+                        .join('');
                     if (word && word.length === WORD_LENGTH) {
                         this.saveCompletedWord(word.toUpperCase());
                     }
                 } else {
                     const gameBoard = document.getElementById('game-board');
                     if (gameBoard) {
-                        const gameOverContainer = gameBoard.parentElement.querySelector('.mt-3.p-3.bg-body-secondary');
+                        const gameOverContainer =
+                            gameBoard.parentElement.querySelector(
+                                '.mt-3.p-3.bg-body-secondary'
+                            );
                         if (gameOverContainer) {
-                            const gameOverText = gameOverContainer.textContent || '';
-                            const wordMatch = gameOverText.match(/word was:\s*(\w+)/i);
+                            const gameOverText =
+                                gameOverContainer.textContent || '';
+                            const wordMatch =
+                                gameOverText.match(/word was:\s*(\w+)/i);
                             if (wordMatch && wordMatch[1]) {
-                                this.saveCompletedWord(wordMatch[1].toUpperCase());
+                                this.saveCompletedWord(
+                                    wordMatch[1].toUpperCase()
+                                );
                             }
                         }
                     }
@@ -530,10 +565,14 @@ window.gameApp = function () {
             }
         },
         launchConfetti() {
-            if (!window._confettiScriptLoaded && typeof window.confetti !== 'function') {
+            if (
+                !window._confettiScriptLoaded &&
+                typeof window.confetti !== 'function'
+            ) {
                 window._confettiScriptLoaded = true;
                 const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
+                script.src =
+                    'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
                 script.onload = () => {
                     this._doConfetti();
                     this._doFireworks();
@@ -626,11 +665,9 @@ window.gameApp = function () {
                     tiles.forEach((tile) => {
                         if (tile.classList.contains('tile-correct')) {
                             emojiGrid += '🟩';
-                        }
-                        else if (tile.classList.contains('tile-present')) {
+                        } else if (tile.classList.contains('tile-present')) {
                             emojiGrid += '🟨';
-                        }
-                        else {
+                        } else {
                             emojiGrid += '⬛';
                         }
                     });
@@ -643,13 +680,19 @@ window.gameApp = function () {
             try {
                 if (navigator.clipboard && window.isSecureContext) {
                     await navigator.clipboard.writeText(text);
-                    this.showToastNotification('Results copied to clipboard!', 'success');
+                    this.showToastNotification(
+                        'Results copied to clipboard!',
+                        'success'
+                    );
                     return;
                 }
                 this.openCopyModal(text);
-            } catch (err) {
+            } catch {
                 this.openCopyModal(text);
-                this.showToastNotification('Could not copy to clipboard automatically. Please copy manually.', 'warning');
+                this.showToastNotification(
+                    'Could not copy to clipboard automatically. Please copy manually.',
+                    'warning'
+                );
             }
         },
         openCopyModal(text) {
@@ -679,7 +722,10 @@ window.gameApp = function () {
                 textarea.select();
                 textarea.focus();
             } else {
-                this.showToastNotification('Could not select text for copying.', 'warning');
+                this.showToastNotification(
+                    'Could not select text for copying.',
+                    'warning'
+                );
             }
         },
         showToastNotification(message, type = 'success') {
@@ -703,9 +749,16 @@ window.gameApp = function () {
             this.toastType = type;
 
             this.$nextTick(() => {
-                const toastElement = document.getElementById('notification-toast');
-                if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-                    const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                const toastElement =
+                    document.getElementById('notification-toast');
+                if (
+                    toastElement &&
+                    typeof bootstrap !== 'undefined' &&
+                    bootstrap.Toast
+                ) {
+                    const toast = new bootstrap.Toast(toastElement, {
+                        delay: 3000,
+                    });
                     toast.show();
                 }
             });
@@ -715,10 +768,15 @@ window.gameApp = function () {
         },
         getCompletedWords() {
             try {
-                const completed = localStorage.getItem('vortludo-completed-words');
+                const completed = localStorage.getItem(
+                    'vortludo-completed-words'
+                );
                 return completed ? JSON.parse(completed) : [];
             } catch {
-                this.showToastNotification('Could not load completed words from your browser storage.', 'warning');
+                this.showToastNotification(
+                    'Could not load completed words from your browser storage.',
+                    'warning'
+                );
                 return [];
             }
         },
@@ -727,25 +785,42 @@ window.gameApp = function () {
                 const completed = this.getCompletedWords();
                 if (!completed.includes(word)) {
                     completed.push(word);
-                    localStorage.setItem('vortludo-completed-words', JSON.stringify(completed));
-                    this.showToastNotification(`Word "${word}" added to your completed list! 🎯`, 'success');
+                    localStorage.setItem(
+                        'vortludo-completed-words',
+                        JSON.stringify(completed)
+                    );
+                    this.showToastNotification(
+                        `Word "${word}" added to your completed list! 🎯`,
+                        'success'
+                    );
                 }
             } catch {
-                this.showToastNotification('Could not save completed word to your browser storage.', 'warning');
+                this.showToastNotification(
+                    'Could not save completed word to your browser storage.',
+                    'warning'
+                );
             }
         },
         clearCompletedWords() {
             try {
                 localStorage.removeItem('vortludo-completed-words');
-                this.showToastNotification('🎉 Congratulations! You\'ve completed all words! Progress reset.', 'success');
+                this.showToastNotification(
+                    "🎉 Congratulations! You've completed all words! Progress reset.",
+                    'success'
+                );
             } catch {
-                this.showToastNotification('Could not clear completed words from your browser storage.', 'warning');
+                this.showToastNotification(
+                    'Could not clear completed words from your browser storage.',
+                    'warning'
+                );
             }
         },
         prepareNewGameData(event) {
             const completedWords = this.getCompletedWords();
             const form = event.target;
-            const completedWordsInput = form.querySelector('input[name="completedWords"]');
+            const completedWordsInput = form.querySelector(
+                'input[name="completedWords"]'
+            );
             if (completedWordsInput && completedWords.length > 0) {
                 completedWordsInput.value = JSON.stringify(completedWords);
             }

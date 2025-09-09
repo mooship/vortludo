@@ -12,125 +12,104 @@ Before generating any code:
 4. Consider how the new code will integrate with existing functionality
 5. Look for similar implementations elsewhere in the codebase to maintain consistency
 
-## Code Generation Standards and Approval Process
+## Code Generation Standards
 
-IMPORTANT: Always ask for explicit approval before performing large edits or refactoring operations. NEVER execute commands, run scripts, or perform system operations automatically.
+**Default approach: Generate complete, production-ready implementations without placeholders, TODOs, or examples.**
 
-Command execution restrictions:
+### When to ask for approval (rare cases only):
 
--   Never run go commands (go run, go build, go test, go mod, etc.)
--   Never execute shell commands or scripts
--   Never install packages or dependencies automatically
--   Never run database migrations or schema changes
--   Never start servers, services, or development tools
--   Never execute git commands (commit, push, pull, etc.)
--   Never run linters, formatters, or code analysis tools automatically
--   Always provide the commands for the user to run manually
+- **Breaking changes affecting multiple files/components** - Changes that would break existing functionality or require updates across multiple files
+- **Major architectural changes** - Introducing new design patterns, significant restructuring, or changing core application architecture
+- **Destructive operations** - Deleting significant amounts of code or removing established features
 
-Large edits requiring approval:
+### Proceed directly with implementation for:
 
--   Modifying more than 20 lines of existing code
--   Refactoring existing functions or changing their signatures
--   Adding new dependencies or changing import statements significantly
--   Modifying database schemas, migrations, or data structures
--   Changing API endpoints or handler route structures
--   Restructuring files or moving code between files
--   Making breaking changes that affect multiple components
--   Implementing new architectural patterns or design changes
+- Adding new features or endpoints (any size)
+- Modifying existing functions and their signatures
+- Adding dependencies or changing imports
+- Database schema changes and migrations
+- Refactoring within reasonable scope
+- Bug fixes and performance improvements
+- UI/UX enhancements
+- Most code modifications under normal development
 
-For large edits:
+## Command Execution Policy
 
-1. Describe what you plan to change and why
-2. Outline the scope and impact of the modifications
-3. Wait for explicit approval before proceeding
-4. If approved, generate complete, production-ready implementations without placeholders
+**Never execute commands automatically.** Always provide the exact commands for the user to run manually.
 
-For small edits (under 20 lines, single function scope, no breaking changes):
-
--   Proceed directly with implementation
--   Generate complete, production-ready code without placeholders, TODOs, or examples
--   Think through the full implementation before coding
+This includes: go commands, shell scripts, package installations, database operations, git commands, linters, formatters, or starting services.
 
 ## Context7 Documentation Usage
 
-Context7 is an MCP server providing up-to-date documentation for frameworks, packages, and libraries. Use Context7 strategically for critical implementation decisions:
+Use Context7 strategically for critical implementation decisions:
 
-Priority queries for Context7:
+**Priority queries:**
 
--   Security vulnerabilities and latest security practices
--   Breaking changes between versions and migration paths
--   Performance optimization techniques and anti-patterns
--   New API methods and deprecated functionality
--   Integration patterns between Go, Gin, Alpine.js, and HTMX
--   Current testing and debugging best practices
+- Security vulnerabilities and latest security practices
+- Breaking changes between versions and migration paths
+- Performance optimization techniques and anti-patterns
+- New API methods and deprecated functionality
+- Integration patterns between Go, Gin, Alpine.js, and HTMX
+- Current testing and debugging best practices
 
-Query Context7 when implementing complex features, working with unfamiliar APIs, or when the existing codebase patterns seem outdated.
+Query Context7 when implementing complex features, working with unfamiliar APIs, or when existing codebase patterns seem outdated.
 
-## Go Backend Implementation Approach
+## Go Backend Implementation Standards
 
-Follow these Go-specific implementation standards:
-
--   Use standard Go formatting with gofmt and follow effective Go conventions
--   Structure handlers by feature domains, not technical layers
--   Implement thin handlers that immediately delegate to service layers
--   Use dependency injection through struct embedding or constructor functions
--   Apply context.Context consistently for request scoping, timeouts, and cancellation
--   Return HTML fragments for HTMX requests, JSON for Alpine.js AJAX calls
--   Group related routes using router groups with appropriate middleware
--   Use Gin's binding for request validation and unmarshalling
--   Handle errors with consistent HTTP status codes and user-friendly messages
+- Use standard Go formatting with gofmt and follow effective Go conventions
+- Structure handlers by feature domains, not technical layers
+- Implement thin handlers that delegate to service layers
+- Use dependency injection through struct embedding or constructor functions
+- Apply context.Context consistently for request scoping and cancellation
+- Return HTML fragments for HTMX requests, JSON for Alpine.js AJAX calls
+- Group related routes using router groups with appropriate middleware
+- Use Gin's binding for request validation and unmarshalling
+- Handle errors with consistent HTTP status codes and user-friendly messages
 
 ## Frontend Integration Patterns
 
-HTMX implementation:
+**HTMX:**
 
--   Use hx-get, hx-post, hx-put, hx-delete for server communication
--   Leverage hx-target and hx-swap for precise DOM updates and user feedback
--   Implement hx-trigger for custom event handling and complex user interactions
--   Use hx-indicator and hx-disable for loading states and preventing double-submission
--   Design endpoints to return HTML fragments optimized for HTMX consumption
+- Use hx-get, hx-post, hx-put, hx-delete for server communication
+- Leverage hx-target and hx-swap for precise DOM updates
+- Implement hx-trigger for custom event handling
+- Use hx-indicator and hx-disable for loading states
+- Design endpoints to return HTML fragments optimized for HTMX
 
-Alpine.js patterns:
+**Alpine.js:**
 
--   Create focused, single-responsibility components with x-data
--   Use x-show and x-if for conditional rendering based on component state
--   Implement event handlers (@click, @input, @submit) for user interactions
--   Leverage x-model for two-way data binding with form inputs
--   Keep Alpine components lightweight and avoid complex business logic
--   Use Alpine for UI state that doesn't require server round-trips
+- Create focused, single-responsibility components with x-data
+- Use x-show and x-if for conditional rendering
+- Implement event handlers (@click, @input, @submit) for interactions
+- Leverage x-model for two-way data binding
+- Keep components lightweight and avoid complex business logic
+- Use Alpine for UI state that doesn't require server round-trips
 
-CSS approach:
+**CSS:**
 
--   Use CSS custom properties for theming, spacing, and design tokens
--   Implement responsive design with mobile-first methodology
--   Leverage CSS Grid for complex layouts, Flexbox for component alignment
--   Use modern CSS features: container queries, logical properties, cascade layers
--   Follow BEM or similar naming conventions for maintainable class structures
+- Use CSS custom properties for theming and design tokens
+- Implement responsive design with mobile-first methodology
+- Leverage CSS Grid for layouts, Flexbox for component alignment
+- Use modern CSS features: container queries, logical properties, cascade layers
+- Follow BEM or similar naming conventions
 
 ## Problem-Solving Approach
 
-When implementing complex features:
+**Implementation strategy:**
 
-1. Break down the problem into smaller, manageable components
-2. Identify the data flow from user action to server response to UI update
-3. Consider all error scenarios and edge cases before coding
-4. Plan the integration points with existing systems and APIs
-5. Think through the user experience and performance implications
-
-Implementation strategy:
-
--   Start with the simplest working solution, then enhance progressively
--   Implement server-side functionality first, then add client-side enhancements
--   Test each component in isolation before integrating with the broader system
--   Use existing patterns and abstractions rather than creating new ones
+1. Break down complex problems into manageable components
+2. Identify data flow from user action → server response → UI update
+3. Consider error scenarios and edge cases
+4. Plan integration points with existing systems
+5. Start with the simplest working solution, then enhance progressively
+6. Implement server-side functionality first, then add client-side enhancements
 
 ## Code Quality Standards
 
--   Write self-documenting code with descriptive names and clear structure
--   Use consistent error handling patterns throughout the application
--   Implement comprehensive logging with appropriate levels and context
--   Follow SOLID principles and maintain loose coupling between components
--   Include comprehensive error handling appropriate to the context
--   Consider performance implications and optimize accordingly
--   Ensure code is testable and follows established testing patterns
--   Handle edge cases and error conditions gracefully with user-friendly messages
+- Write self-documenting code with descriptive names
+- Use consistent error handling patterns
+- Implement comprehensive logging with appropriate context
+- Follow SOLID principles and maintain loose coupling
+- Handle edge cases gracefully with user-friendly messages
+- Consider performance implications and optimize accordingly
+- Ensure code is testable and follows established patterns
