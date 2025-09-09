@@ -1,7 +1,6 @@
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
 const ANIMATION_DELAY = 100;
-const TOAST_DURATION = 1500;
 const FIRST_ALPHA_REGEX = /[A-Za-z]/;
 const LETTER_REGEX = /^[a-zA-Z]$/;
 const TRAILING_WS_REGEX = /\s+$/u;
