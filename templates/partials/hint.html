@@ -1,5 +1,5 @@
 {{define "hint"}}
-<div x-data="{ hintVisible: false }" class="mb-2 hint-area">
+<div class="mb-2 hint-area">
     <div class="hint-btn-row">
         {{if .hint}}
         <button
@@ -14,19 +14,15 @@
         </button>
         {{end}}
     </div>
-    <div class="hint-text-row">
-        {{if .hint}}
+    <div class="hint-text-row" style="min-height: 2em">
         <p
             class="mb-0 small text-hint w-100 text-center"
-            x-show="hintVisible"
-            x-transition
+            :class="hintVisible ? '' : 'invisible'"
+            style="min-width: 180px; display: inline-block"
         >
             <i class="bi bi-lightbulb"></i>
             <span>Hint: {{.hint}}</span>
         </p>
-        {{else}}
-        <p class="mb-0 small w-100"></p>
-        {{end}}
     </div>
 </div>
 {{end}}

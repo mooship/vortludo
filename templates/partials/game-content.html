@@ -1,7 +1,15 @@
 {{define "game-content"}}
 <div class="text-center">
-    <p class="mb-2 small">Guess the 5-letter word!</p>
-    {{template "hint" .}}
+    <p
+        class="mb-2 small"
+        :class="gameOver ? 'invisible' : ''"
+        style="min-height: 2em"
+    >
+        Guess the 5-letter word!
+    </p>
+    <div :class="gameOver ? 'invisible' : ''" style="min-height: 2.5em">
+        {{template "hint" .}}
+    </div>
 </div>
 <div class="mb-3">{{template "game-board" .}}</div>
 {{end}}

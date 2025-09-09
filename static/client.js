@@ -53,6 +53,7 @@ window.gameApp = function () {
         currentGuess: '',
         currentRow: 0,
         gameOver: false,
+        hintVisible: false,
         isDarkMode: false,
         keyStatus: {},
         showCopyModal: false,
@@ -121,6 +122,7 @@ window.gameApp = function () {
             this.currentGuess = '';
             this.currentRow = 0;
             this.gameOver = false;
+            this.hintVisible = false;
             this.keyStatus = {};
             this.submittingGuess = false;
             this.clearDOMCache();
@@ -387,7 +389,11 @@ window.gameApp = function () {
             const gameOverContainer = board.parentElement.querySelector(
                 '.mt-3.p-3.bg-body-secondary'
             );
+            const wasGameOver = this.gameOver;
             this.gameOver = gameOverContainer !== null;
+            if (!wasGameOver && this.gameOver) {
+                this.hintVisible = false;
+            }
 
             const rows = this.getGuessRows();
             let completedRows = 0;
