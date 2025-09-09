@@ -1,0 +1,7 @@
+{{define "game-content"}}
+<div class="text-center">
+    <p class="mb-2 small">Guess the 5-letter word!</p>
+    {{template "hint" .}}
+</div>
+<div class="mb-3">{{template "game-board" .}}</div>
+{{end}}

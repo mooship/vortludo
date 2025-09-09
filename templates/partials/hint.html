@@ -1,0 +1,32 @@
+{{define "hint"}}
+<div x-data="{ hintVisible: false }" class="mb-2 hint-area">
+    <div class="hint-btn-row">
+        {{if .hint}}
+        <button
+            class="btn btn-outline-warning btn-sm vl-btn-shared"
+            @click="hintVisible = !hintVisible; $event.target.blur()"
+            :aria-pressed="hintVisible.toString()"
+            :class="hintVisible ? 'is-open' : ''"
+            type="button"
+        >
+            <i class="bi bi-lightbulb"></i>
+            <span x-text="hintVisible ? 'Hide Hint' : 'Show Hint'"></span>
+        </button>
+        {{end}}
+    </div>
+    <div class="hint-text-row">
+        {{if .hint}}
+        <p
+            class="mb-0 small text-hint w-100 text-center"
+            x-show="hintVisible"
+            x-transition
+        >
+            <i class="bi bi-lightbulb"></i>
+            <span>Hint: {{.hint}}</span>
+        </p>
+        {{else}}
+        <p class="mb-0 small w-100"></p>
+        {{end}}
+    </div>
+</div>
+{{end}}

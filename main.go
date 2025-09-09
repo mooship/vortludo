@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -91,20 +92,30 @@ func main() {
 		})
 	}
 
+	funcMap := template.FuncMap{"hasPrefix": strings.HasPrefix}
+
+	var baseTplDir string
 	if isProduction && dirExists("dist") {
 		logInfo("Serving assets from dist/ directory")
-		router.LoadHTMLGlob("dist/templates/*.html")
+		baseTplDir = filepath.ToSlash(filepath.Join("dist", "templates"))
 		router.Static("/static", "./dist/static")
 	} else {
 		logInfo("Serving development assets from source directories")
-		router.LoadHTMLGlob("templates/*.html")
+		baseTplDir = "templates"
 		router.Static("/static", "./static")
 	}
 
-	funcMap := template.FuncMap{
-		"hasPrefix": strings.HasPrefix,
+	rootPattern := filepath.ToSlash(filepath.Join(baseTplDir, "*.html"))
+	partialsPattern := filepath.ToSlash(filepath.Join(baseTplDir, "partials", "*.html"))
+
+	master := template.New("").Funcs(funcMap)
+	if _, err := master.ParseGlob(rootPattern); err != nil {
+		logFatal("Failed to parse root templates: %v", err)
 	}
-	router.SetFuncMap(funcMap)
+	if _, err := master.ParseGlob(partialsPattern); err != nil {
+		logFatal("Failed to parse partial templates: %v", err)
+	}
+	router.SetHTMLTemplate(master)
 
 	router.GET("/", app.homeHandler)
 	router.GET("/new-game", app.newGameHandler)
