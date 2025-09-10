@@ -33,31 +33,26 @@ document.addEventListener('click', (e) => {
     const target = e.target.closest('[data-autoblur]');
     if (target) {
         setTimeout(() => {
-            if (typeof target.blur === 'function') {
-                target.blur();
-            }
+            target.blur?.();
         }, 60);
     }
 });
 
-function debounce(func, wait) {
+const debounce = (func, wait) => {
     let timeout;
-    return function (...args) {
+    return (...args) => {
         if (timeout) {
             clearTimeout(timeout);
         }
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
-}
+};
 
-function readCookie(name) {
+const readCookie = (name) => {
     const v = `; ${document.cookie}`;
     const parts = v.split(`; ${name}=`);
-    if (parts.length === 2) {
-        return parts.pop().split(';').shift();
-    }
-    return '';
-}
+    return parts.length === 2 ? parts.pop().split(';').shift() : '';
+};
 
 window.gameApp = function () {
     return {
@@ -463,10 +458,10 @@ window.gameApp = function () {
                 const status = tile.classList.contains('tile-correct')
                     ? 'correct'
                     : tile.classList.contains('tile-present')
-                    ? 'present'
-                    : tile.classList.contains('tile-absent')
-                    ? 'absent'
-                    : '';
+                      ? 'present'
+                      : tile.classList.contains('tile-absent')
+                        ? 'absent'
+                        : '';
                 if (letter && status) {
                     if (
                         !this.keyStatus[letter] ||
@@ -504,30 +499,33 @@ window.gameApp = function () {
             row.classList.add('animated');
             row.classList.remove('submitting');
 
-            setTimeout(() => {
-                const sr = document.getElementById('sr-live');
-                if (sr) {
-                    const tiles = row.querySelectorAll('.tile.filled');
-                    if (tiles.length === WORD_LENGTH) {
-                        const parts = Array.from(tiles).map((tile) => {
-                            const letter = tile.textContent || '';
-                            const status = tile.classList.contains(
-                                'tile-correct'
-                            )
-                                ? 'correct'
-                                : tile.classList.contains('tile-present')
-                                ? 'present'
-                                : tile.classList.contains('tile-absent')
-                                ? 'absent'
-                                : 'unknown';
-                            return `${letter} is ${status}`;
-                        });
-                        sr.textContent = `Row ${
-                            this.currentRow
-                        } revealed: ${parts.join(', ')}.`;
+            setTimeout(
+                () => {
+                    const sr = document.getElementById('sr-live');
+                    if (sr) {
+                        const tiles = row.querySelectorAll('.tile.filled');
+                        if (tiles.length === WORD_LENGTH) {
+                            const parts = Array.from(tiles).map((tile) => {
+                                const letter = tile.textContent || '';
+                                const status = tile.classList.contains(
+                                    'tile-correct'
+                                )
+                                    ? 'correct'
+                                    : tile.classList.contains('tile-present')
+                                      ? 'present'
+                                      : tile.classList.contains('tile-absent')
+                                        ? 'absent'
+                                        : 'unknown';
+                                return `${letter} is ${status}`;
+                            });
+                            sr.textContent = `Row ${
+                                this.currentRow
+                            } revealed: ${parts.join(', ')}.`;
+                        }
                     }
-                }
-            }, WORD_LENGTH * ANIMATION_DELAY + 400);
+                },
+                WORD_LENGTH * ANIMATION_DELAY + 400
+            );
         },
         checkForWin() {
             const rows = this.getGameRows();
