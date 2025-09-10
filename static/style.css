@@ -267,8 +267,6 @@
     height: 3.4rem;
     padding: 0.6rem 0.3rem;
     margin: 0.125rem !important;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
     font-size: 0.9rem;
     font-weight: 600;
     border-radius: 0.4rem;
@@ -353,6 +351,34 @@
     color: var(--vl-btn-primary-color) !important;
 }
 
+button,
+.btn,
+.vl-btn-shared,
+.key-button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+@media (hover: hover) {
+    .btn:focus-visible,
+    button:focus-visible,
+    .vl-btn-shared:focus-visible,
+    .key-button:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
+}
+
+@media (hover: none) {
+    .btn:focus,
+    button:focus,
+    .vl-btn-shared:focus,
+    .key-button:focus {
+        outline: none;
+        box-shadow: none;
+    }
+}
+
 .vl-btn-shared {
     font-weight: 600;
     position: relative;
@@ -392,11 +418,6 @@
     border-color: var(--vl-btn-outline-warning-active-border) !important;
     color: var(--vl-btn-outline-warning-active-color) !important;
     box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.04) inset;
-    filter: brightness(1.05);
-}
-
-.vl-btn-shared.hint-toggle.is-open,
-.vl-btn-shared.hint-toggle[aria-pressed='true'] {
     filter: brightness(1.05);
 }
 
