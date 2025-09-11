@@ -3,6 +3,7 @@ const MAX_GUESSES = 6;
 const ANIMATION_DELAY = 100;
 const REGEX = {
     LETTER: /^[a-zA-Z]$/,
+    WORD_WAS: /word was:\s*(\w+)/i,
 };
 const CONFETTI_COLORS = [
     '#ff0000',
@@ -569,8 +570,9 @@ window.gameApp = function () {
                         if (gameOverContainer) {
                             const gameOverText =
                                 gameOverContainer.textContent || '';
-                            const wordMatch =
-                                gameOverText.match(/word was:\s*(\w+)/i);
+                            const wordMatch = gameOverText.match(
+                                REGEX.WORD_WAS
+                            );
                             if (wordMatch && wordMatch[1]) {
                                 this.saveCompletedWord(
                                     wordMatch[1].toUpperCase()
