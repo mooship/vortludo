@@ -1,10 +1,40 @@
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
 const ANIMATION_DELAY = 100;
+const COMPLETED_WORDS_KEY = 'vortludo-completed-words';
+
+const SELECTORS = {
+    GAME_BOARD: '#game-board',
+    GUESS_ROW: '.guess-row',
+    TILE: '.tile',
+    FILLED_TILE: '.tile.filled',
+    GAME_CONTENT_CONTAINER: '#game-content-container',
+    CSRF_META: 'meta[name="csrf-token"]',
+    GUESS_INPUT: '#guess-input',
+    GUESS_FORM: '#guess-form',
+    SR_LIVE: '#sr-live',
+    NOTIFICATION_TOAST: '#notification-toast',
+    COPY_MODAL: '.modal',
+    COPY_MODAL_TEXTAREA: '.copy-modal textarea',
+};
+
+const CSS_CLASSES = {
+    CORRECT: 'tile-correct',
+    PRESENT: 'tile-present',
+    ABSENT: 'tile-absent',
+    FILLED: 'filled',
+    SHAKE: 'shake',
+    FLIP: 'flip',
+    FLIP_REVEALED: 'flip-revealed',
+    ANIMATED: 'animated',
+    WINNER: 'winner',
+    PRESSED: 'pressed',
+};
+
 const REGEX = {
     LETTER: /^[a-zA-Z]$/,
-    WORD_WAS: /word was:\s*(\w+)/i,
 };
+
 const CONFETTI_COLORS = [
     '#ff0000',
     '#00ff00',
@@ -65,14 +95,13 @@ window.gameApp = function () {
         keyStatus: {},
         showCopyModal: false,
         copyModalText: '',
-        showToast: false,
-        toastMessage: '',
-        toastType: 'info',
         submittingGuess: false,
         lastServerError: '',
-        _suppressGuessClear: false,
+        keepInputAfterError: false,
         _gameRows: null,
         _guessRows: null,
+        _toast: null,
+        _bsModal: null,
         errorCodeMessages: {
             game_over: {
                 text: 'Game is already over! Start a new game! 🎮',
@@ -105,13 +134,17 @@ window.gameApp = function () {
         },
         getGameRows() {
             if (!this._gameRows) {
-                this._gameRows = document.querySelectorAll('#game-board > div');
+                this._gameRows = document.querySelectorAll(
+                    SELECTORS.GAME_BOARD + ' > div'
+                );
             }
             return this._gameRows;
         },
         getGuessRows() {
             if (!this._guessRows) {
-                this._guessRows = document.querySelectorAll('.guess-row');
+                this._guessRows = document.querySelectorAll(
+                    SELECTORS.GUESS_ROW
+                );
             }
             return this._guessRows;
         },
@@ -122,8 +155,23 @@ window.gameApp = function () {
         initGame() {
             this.resetGameState();
             this.initTheme();
+            this.initToast();
             this.setupHTMXHandlers();
             setTimeout(() => this.updateGameState(), 100);
+        },
+        initToast() {
+            const toastElement = document.querySelector(
+                SELECTORS.NOTIFICATION_TOAST
+            );
+            if (
+                toastElement &&
+                typeof bootstrap !== 'undefined' &&
+                bootstrap.Toast
+            ) {
+                this._toast = new bootstrap.Toast(toastElement, {
+                    delay: 3000,
+                });
+            }
         },
         resetGameState() {
             this.currentGuess = '';
@@ -139,6 +187,43 @@ window.gameApp = function () {
             this.isDarkMode = savedTheme === 'dark';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
         },
+        _handleTriggerHeader(header) {
+            if (!header) {
+                this.lastServerError = '';
+                this.updateGameState();
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(header);
+                if (typeof parsed['clear-completed-words'] !== 'undefined') {
+                    this.clearCompletedWords();
+                }
+                if (parsed.server_error_code) {
+                    const code = parsed.server_error_code;
+                    const info = this.errorCodeMessages[code] || {
+                        text: `An unexpected error occurred. (code: ${code}) ❗`,
+                        type: 'error',
+                    };
+                    this.lastServerError = code;
+                    this.keepInputAfterError = true;
+                    this.showToastNotification(info.text, info.type);
+                    this.submittingGuess = false;
+                    this.shakeCurrentRow();
+                } else {
+                    this.lastServerError = '';
+                    this.updateGameState();
+                }
+            } catch {
+                if (header.includes('clear-completed-words')) {
+                    this.clearCompletedWords();
+                }
+                if (!header.includes('server_error_code')) {
+                    this.lastServerError = '';
+                    this.updateGameState();
+                }
+            }
+        },
         setupHTMXHandlers() {
             document.body.addEventListener('htmx:afterSwap', (evt) => {
                 this.submittingGuess = false;
@@ -146,7 +231,7 @@ window.gameApp = function () {
                 this.restoreUserInput();
                 const targetEl =
                     evt?.detail?.target ||
-                    document.getElementById('game-content-container');
+                    document.querySelector(SELECTORS.GAME_CONTENT_CONTAINER);
                 if (
                     window.Alpine &&
                     targetEl &&
@@ -164,17 +249,11 @@ window.gameApp = function () {
             });
 
             document.body.addEventListener('htmx:responseError', (evt) => {
-                if (evt.detail.xhr.status === 429) {
-                    this.showToastNotification(
-                        'Too many requests. Please slow down! ⏰',
-                        'warning'
-                    );
-                } else {
-                    this.showToastNotification(
-                        'Connection error. Please try again! 🔄',
-                        'error'
-                    );
-                }
+                const message =
+                    evt.detail.xhr.status === 429
+                        ? 'Too many requests. Please slow down! ⏰'
+                        : 'Connection error. Please try again! 🔄';
+                this.showToastNotification(message, 'warning');
             });
 
             document.body.addEventListener('htmx:sendError', () => {
@@ -194,52 +273,9 @@ window.gameApp = function () {
             document.body.addEventListener('htmx:afterSettle', (evt) => {
                 const xhr = evt?.detail?.xhr;
                 if (xhr && typeof xhr.getResponseHeader === 'function') {
-                    const triggerHeader = xhr.getResponseHeader('HX-Trigger');
-                    if (triggerHeader) {
-                        try {
-                            const parsed = JSON.parse(triggerHeader);
-                            if (
-                                typeof parsed['clear-completed-words'] !==
-                                'undefined'
-                            ) {
-                                this.clearCompletedWords();
-                            }
-                            if (parsed.server_error_code) {
-                                const code = parsed.server_error_code;
-                                let info = this.errorCodeMessages[code];
-                                if (!info) {
-                                    info = {
-                                        text: `An unexpected error occurred. (code: ${code}) ❗`,
-                                        type: 'error',
-                                    };
-                                }
-                                this.lastServerError = code;
-                                this._suppressGuessClear = true;
-                                this.showToastNotification(
-                                    info.text,
-                                    info.type
-                                );
-                                this.submittingGuess = false;
-                                this.shakeCurrentRow();
-                            } else {
-                                this.lastServerError = '';
-                                this.updateGameState();
-                            }
-                        } catch {
-                            if (
-                                triggerHeader.includes('clear-completed-words')
-                            ) {
-                                this.clearCompletedWords();
-                            }
-                            if (!triggerHeader.includes('server_error_code')) {
-                                this.lastServerError = '';
-                                this.updateGameState();
-                            }
-                        }
-                    } else {
-                        this.lastServerError = '';
-                        this.updateGameState();
-                    }
+                    this._handleTriggerHeader(
+                        xhr.getResponseHeader('HX-Trigger')
+                    );
                 } else {
                     this.updateGameState();
                 }
@@ -248,14 +284,12 @@ window.gameApp = function () {
             if (window.htmx) {
                 htmx.on('htmx:configRequest', (evt) => {
                     let token = readCookie('csrf_token');
-
                     if (!token) {
                         const meta = document.querySelector(
-                            'meta[name="csrf-token"]'
+                            SELECTORS.CSRF_META
                         );
                         token = meta ? meta.getAttribute('content') : '';
                     }
-
                     if (token) {
                         evt.detail.headers['X-CSRF-Token'] = token;
                     }
@@ -267,42 +301,35 @@ window.gameApp = function () {
                 this.currentGuess = this.tempCurrentGuess;
                 this.currentRow = this.tempCurrentRow;
                 this.updateDisplay();
-                this.tempCurrentGuess = null;
-                this.tempCurrentRow = null;
-            } else {
-                this.tempCurrentGuess = null;
-                this.tempCurrentRow = null;
             }
+            this.tempCurrentGuess = null;
+            this.tempCurrentRow = null;
         },
         updateDisplay: debounce(function () {
-            const rows = this.getGameRows();
-            const row = rows?.[this.currentRow];
-            if (!row) {
-                return;
-            }
-            const tiles = row.querySelectorAll('.tile');
+            const row = this.getGameRows()?.[this.currentRow];
+            if (!row) return;
+
+            const tiles = row.querySelectorAll(SELECTORS.TILE);
             tiles?.forEach((tile, i) => {
                 tile.classList.remove(
-                    'tile-correct',
-                    'tile-present',
-                    'tile-absent'
+                    CSS_CLASSES.CORRECT,
+                    CSS_CLASSES.PRESENT,
+                    CSS_CLASSES.ABSENT
                 );
                 const letter = this.currentGuess[i] || '';
                 tile.textContent = letter;
                 if (letter) {
-                    tile.classList.add('filled');
+                    tile.classList.add(CSS_CLASSES.FILLED);
                 } else {
-                    tile.classList.remove('filled');
+                    tile.classList.remove(CSS_CLASSES.FILLED);
                 }
             });
         }, 50),
         shakeCurrentRow() {
-            const rows = this.getGuessRows();
-            const targetRow = Math.max(0, this.currentRow);
-            const row = rows?.[targetRow];
+            const row = this.getGuessRows()?.[Math.max(0, this.currentRow)];
             if (row) {
-                row.classList.add('shake');
-                setTimeout(() => row.classList.remove('shake'), 500);
+                row.classList.add(CSS_CLASSES.SHAKE);
+                setTimeout(() => row.classList.remove(CSS_CLASSES.SHAKE), 500);
             }
         },
         handleKeyInput(key, evt) {
@@ -313,17 +340,12 @@ window.gameApp = function () {
                 );
                 return;
             }
-            if (
-                evt &&
-                evt.target &&
-                evt.target instanceof HTMLButtonElement &&
-                evt.target.disabled !== undefined
-            ) {
+            if (evt?.target instanceof HTMLButtonElement) {
                 evt.target.disabled = true;
-                evt.target.classList.add('pressed');
+                evt.target.classList.add(CSS_CLASSES.PRESSED);
                 setTimeout(() => {
                     evt.target.disabled = false;
-                    evt.target.classList.remove('pressed');
+                    evt.target.classList.remove(CSS_CLASSES.PRESSED);
                 }, 120);
             }
             if (key === 'Enter' || key === 'ENTER') {
@@ -365,33 +387,27 @@ window.gameApp = function () {
             localStorage.setItem('theme', theme);
         },
         updateGameState() {
-            const board = document.getElementById('game-board');
-            if (!board) {
-                return;
-            }
+            const board = document.querySelector(SELECTORS.GAME_BOARD);
+            if (!board) return;
+
             const errEl = board.querySelector('[data-error-code]');
             if (errEl) {
                 const code = errEl.getAttribute('data-error-code');
                 if (code) {
-                    let info = this.errorCodeMessages[code];
-                    if (!info) {
-                        info = {
-                            text: `An unexpected error occurred. (code: ${code}) ❗`,
-                            type: 'error',
-                        };
-                    }
+                    const info = this.errorCodeMessages[code] || {
+                        text: `An unexpected error occurred. (code: ${code}) ❗`,
+                        type: 'error',
+                    };
                     this.showToastNotification(info.text, info.type);
                     this.shakeCurrentRow();
                 }
             }
 
-            if (this._suppressGuessClear) {
-                this._suppressGuessClear = false;
+            if (this.keepInputAfterError) {
+                this.keepInputAfterError = false;
             } else {
                 this.currentGuess = '';
             }
-
-            this.keyStatus = {};
 
             const gameOverContainer = board.parentElement.querySelector(
                 '.mt-3.p-3.bg-body-secondary'
@@ -405,12 +421,12 @@ window.gameApp = function () {
             const rows = this.getGuessRows();
             let completedRows = 0;
             rows.forEach((row) => {
-                const tiles = row.querySelectorAll('.tile.filled');
+                const tiles = row.querySelectorAll(SELECTORS.FILLED_TILE);
                 const hasStatusTiles = Array.from(tiles).some(
                     (tile) =>
-                        tile.classList.contains('tile-correct') ||
-                        tile.classList.contains('tile-present') ||
-                        tile.classList.contains('tile-absent')
+                        tile.classList.contains(CSS_CLASSES.CORRECT) ||
+                        tile.classList.contains(CSS_CLASSES.PRESENT) ||
+                        tile.classList.contains(CSS_CLASSES.ABSENT)
                 );
                 if (hasStatusTiles) {
                     completedRows++;
@@ -418,190 +434,168 @@ window.gameApp = function () {
             });
 
             this.currentRow = Math.min(completedRows, rows.length - 1);
-            this.updateKeyboardColors();
-            this.animateNewGuess();
-            this.checkForWin();
+            this.updateKeyboardColors(rows);
+            this.animateNewGuess(rows);
+            this.checkForWin(rows, gameOverContainer);
         },
-
         submitGuess() {
             if (
                 this.submittingGuess ||
                 this.gameOver ||
                 this.currentGuess.length !== WORD_LENGTH
             ) {
-                if (this.currentGuess.length < WORD_LENGTH) {
+                if (this.submittingGuess) {
+                    this.showToastNotification(
+                        'Please wait, submitting your guess...',
+                        'info'
+                    );
+                } else if (this.currentGuess.length < WORD_LENGTH) {
                     this.showToastNotification(
                         `Word must be ${WORD_LENGTH} letters long! ✏️`,
                         'warning'
                     );
-                    this.shakeCurrentRow();
                 } else if (this.gameOver) {
                     this.showToastNotification(
                         'Game is already over! Start a new game! 🎮',
                         'warning'
                     );
-                    this.shakeCurrentRow();
                 }
+                this.shakeCurrentRow();
                 return;
             }
             this.submittingGuess = true;
-            const guessInput = document.getElementById('guess-input');
+            const guessInput = document.querySelector(SELECTORS.GUESS_INPUT);
             if (guessInput) {
                 guessInput.value = this.currentGuess;
             }
-            htmx.trigger('#guess-form', 'submit');
+            htmx.trigger(SELECTORS.GUESS_FORM, 'submit');
         },
-        updateKeyboardColors() {
-            const tiles = document.querySelectorAll('.tile.filled');
+        updateKeyboardColors(rows) {
             this.keyStatus = {};
-            tiles.forEach((tile) => {
-                const letter = tile.textContent;
-                const status = tile.classList.contains('tile-correct')
-                    ? 'correct'
-                    : tile.classList.contains('tile-present')
-                      ? 'present'
-                      : tile.classList.contains('tile-absent')
+            rows.forEach((row) => {
+                const tiles = row.querySelectorAll(SELECTORS.FILLED_TILE);
+                tiles.forEach((tile) => {
+                    const letter = tile.textContent;
+                    const status = tile.classList.contains(CSS_CLASSES.CORRECT)
+                        ? 'correct'
+                        : tile.classList.contains(CSS_CLASSES.PRESENT)
+                        ? 'present'
+                        : tile.classList.contains(CSS_CLASSES.ABSENT)
                         ? 'absent'
                         : '';
-                if (letter && status) {
-                    if (
-                        !this.keyStatus[letter] ||
-                        status === 'correct' ||
-                        (status === 'present' &&
-                            this.keyStatus[letter] === 'absent')
-                    ) {
-                        this.keyStatus[letter] = status;
+                    if (letter && status) {
+                        if (
+                            !this.keyStatus[letter] ||
+                            status === 'correct' ||
+                            (status === 'present' &&
+                                this.keyStatus[letter] === 'absent')
+                        ) {
+                            this.keyStatus[letter] = status;
+                        }
                     }
-                }
+                });
             });
         },
         getKeyClass(letter) {
             return this.keyStatus[letter] ?? '';
         },
-        animateNewGuess() {
-            const rows = this.getGameRows();
+        animateNewGuess(allRows) {
+            const rows = allRows || this.getGameRows();
             const row = rows?.[this.currentRow - 1];
-            if (!row || row.classList.contains('animated')) {
-                return;
-            }
-            const tiles = row.querySelectorAll('.tile.filled');
-            if (tiles.length !== WORD_LENGTH) {
-                return;
-            }
-            tiles?.forEach((tile, index) => {
+            if (!row || row.classList.contains(CSS_CLASSES.ANIMATED)) return;
+
+            const tiles = row.querySelectorAll(SELECTORS.FILLED_TILE);
+            if (tiles.length !== WORD_LENGTH) return;
+
+            tiles.forEach((tile, index) => {
                 tile.style.setProperty('--tile-index', index);
                 setTimeout(() => {
-                    tile.classList.add('flip');
-                    setTimeout(() => {
-                        tile.classList.add('flip-revealed');
-                    }, 300);
+                    tile.classList.add(CSS_CLASSES.FLIP);
+                    setTimeout(
+                        () => tile.classList.add(CSS_CLASSES.FLIP_REVEALED),
+                        300
+                    );
                 }, index * ANIMATION_DELAY);
             });
-            row.classList.add('animated');
+            row.classList.add(CSS_CLASSES.ANIMATED);
             row.classList.remove('submitting');
 
-            setTimeout(
-                () => {
-                    const sr = document.getElementById('sr-live');
-                    if (sr) {
-                        const tiles = row.querySelectorAll('.tile.filled');
-                        if (tiles.length === WORD_LENGTH) {
-                            const parts = Array.from(tiles).map((tile) => {
-                                const letter = tile.textContent || '';
-                                const status = tile.classList.contains(
-                                    'tile-correct'
-                                )
-                                    ? 'correct'
-                                    : tile.classList.contains('tile-present')
-                                      ? 'present'
-                                      : tile.classList.contains('tile-absent')
-                                        ? 'absent'
-                                        : 'unknown';
-                                return `${letter} is ${status}`;
-                            });
-                            sr.textContent = `Row ${
-                                this.currentRow
-                            } revealed: ${parts.join(', ')}.`;
-                        }
-                    }
-                },
-                WORD_LENGTH * ANIMATION_DELAY + 400
-            );
+            setTimeout(() => {
+                const sr = document.querySelector(SELECTORS.SR_LIVE);
+                if (sr) {
+                    const parts = Array.from(tiles).map((tile) => {
+                        const letter = tile.textContent || '';
+                        const status = tile.classList.contains(
+                            CSS_CLASSES.CORRECT
+                        )
+                            ? 'correct'
+                            : tile.classList.contains(CSS_CLASSES.PRESENT)
+                            ? 'present'
+                            : tile.classList.contains(CSS_CLASSES.ABSENT)
+                            ? 'absent'
+                            : 'unknown';
+                        return `${letter} is ${status}`;
+                    });
+                    sr.textContent = `Row ${
+                        this.currentRow
+                    } revealed: ${parts.join(', ')}.`;
+                }
+            }, WORD_LENGTH * ANIMATION_DELAY + 400);
         },
-        checkForWin() {
-            const rows = this.getGameRows();
-            let hasWinner = false;
-            rows.forEach((row) => {
-                const tiles = row.querySelectorAll('.tile-correct');
-                if (tiles.length === WORD_LENGTH) {
-                    hasWinner = true;
-                    if (!row.classList.contains('winner')) {
-                        row.classList.add('winner');
-                        tiles.forEach((tile, index) => {
+        checkForWin(allRows, gameOverContainer) {
+            const rows = allRows || this.getGameRows();
+            const winningRow = Array.from(rows).find(
+                (row) =>
+                    row.querySelectorAll('.' + CSS_CLASSES.CORRECT).length ===
+                    WORD_LENGTH
+            );
+
+            if (winningRow) {
+                this.gameOver = true;
+                if (!winningRow.classList.contains(CSS_CLASSES.WINNER)) {
+                    winningRow.classList.add(CSS_CLASSES.WINNER);
+                    winningRow
+                        .querySelectorAll(SELECTORS.TILE)
+                        .forEach((tile, index) => {
                             tile.style.setProperty('--tile-index', index);
                         });
-                    }
                 }
-            });
-            if (hasWinner) {
-                this.gameOver = true;
                 this.launchConfetti();
-
-                const winningRow = Array.from(rows).find((row) => {
-                    const tiles = row.querySelectorAll('.tile-correct');
-                    return tiles.length === WORD_LENGTH;
-                });
-
-                if (winningRow) {
-                    const tiles = winningRow.querySelectorAll('.tile-correct');
-                    const word = Array.from(tiles)
-                        .map((tile) => tile.textContent)
-                        .join('');
-                    if (word && word.length === WORD_LENGTH) {
-                        this.saveCompletedWord(word.toUpperCase());
-                    }
-                } else {
-                    const gameBoard = document.getElementById('game-board');
-                    if (gameBoard) {
-                        const gameOverContainer =
-                            gameBoard.parentElement.querySelector(
-                                '.mt-3.p-3.bg-body-secondary'
-                            );
-                        if (gameOverContainer) {
-                            const gameOverText =
-                                gameOverContainer.textContent || '';
-                            const wordMatch = gameOverText.match(
-                                REGEX.WORD_WAS
-                            );
-                            if (wordMatch && wordMatch[1]) {
-                                this.saveCompletedWord(
-                                    wordMatch[1].toUpperCase()
-                                );
-                            }
-                        }
-                    }
+                const word = Array.from(
+                    winningRow.querySelectorAll('.' + CSS_CLASSES.CORRECT)
+                )
+                    .map((tile) => tile.textContent)
+                    .join('');
+                if (word) {
+                    this.saveCompletedWord(word.toUpperCase());
                 }
             } else {
-                const completedRows = Array.from(rows).filter((row) => {
-                    const tiles = row.querySelectorAll('.tile.filled');
+                const completedRowCount = Array.from(rows).filter((row) => {
+                    const tiles = row.querySelectorAll(SELECTORS.FILLED_TILE);
                     return (
                         tiles.length === WORD_LENGTH &&
                         Array.from(tiles).some(
                             (tile) =>
-                                tile.classList.contains('tile-correct') ||
-                                tile.classList.contains('tile-present') ||
-                                tile.classList.contains('tile-absent')
+                                tile.classList.contains(CSS_CLASSES.CORRECT) ||
+                                tile.classList.contains(CSS_CLASSES.PRESENT) ||
+                                tile.classList.contains(CSS_CLASSES.ABSENT)
                         )
                     );
-                });
+                }).length;
 
-                if (completedRows.length === MAX_GUESSES && !hasWinner) {
-                    setTimeout(() => {
-                        this.showToastNotification(
-                            'Game over! Better luck next time! 🎯',
-                            'info'
-                        );
-                    }, 1000);
+                if (completedRowCount === MAX_GUESSES) {
+                    setTimeout(
+                        () =>
+                            this.showToastNotification(
+                                'Game over! Better luck next time! 🎯',
+                                'info'
+                            ),
+                        1000
+                    );
+                    const solution = gameOverContainer?.dataset.solution;
+                    if (solution) {
+                        this.saveCompletedWord(solution.toUpperCase());
+                    }
                 }
             }
         },
@@ -670,34 +664,35 @@ window.gameApp = function () {
         },
         shareResults() {
             const rows = this.getGameRows();
-            let emojiGrid = 'Vortludo ';
             let completedRowCount = 0;
             let hasWon = false;
 
             rows.forEach((row) => {
-                const tiles = row.querySelectorAll('.tile.filled');
+                const tiles = row.querySelectorAll(SELECTORS.FILLED_TILE);
                 if (tiles.length === WORD_LENGTH) {
                     completedRowCount++;
-                    const correctTiles = row.querySelectorAll('.tile-correct');
-                    if (correctTiles.length === WORD_LENGTH) {
+                    if (
+                        row.querySelectorAll('.' + CSS_CLASSES.CORRECT)
+                            .length === WORD_LENGTH
+                    ) {
                         hasWon = true;
                     }
                 }
             });
 
-            if (hasWon) {
-                emojiGrid += `${completedRowCount}/6\n\n`;
-            } else {
-                emojiGrid += 'X/6\n\n';
-            }
+            let emojiGrid = `Vortludo ${
+                hasWon ? completedRowCount : 'X'
+            }/6\n\n`;
 
             rows.forEach((row) => {
-                const tiles = row.querySelectorAll('.tile.filled');
+                const tiles = row.querySelectorAll(SELECTORS.FILLED_TILE);
                 if (tiles.length === WORD_LENGTH) {
                     tiles.forEach((tile) => {
-                        if (tile.classList.contains('tile-correct')) {
+                        if (tile.classList.contains(CSS_CLASSES.CORRECT)) {
                             emojiGrid += '🟩';
-                        } else if (tile.classList.contains('tile-present')) {
+                        } else if (
+                            tile.classList.contains(CSS_CLASSES.PRESENT)
+                        ) {
                             emojiGrid += '🟨';
                         } else {
                             emojiGrid += '⬛';
@@ -729,7 +724,7 @@ window.gameApp = function () {
         },
         openCopyModal(text) {
             this.copyModalText = text;
-            const modalEl = document.querySelector('.modal');
+            const modalEl = document.querySelector(SELECTORS.COPY_MODAL);
             if (window.bootstrap && modalEl) {
                 if (!this._bsModal) {
                     this._bsModal = new bootstrap.Modal(modalEl);
@@ -740,8 +735,7 @@ window.gameApp = function () {
             }
         },
         closeCopyModal() {
-            const modalEl = document.querySelector('.modal');
-            if (window.bootstrap && modalEl && this._bsModal) {
+            if (this._bsModal) {
                 this._bsModal.hide();
             } else {
                 this.showCopyModal = false;
@@ -749,7 +743,9 @@ window.gameApp = function () {
             this.copyModalText = '';
         },
         selectAllText() {
-            const textarea = document.querySelector('.copy-modal textarea');
+            const textarea = document.querySelector(
+                SELECTORS.COPY_MODAL_TEXTAREA
+            );
             if (textarea) {
                 textarea.select();
                 textarea.focus();
@@ -760,18 +756,12 @@ window.gameApp = function () {
                 );
             }
         },
-        showToastNotification(message, type = 'success') {
+        showToastNotification(message, type = 'info') {
             this.toastMessage = message;
             this.toastType = type;
             this.$nextTick(() => {
-                const toastElement =
-                    document.getElementById('notification-toast');
-                if (
-                    toastElement &&
-                    typeof bootstrap !== 'undefined' &&
-                    bootstrap.Toast
-                ) {
-                    new bootstrap.Toast(toastElement, { delay: 3000 }).show();
+                if (this._toast) {
+                    this._toast.show();
                 }
             });
         },
@@ -780,9 +770,7 @@ window.gameApp = function () {
         },
         getCompletedWords() {
             try {
-                const completed = localStorage.getItem(
-                    'vortludo-completed-words'
-                );
+                const completed = localStorage.getItem(COMPLETED_WORDS_KEY);
                 return completed ? JSON.parse(completed) : [];
             } catch {
                 this._storageErrorToast('load');
@@ -795,7 +783,7 @@ window.gameApp = function () {
                 if (!completed.includes(word)) {
                     completed.push(word);
                     localStorage.setItem(
-                        'vortludo-completed-words',
+                        COMPLETED_WORDS_KEY,
                         JSON.stringify(completed)
                     );
                     this.showToastNotification(
@@ -809,7 +797,7 @@ window.gameApp = function () {
         },
         clearCompletedWords() {
             try {
-                localStorage.removeItem('vortludo-completed-words');
+                localStorage.removeItem(COMPLETED_WORDS_KEY);
                 this.showToastNotification(
                     "🎉 Congratulations! You've completed all words! Progress reset.",
                     'success'

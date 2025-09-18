@@ -47,34 +47,6 @@
             >
                 <i class="bi bi-share"></i> Share Results
             </button>
-            <form
-                hx-post="/new-game"
-                hx-target="#game-content-container"
-                hx-swap="innerHTML"
-                hx-indicator=".loading-indicator"
-                class="d-inline"
-                @submit="prepareNewGameData($event)"
-            >
-                {{if $.csrf_token}}
-                <input
-                    type="hidden"
-                    name="csrf_token"
-                    value="{{$.csrf_token}}"
-                />
-                {{end}}
-                <input
-                    type="hidden"
-                    name="completedWords"
-                    x-ref="completedWordsInput"
-                    value=""
-                />
-                <button
-                    type="submit"
-                    class="btn btn-primary vl-btn-shared btn-sm btn-max-130"
-                >
-                    <i class="bi bi-arrow-clockwise"></i> New Game
-                </button>
-            </form>
         </div>
         {{else}}
         <h3 class="text-danger text-center h5 mb-2">Game Over!</h3>
