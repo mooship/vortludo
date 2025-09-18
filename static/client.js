@@ -251,21 +251,21 @@ window.gameApp = function () {
             document.body.addEventListener('htmx:responseError', (evt) => {
                 const message =
                     evt.detail.xhr.status === 429
-                        ? 'Too many requests. Please slow down! ⏰'
-                        : 'Connection error. Please try again! 🔄';
+                        ? 'Too many requests. Please slow down!'
+                        : 'Connection error. Please try again!';
                 this.showToastNotification(message, 'warning');
             });
 
             document.body.addEventListener('htmx:sendError', () => {
                 this.showToastNotification(
-                    'Network error. Check your connection! 📡',
+                    'Network error. Check your connection!',
                     'error'
                 );
             });
 
             document.body.addEventListener('htmx:timeout', () => {
                 this.showToastNotification(
-                    'Request timed out. Please try again! ⏱️',
+                    'Request timed out. Please try again!',
                     'error'
                 );
             });
@@ -335,7 +335,7 @@ window.gameApp = function () {
         handleKeyInput(key, evt) {
             if (this.gameOver) {
                 this.showToastNotification(
-                    'Game is over! Start a new game to continue! 🎮',
+                    'Game is over! Start a new game to continue!',
                     'warning'
                 );
                 return;
@@ -368,7 +368,7 @@ window.gameApp = function () {
                 this.updateDisplay();
             } else {
                 this.showToastNotification(
-                    `Word is already ${WORD_LENGTH} letters! Press Enter to submit! ⌨️`,
+                    `Word is already ${WORD_LENGTH} letters! Press Enter to submit!`,
                     'warning'
                 );
                 this.shakeCurrentRow();
@@ -395,7 +395,7 @@ window.gameApp = function () {
                 const code = errEl.getAttribute('data-error-code');
                 if (code) {
                     const info = this.errorCodeMessages[code] || {
-                        text: `An unexpected error occurred. (code: ${code}) ❗`,
+                        text: `An unexpected error occurred. (code: ${code})`,
                         type: 'error',
                     };
                     this.showToastNotification(info.text, info.type);
@@ -451,12 +451,12 @@ window.gameApp = function () {
                     );
                 } else if (this.currentGuess.length < WORD_LENGTH) {
                     this.showToastNotification(
-                        `Word must be ${WORD_LENGTH} letters long! ✏️`,
+                        `Word must be ${WORD_LENGTH} letters long!`,
                         'warning'
                     );
                 } else if (this.gameOver) {
                     this.showToastNotification(
-                        'Game is already over! Start a new game! 🎮',
+                        'Game is already over! Start a new game!',
                         'warning'
                     );
                 }
@@ -587,7 +587,7 @@ window.gameApp = function () {
                     setTimeout(
                         () =>
                             this.showToastNotification(
-                                'Game over! Better luck next time! 🎯',
+                                'Game over! Better luck next time!',
                                 'info'
                             ),
                         1000
@@ -787,7 +787,7 @@ window.gameApp = function () {
                         JSON.stringify(completed)
                     );
                     this.showToastNotification(
-                        `Word "${word}" added to your completed list! 🎯`,
+                        `Word "${word}" added to your completed list!`,
                         'success'
                     );
                 }
